@@ -28,13 +28,12 @@ export default function ReportsPage() {
     const handleGenerate = async () => {
         setGenerating(true);
         try {
-            // Dynamically import jsPDF
             const { default: jsPDF } = await import('jspdf');
             const autoTableModule = await import('jspdf-autotable');
             const doc = new jsPDF();
 
             doc.setFontSize(18);
-            doc.setTextColor(79, 70, 229);
+            doc.setTextColor(16, 185, 129); // emerald-500
             doc.text('Ticketing System', 14, 22);
             doc.setFontSize(11);
             doc.setTextColor(100);
@@ -48,7 +47,7 @@ export default function ReportsPage() {
                     head: [['#', 'Date', 'Employee', 'Work Email', 'Resolution', 'Completed']],
                     body: entries.map(e => [e.number, e.entry_date, e.employee_name, e.work_email, e.resolution, e.completed ? 'Yes' : 'No']),
                     theme: 'grid',
-                    headStyles: { fillColor: [79, 70, 229] },
+                    headStyles: { fillColor: [16, 185, 129] },
                 });
             } else if (reportType === 'tasks') {
                 const tasks = await getTasks();
@@ -57,7 +56,7 @@ export default function ReportsPage() {
                     head: [['Date', 'Task', 'Priority', 'Completed']],
                     body: tasks.map(t => [t.date, t.text, t.importance, t.completed ? 'Yes' : 'No']),
                     theme: 'grid',
-                    headStyles: { fillColor: [79, 70, 229] },
+                    headStyles: { fillColor: [16, 185, 129] },
                 });
             } else {
                 const machines = await getMachines();
@@ -66,13 +65,12 @@ export default function ReportsPage() {
                     head: [['#', 'Date', 'Requester', 'User', 'Reason', 'Status']],
                     body: machines.map(m => [m.number, m.date, m.requester_name, m.user_name, m.reason, m.status]),
                     theme: 'grid',
-                    headStyles: { fillColor: [79, 70, 229] },
+                    headStyles: { fillColor: [16, 185, 129] },
                 });
             }
 
             doc.save(`${reportType}_report_${dateRange}.pdf`);
         } catch {
-            // PDF library not found — fallback to CSV
             let csv = '';
             if (reportType === 'entries') {
                 const entries = await getEntries({ dateRange });
@@ -99,44 +97,44 @@ export default function ReportsPage() {
     };
 
     const summaryCards = [
-        { label: 'Email Entries', value: entryStats?.total ?? 0, sub: `${entryStats?.sorted ?? 0} sorted`, icon: Mail, color: 'text-indigo-400', bg: 'bg-indigo-600/10' },
-        { label: 'Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-600/10' },
-        { label: 'Machine Requests', value: machineStats?.total ?? 0, sub: `${machineStats?.fulfilled ?? 0} fulfilled`, icon: Monitor, color: 'text-purple-400', bg: 'bg-purple-600/10' },
+        { label: 'Email Entries', value: entryStats?.total ?? 0, sub: `${entryStats?.sorted ?? 0} sorted`, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+        { label: 'Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: CheckSquare, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Machine Requests', value: machineStats?.total ?? 0, sub: `${machineStats?.fulfilled ?? 0} fulfilled`, icon: Monitor, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
     ];
 
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-3xl font-bold text-white">📊 Reports</h1>
-                <p className="text-slate-400 mt-1">Generate and export data reports</p>
+                <h1 className="text-3xl font-bold text-foreground">📊 Reports</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1">Generate and export data reports</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {summaryCards.map((c) => (
-                    <Card key={c.label} className="bg-slate-900/60 border-slate-800">
+                    <Card key={c.label} className="bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
-                            <CardTitle className="text-sm font-medium text-slate-400">{c.label}</CardTitle>
+                            <CardTitle className="text-sm font-medium text-slate-500 dark:text-slate-400">{c.label}</CardTitle>
                             <div className={`p-2 rounded-lg ${c.bg}`}><c.icon className={`h-5 w-5 ${c.color}`} /></div>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-3xl font-bold text-white">{c.value}</p>
-                            <p className="text-xs text-slate-500 mt-1">{c.sub}</p>
+                            <p className="text-3xl font-bold text-foreground">{c.value}</p>
+                            <p className="text-xs text-slate-400 mt-1">{c.sub}</p>
                         </CardContent>
                     </Card>
                 ))}
             </div>
 
-            <Card className="bg-slate-900/60 border-slate-800">
+            <Card className="bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800">
                 <CardHeader>
-                    <CardTitle className="text-white">Generate Report</CardTitle>
+                    <CardTitle className="text-foreground">Generate Report</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm text-slate-400">Report Type</label>
+                            <label className="text-sm text-slate-500 dark:text-slate-400">Report Type</label>
                             <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>
-                                <SelectTrigger className="bg-slate-800 border-slate-700"><SelectValue /></SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700">
+                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"><SelectValue /></SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                     <SelectItem value="entries">📧 Email Entries</SelectItem>
                                     <SelectItem value="tasks">📝 Tasks</SelectItem>
                                     <SelectItem value="machines">💻 Machine Requests</SelectItem>
@@ -144,10 +142,10 @@ export default function ReportsPage() {
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm text-slate-400">Time Period</label>
+                            <label className="text-sm text-slate-500 dark:text-slate-400">Time Period</label>
                             <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRange)}>
-                                <SelectTrigger className="bg-slate-800 border-slate-700"><SelectValue /></SelectTrigger>
-                                <SelectContent className="bg-slate-800 border-slate-700">
+                                <SelectTrigger className="bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700"><SelectValue /></SelectTrigger>
+                                <SelectContent className="bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700">
                                     <SelectItem value="today">Today</SelectItem>
                                     <SelectItem value="week">This Week</SelectItem>
                                     <SelectItem value="month">This Month</SelectItem>
@@ -159,7 +157,7 @@ export default function ReportsPage() {
                     <Button
                         onClick={handleGenerate}
                         disabled={generating}
-                        className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto"
                     >
                         <FileDown className="h-4 w-4 mr-2" />
                         {generating ? 'Generating...' : 'Download Report'}

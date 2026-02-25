@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut } from '@/services/auth';
 import { cn } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
     { href: '/dashboard', label: 'Email', icon: Mail },
@@ -30,7 +31,7 @@ export function Sidebar() {
             <Button
                 variant="ghost"
                 size="icon"
-                className="fixed top-4 left-4 z-50 lg:hidden text-white"
+                className="fixed top-4 left-4 z-50 lg:hidden text-foreground"
                 onClick={toggleSidebar}
             >
                 {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -42,13 +43,13 @@ export function Sidebar() {
 
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-40 h-screen w-64 bg-slate-950 border-r border-slate-800 flex flex-col transition-transform duration-300',
+                    'fixed top-0 left-0 z-40 h-screen w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300',
                     'lg:translate-x-0',
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
-                <div className="p-6 border-b border-slate-800">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
                         Ticketing System
                     </h1>
                     <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
@@ -65,8 +66,8 @@ export function Sidebar() {
                                 className={cn(
                                     'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200',
                                     isActive
-                                        ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20'
-                                        : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                                        : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                 )}
                             >
                                 <item.icon className="h-5 w-5" />
@@ -76,16 +77,19 @@ export function Sidebar() {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-800">
-                    {profile && (
-                        <div className="mb-3 px-4">
-                            <p className="text-sm font-medium text-white truncate">{profile.name}</p>
-                            <p className="text-xs text-slate-500">{profile.role === 'ADMIN' ? 'Administrator' : 'IT Staff'}</p>
-                        </div>
-                    )}
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center justify-between mb-3 px-2">
+                        {profile && (
+                            <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground truncate">{profile.name}</p>
+                                <p className="text-xs text-slate-500">{profile.role === 'ADMIN' ? 'Administrator' : 'IT Staff'}</p>
+                            </div>
+                        )}
+                        <ThemeToggle />
+                    </div>
                     <Button
                         variant="ghost"
-                        className="w-full justify-start gap-3 text-red-400 hover:text-red-300 hover:bg-red-950/30"
+                        className="w-full justify-start gap-3 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                         onClick={handleLogout}
                     >
                         <LogOut className="h-5 w-5" />
