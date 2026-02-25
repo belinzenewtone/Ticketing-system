@@ -64,7 +64,6 @@ export async function getMachineStats() {
     return {
         total: machines.length,
         pending: machines.filter(m => m.status === 'pending').length,
-        approved: machines.filter(m => m.status === 'approved').length,
         fulfilled: machines.filter(m => m.status === 'fulfilled').length,
         rejected: machines.filter(m => m.status === 'rejected').length,
         oldHardware: machines.filter(m => m.reason === 'old-hardware').length,

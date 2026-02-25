@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Profile, ResolutionType, ImportanceLevel, MachineReason, MachineStatus } from '@/types/database';
+import type { Profile, ImportanceLevel, MachineReason, MachineStatus } from '@/types/database';
 
 interface AppState {
     profile: Profile | null;
