@@ -22,7 +22,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, CheckCircle, Circle, Mail, Clock, BarChart3, Pencil } from 'lucide-react';
+import { Plus, Search, Trash2, CheckCircle, Circle, Mail, Clock, BarChart3, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -52,6 +52,7 @@ const entrySchema = z.object({
 export default function DashboardPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
+    const [view, setView] = useState<'dashboard' | 'list'>('list');
     const { entryFilter, entryDateRange, entrySearch, setEntryFilter, setEntryDateRange, setEntrySearch } = useAppStore();
     const queryClient = useQueryClient();
 
@@ -146,19 +147,23 @@ export default function DashboardPage() {
         }
     };
 
-    // Reset form when dialog closes
-    useEffect(() => {
-        if (!formOpen) {
-            setEditingId(null);
-        }
-    }, [formOpen]);
+    useEffect(() => { if (!formOpen) setEditingId(null); }, [formOpen]);
 
     const statCards = [
         { label: 'Total Entries', value: stats?.total ?? 0, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Sorted', value: stats?.sorted ?? 0, icon: CheckCircle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
         { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Completed', value: stats?.completed ?? 0, icon: BarChart3, color: 'text-blue-500', bg: 'bg-blue-500/10' },
     ];
+
+    // Resolution breakdown for dashboard view
+    const resolutionBreakdown = entries ? Object.entries(
+        entries.reduce((acc, e) => {
+            acc[e.resolution] = (acc[e.resolution] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>)
+    ).sort((a, b) => b[1] - a[1]) : [];
+
+    const resolutionRate = stats && stats.total > 0 ? Math.round((stats.sorted / stats.total) * 100) : 0;
 
     return (
         <div className="space-y-6">
@@ -167,13 +172,23 @@ export default function DashboardPage() {
                     <h1 className="text-3xl font-bold text-foreground">📧 Email Dashboard</h1>
                     <p className="text-muted-foreground mt-1">Track and resolve employee email issues</p>
                 </div>
-                <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <Plus className="h-4 w-4 mr-2" /> New Entry
-                </Button>
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center rounded-lg border p-1 gap-1">
+                        <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                            <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
+                        </Button>
+                        <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                            <List className="h-4 w-4 mr-1" /> View Emails
+                        </Button>
+                    </div>
+                    <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Plus className="h-4 w-4 mr-2" /> New Entry
+                    </Button>
+                </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Stats — shown on both views */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {statCards.map((c) => (
                     <Card key={c.label} className="border shadow-sm">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -187,109 +202,162 @@ export default function DashboardPage() {
                 ))}
             </div>
 
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search entries..." value={entrySearch} onChange={(e) => setEntrySearch(e.target.value)} className="pl-10" />
-                </div>
-                <Select value={entryFilter} onValueChange={(v) => setEntryFilter(v as 'all' | 'sorted' | 'pending')}>
-                    <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="sorted">Sorted</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                    </SelectContent>
-                </Select>
-                <Select value={entryDateRange ?? 'none'} onValueChange={(v) => setEntryDateRange(v === 'none' ? undefined : v as 'today' | 'week' | 'month' | 'year')}>
-                    <SelectTrigger className="w-[150px]"><SelectValue placeholder="Time Range" /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="none">All Time</SelectItem>
-                        <SelectItem value="today">Today</SelectItem>
-                        <SelectItem value="week">This Week</SelectItem>
-                        <SelectItem value="month">This Month</SelectItem>
-                        <SelectItem value="year">This Year</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
+            {/* ===== DASHBOARD VIEW ===== */}
+            {view === 'dashboard' && (
+                <div className="space-y-6">
+                    {/* Resolution Rate */}
+                    <Card className="border shadow-sm">
+                        <CardHeader><CardTitle className="text-sm font-medium text-muted-foreground">Resolution Rate</CardTitle></CardHeader>
+                        <CardContent>
+                            <div className="flex items-end gap-2 mb-3">
+                                <span className="text-4xl font-bold text-foreground">{resolutionRate}%</span>
+                                <span className="text-muted-foreground text-sm pb-1">{stats?.sorted ?? 0} of {stats?.total ?? 0} resolved</span>
+                            </div>
+                            <div className="h-3 bg-muted rounded-full overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-1000" style={{ width: `${resolutionRate}%` }} />
+                            </div>
+                        </CardContent>
+                    </Card>
 
-            {/* Table */}
-            <Card className="border shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>#</TableHead>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Employee</TableHead>
-                                <TableHead>Work Email</TableHead>
-                                <TableHead>Phone</TableHead>
-                                <TableHead>Resolution</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {isLoading ? Array.from({ length: 5 }).map((_, i) => (
-                                <TableRow key={i}>
-                                    {Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
-                                </TableRow>
-                            )) : entries?.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No entries found</TableCell>
-                                </TableRow>
-                            ) : entries?.map((entry) => (
-                                <TableRow key={entry.id}>
-                                    <TableCell className="font-mono font-medium">{entry.number}</TableCell>
-                                    <TableCell className="text-muted-foreground">{entry.entry_date}</TableCell>
-                                    <TableCell className="font-medium">{entry.employee_name}</TableCell>
-                                    <TableCell className="text-muted-foreground">{entry.work_email}</TableCell>
-                                    <TableCell className="text-muted-foreground">{entry.employee_phone}</TableCell>
-                                    <TableCell>
-                                        <Badge className={resolutionConfig[entry.resolution]?.color}>
-                                            {resolutionConfig[entry.resolution]?.label}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer">
-                                            {entry.completed
-                                                ? <CheckCircle className="h-5 w-5 text-emerald-500" />
-                                                : <Circle className="h-5 w-5 text-muted-foreground" />}
-                                        </button>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => handleEdit(entry)} title="Edit">
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            {!entry.completed && (
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400" onClick={() => toggleMut.mutate({ id: entry.id, completed: true })} title="Mark Complete">
-                                                    <CheckCircle className="h-4 w-4" />
-                                                </Button>
-                                            )}
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400"><Trash2 className="h-4 w-4" /></Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Entry #{entry.number}?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteMut.mutate(entry.id)}>Delete</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                    {/* Resolution Breakdown */}
+                    <Card className="border shadow-sm">
+                        <CardHeader><CardTitle className="text-sm font-medium text-muted-foreground">Resolution Status Breakdown</CardTitle></CardHeader>
+                        <CardContent>
+                            {resolutionBreakdown.length === 0 ? (
+                                <p className="text-muted-foreground text-center py-8">No entries yet</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {resolutionBreakdown.map(([key, count]) => {
+                                        const pct = entries ? Math.round((count / entries.length) * 100) : 0;
+                                        const config = resolutionConfig[key as ResolutionType];
+                                        return (
+                                            <div key={key} className="space-y-1">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="font-medium text-foreground">{config?.label || key}</span>
+                                                    <span className="text-muted-foreground">{count} ({pct}%)</span>
+                                                </div>
+                                                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                                                    <div className={`h-full rounded-full transition-all duration-700 ${key === 'sorted' ? 'bg-emerald-500' : key === 'alt-email' ? 'bg-red-500' : key === 'alt-phone' ? 'bg-orange-500' : key === 'alt-both' ? 'bg-amber-500' : key === 'never-used' ? 'bg-purple-500' : 'bg-blue-500'}`}
+                                                        style={{ width: `${pct}%` }} />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </div>
-            </Card>
+            )}
+
+            {/* ===== LIST VIEW ===== */}
+            {view === 'list' && (
+                <>
+                    {/* Filters */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search entries..." value={entrySearch} onChange={(e) => setEntrySearch(e.target.value)} className="pl-10" />
+                        </div>
+                        <Select value={entryFilter} onValueChange={(v) => setEntryFilter(v as 'all' | 'sorted' | 'pending')}>
+                            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All</SelectItem>
+                                <SelectItem value="sorted">Sorted</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={entryDateRange ?? 'none'} onValueChange={(v) => setEntryDateRange(v === 'none' ? undefined : v as 'today' | 'week' | 'month' | 'year')}>
+                            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Time Range" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">All Time</SelectItem>
+                                <SelectItem value="today">Today</SelectItem>
+                                <SelectItem value="week">This Week</SelectItem>
+                                <SelectItem value="month">This Month</SelectItem>
+                                <SelectItem value="year">This Year</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Table */}
+                    <Card className="border shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>#</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Employee</TableHead>
+                                        <TableHead>Work Email</TableHead>
+                                        <TableHead>Phone</TableHead>
+                                        <TableHead>Resolution</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {isLoading ? Array.from({ length: 5 }).map((_, i) => (
+                                        <TableRow key={i}>
+                                            {Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                                        </TableRow>
+                                    )) : entries?.length === 0 ? (
+                                        <TableRow>
+                                            <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No entries found</TableCell>
+                                        </TableRow>
+                                    ) : entries?.map((entry) => (
+                                        <TableRow key={entry.id}>
+                                            <TableCell className="font-mono font-medium">{entry.number}</TableCell>
+                                            <TableCell className="text-muted-foreground">{entry.entry_date}</TableCell>
+                                            <TableCell className="font-medium">{entry.employee_name}</TableCell>
+                                            <TableCell className="text-muted-foreground">{entry.work_email}</TableCell>
+                                            <TableCell className="text-muted-foreground">{entry.employee_phone}</TableCell>
+                                            <TableCell>
+                                                <Badge className={resolutionConfig[entry.resolution]?.color}>
+                                                    {resolutionConfig[entry.resolution]?.label}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer">
+                                                    {entry.completed
+                                                        ? <CheckCircle className="h-5 w-5 text-emerald-500" />
+                                                        : <Circle className="h-5 w-5 text-muted-foreground" />}
+                                                </button>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => handleEdit(entry)} title="Edit">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    {!entry.completed && (
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400" onClick={() => toggleMut.mutate({ id: entry.id, completed: true })} title="Mark Complete">
+                                                            <CheckCircle className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Entry #{entry.number}?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteMut.mutate(entry.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </Card>
+                </>
+            )}
 
             {/* Create/Edit Entry Form */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
