@@ -138,17 +138,19 @@ export default function MachinesPage() {
                     <h1 className="text-3xl font-bold text-foreground">💻 Machine Requests</h1>
                     <p className="text-muted-foreground mt-1">Track hardware requests for employees</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center rounded-lg border p-1 gap-1">
-                        <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
-                            <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
-                        </Button>
-                        <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
-                            <List className="h-4 w-4 mr-1" /> View Requests
-                        </Button>
-                    </div>
-                    <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                        <Plus className="h-4 w-4 mr-2" /> New Request
+                <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Plus className="h-4 w-4 mr-2" /> New Request
+                </Button>
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex justify-center">
+                <div className="flex items-center rounded-lg border p-1 gap-1">
+                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
+                    </Button>
+                    <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <List className="h-4 w-4 mr-1" /> View Requests
                     </Button>
                 </div>
             </div>
@@ -278,10 +280,8 @@ export default function MachinesPage() {
                                                     value={m.status}
                                                     onValueChange={(v) => updateStatusMut.mutate({ id: m.id, status: v as MachineStatus })}
                                                 >
-                                                    <SelectTrigger className="h-8 w-[130px] border">
-                                                        <Badge className={statusConfig[m.status]?.color}>
-                                                            {statusConfig[m.status]?.label}
-                                                        </Badge>
+                                                    <SelectTrigger className={`h-8 w-[130px] text-xs font-semibold ${m.status === 'pending' ? 'text-slate-600 dark:text-slate-300' : m.status === 'fulfilled' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                                                        <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <SelectItem value="pending">⏳ Pending</SelectItem>

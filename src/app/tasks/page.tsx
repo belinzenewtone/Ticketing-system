@@ -126,17 +126,19 @@ export default function TasksPage() {
                     <h1 className="text-3xl font-bold text-foreground">📝 Task Management</h1>
                     <p className="text-muted-foreground mt-1">Create, prioritize, and track daily tasks</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <div className="flex items-center rounded-lg border p-1 gap-1">
-                        <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
-                            <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
-                        </Button>
-                        <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
-                            <List className="h-4 w-4 mr-1" /> View Tasks
-                        </Button>
-                    </div>
-                    <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                        <Plus className="h-4 w-4 mr-2" /> New Task
+                <Button onClick={() => { setEditingId(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Plus className="h-4 w-4 mr-2" /> New Task
+                </Button>
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex justify-center">
+                <div className="flex items-center rounded-lg border p-1 gap-1">
+                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
+                    </Button>
+                    <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <List className="h-4 w-4 mr-1" /> View Tasks
                     </Button>
                 </div>
             </div>
@@ -234,7 +236,7 @@ export default function TasksPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-12">Done</TableHead>
+                                        <TableHead className="w-12">Mark Done</TableHead>
                                         <TableHead>Date</TableHead>
                                         <TableHead>Task</TableHead>
                                         <TableHead>Priority</TableHead>
