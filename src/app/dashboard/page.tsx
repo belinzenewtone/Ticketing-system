@@ -32,9 +32,9 @@ import type { ResolutionType, CreateEntryInput } from '@/types/database';
 
 const resolutionConfig: Record<ResolutionType, { label: string; color: string }> = {
     sorted: { label: 'Sorted ✅', color: 'bg-emerald-600 text-white hover:bg-emerald-600' },
-    'alt-email': { label: 'Alt Email', color: 'bg-red-600 text-white hover:bg-red-600' },
-    'alt-phone': { label: 'Alt Phone', color: 'bg-orange-500 text-white hover:bg-orange-500' },
-    'alt-both': { label: 'Alt Both', color: 'bg-amber-500 text-white hover:bg-amber-500' },
+    'alt-email': { label: 'Alternative Email', color: 'bg-red-600 text-white hover:bg-red-600' },
+    'alt-phone': { label: 'Alternative Phone', color: 'bg-orange-500 text-white hover:bg-orange-500' },
+    'alt-both': { label: 'Alternative Both', color: 'bg-amber-500 text-white hover:bg-amber-500' },
     'never-used': { label: 'Never Used', color: 'bg-purple-600 text-white hover:bg-purple-600' },
     licensing: { label: 'Licensing', color: 'bg-blue-600 text-white hover:bg-blue-600' },
 };
@@ -391,7 +391,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Alt Email Status</Label>
+                                <Label>Alternative Email Status</Label>
                                 <Select onValueChange={(v) => form.setValue('alt_email_status', v)} defaultValue={form.getValues('alt_email_status') || 'doesnt-exist'}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
@@ -400,10 +400,12 @@ export default function DashboardPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
-                                <Label>Alt Email</Label>
-                                <Input placeholder="alt@gmail.com" {...form.register('alt_email')} />
-                            </div>
+                            {form.watch('alt_email_status') !== 'exists' && (
+                                <div className="space-y-2">
+                                    <Label>Alternative Email</Label>
+                                    <Input placeholder="alt@gmail.com" {...form.register('alt_email')} />
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-2">
                             <Label>Resolution *</Label>
@@ -411,9 +413,9 @@ export default function DashboardPage() {
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="sorted">✅ Sorted</SelectItem>
-                                    <SelectItem value="alt-email">🔴 Alt Email</SelectItem>
-                                    <SelectItem value="alt-phone">🟠 Alt Phone</SelectItem>
-                                    <SelectItem value="alt-both">🟡 Alt Both</SelectItem>
+                                    <SelectItem value="alt-email">🔴 Alternative Email</SelectItem>
+                                    <SelectItem value="alt-phone">🟠 Alternative Phone</SelectItem>
+                                    <SelectItem value="alt-both">🟡 Alternative Both</SelectItem>
                                     <SelectItem value="never-used">🟣 Never Used</SelectItem>
                                     <SelectItem value="licensing">🔵 Licensing</SelectItem>
                                 </SelectContent>
