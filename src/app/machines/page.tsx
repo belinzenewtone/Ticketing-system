@@ -119,6 +119,7 @@ export default function MachinesPage() {
         { label: 'Total', value: stats?.total ?? 0, icon: Monitor, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
         { label: 'Fulfilled', value: stats?.fulfilled ?? 0, icon: CheckCircle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Rejected', value: stats?.rejected ?? 0, icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
     ];
 
     const fulfilledRate = stats && stats.total > 0 ? Math.round((stats.fulfilled / stats.total) * 100) : 0;
@@ -156,7 +157,7 @@ export default function MachinesPage() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {statCards.map((c) => (
                     <Card key={c.label} className="border shadow-sm">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
