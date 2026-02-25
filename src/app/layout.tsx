@@ -6,8 +6,8 @@ import { Providers } from '@/components/providers';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Employee Management System | JTL',
-  description: 'Internal employee management system for Jamii Telecommunications Limited',
+  title: 'Ticketing System | JTL',
+  description: 'Internal ticketing system for Jamii Telecommunications Limited',
 };
 
 export default function RootLayout({

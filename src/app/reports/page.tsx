@@ -35,7 +35,7 @@ export default function ReportsPage() {
 
             doc.setFontSize(18);
             doc.setTextColor(79, 70, 229);
-            doc.text('Employee Management System', 14, 22);
+            doc.text('Ticketing System', 14, 22);
             doc.setFontSize(11);
             doc.setTextColor(100);
             doc.text(`Report: ${reportType.charAt(0).toUpperCase() + reportType.slice(1)} | Period: ${dateRange}`, 14, 30);

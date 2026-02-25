@@ -118,8 +118,8 @@ export default function DashboardPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">📧 Email Management</h1>
-                    <p className="text-slate-400 mt-1">Track and resolve employee email issues</p>
+                    <h1 className="text-3xl font-bold text-white">🎫 Ticketing Dashboard</h1>
+                    <p className="text-slate-400 mt-1">Track and resolve employee tickets</p>
                 </div>
                 <Button onClick={() => setFormOpen(true)} className="bg-indigo-600 hover:bg-indigo-700">
                     <Plus className="h-4 w-4 mr-2" /> New Entry

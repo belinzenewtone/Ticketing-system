@@ -49,7 +49,7 @@ export function Sidebar() {
             >
                 <div className="p-6 border-b border-slate-800">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-                        Employee Management
+                        Ticketing System
                     </h1>
                     <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
                 </div>

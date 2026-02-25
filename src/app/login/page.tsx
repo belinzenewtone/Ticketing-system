@@ -48,7 +48,7 @@ export default function LoginPage() {
                     </div>
                     <CardTitle className="text-2xl text-white">Welcome Back</CardTitle>
                     <CardDescription className="text-slate-400">
-                        Employee Management System — JTL
+                        Ticketing System — JTL
                     </CardDescription>
                 </CardHeader>
 
