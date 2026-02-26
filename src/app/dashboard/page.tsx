@@ -319,7 +319,7 @@ export default function DashboardPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
-                                                <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer">
+                                                <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors">
                                                     {entry.completed
                                                         ? <CheckCircle className="h-5 w-5 text-emerald-500" />
                                                         : <Circle className="h-5 w-5 text-muted-foreground" />}

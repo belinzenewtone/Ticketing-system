@@ -255,7 +255,7 @@ export default function TasksPage() {
                                     ) : tasks?.map((task) => (
                                         <TableRow key={task.id} className={task.completed ? 'opacity-60' : ''}>
                                             <TableCell>
-                                                <button onClick={() => toggleMut.mutate({ id: task.id, completed: !task.completed })} className="cursor-pointer">
+                                                <button onClick={() => toggleMut.mutate({ id: task.id, completed: !task.completed })} className="cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors">
                                                     {task.completed ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
                                                 </button>
                                             </TableCell>
