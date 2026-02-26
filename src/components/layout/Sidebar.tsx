@@ -57,13 +57,13 @@ export function Sidebar() {
 
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-40 h-screen w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 overflow-y-auto',
+                    'fixed top-0 left-0 z-40 h-dvh w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300',
                     'lg:translate-x-0',
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
                 {/* Header with close button inside */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
                     <div>
                         <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
                             Ticketing System
@@ -80,7 +80,7 @@ export function Sidebar() {
                     </Button>
                 </div>
 
-                <nav className="flex-1 p-4 space-y-1">
+                <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
                     {navItems.map((item) => {
                         const isActive = pathname.startsWith(item.href);
                         return (
@@ -102,7 +102,7 @@ export function Sidebar() {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
                     <div className="flex items-center justify-between mb-3 px-2">
                         {profile && (
                             <div className="min-w-0 flex-1">
