@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Mail, CheckSquare, Monitor, FileBarChart, LogOut, Menu, X } from 'lucide-react';
@@ -21,6 +22,16 @@ export function Sidebar() {
     const router = useRouter();
     const { profile, sidebarOpen, toggleSidebar } = useAppStore();
 
+    // Lock body scroll when sidebar is open on mobile
+    useEffect(() => {
+        if (sidebarOpen && window.innerWidth < 1024) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => { document.body.style.overflow = ''; };
+    }, [sidebarOpen]);
+
     const handleLogout = async () => {
         await signOut();
         router.push('/login');
@@ -28,14 +39,17 @@ export function Sidebar() {
 
     return (
         <>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="fixed top-4 left-4 z-50 lg:hidden text-foreground"
-                onClick={toggleSidebar}
-            >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            {/* Hamburger — only visible when sidebar is CLOSED on mobile */}
+            {!sidebarOpen && (
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="fixed top-4 left-4 z-50 lg:hidden text-foreground"
+                    onClick={toggleSidebar}
+                >
+                    <Menu className="h-5 w-5" />
+                </Button>
+            )}
 
             {sidebarOpen && (
                 <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={toggleSidebar} />
@@ -48,11 +62,22 @@ export function Sidebar() {
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
-                        Ticketing System
-                    </h1>
-                    <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
+                {/* Header with close button inside */}
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
+                            Ticketing System
+                        </h1>
+                        <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
+                    </div>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="lg:hidden text-foreground -mt-1 -mr-2 shrink-0"
+                        onClick={toggleSidebar}
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
                 </div>
 
                 <nav className="flex-1 p-4 space-y-1">
