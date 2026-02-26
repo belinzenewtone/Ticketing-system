@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { signIn } from '@/services/auth';
-import { Loader2, Lock } from 'lucide-react';
+import { signIn, getCurrentProfile } from '@/services/auth';
+import { Loader2, Lock, Users, ShieldAlert } from 'lucide-react';
 
 export default function LoginPage() {
+    const [loginType, setLoginType] = useState<'employee' | 'staff'>('employee');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -23,7 +24,14 @@ export default function LoginPage() {
 
         try {
             await signIn(email, password);
-            router.push('/dashboard');
+            const profile = await getCurrentProfile();
+
+            // Route based on role
+            if (profile?.role === 'USER') {
+                router.push('/portal');
+            } else {
+                router.push('/dashboard');
+            }
             router.refresh();
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Invalid credentials';
@@ -53,6 +61,30 @@ export default function LoginPage() {
                 </CardHeader>
 
                 <CardContent>
+                    {/* Login Type Toggle */}
+                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-6">
+                        <button
+                            type="button"
+                            onClick={() => setLoginType('employee')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'employee'
+                                    ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                        >
+                            <Users className="h-4 w-4" /> Employee
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setLoginType('staff')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'staff'
+                                    ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
+                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                }`}
+                        >
+                            <ShieldAlert className="h-4 w-4" /> IT Staff
+                        </button>
+                    </div>
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 rounded-lg p-3 text-sm animate-in fade-in">
@@ -65,7 +97,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder="you@jtl.co.ke"
+                                placeholder={loginType === 'staff' ? "admin@jtl.co.ke" : "employee@jtl.co.ke"}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -89,7 +121,7 @@ export default function LoginPage() {
                         <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 font-medium"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 font-medium mt-2"
                         >
                             {loading ? (
                                 <>
@@ -97,7 +129,7 @@ export default function LoginPage() {
                                     Signing in...
                                 </>
                             ) : (
-                                'Sign In'
+                                loginType === 'staff' ? 'Staff Sign In' : 'Employee Sign In'
                             )}
                         </Button>
                     </form>

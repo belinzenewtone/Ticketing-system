@@ -39,3 +39,13 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     if (error) throw error;
     return data;
 }
+
+export async function getITStaff(): Promise<Profile[]> {
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['ADMIN', 'IT_STAFF']);
+
+    if (error) throw error;
+    return data || [];
+}

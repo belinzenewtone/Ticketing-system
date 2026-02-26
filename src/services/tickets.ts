@@ -9,6 +9,8 @@ export async function getTickets(filters?: {
     status?: TicketStatus;
     search?: string;
     dateRange?: 'today' | 'week' | 'month' | 'year';
+    created_by?: string;
+    assigned_to?: string;
 }): Promise<Ticket[]> {
     let query = supabase
         .from('tickets')
@@ -23,6 +25,12 @@ export async function getTickets(filters?: {
     }
     if (filters?.status) {
         query = query.eq('status', filters.status);
+    }
+    if (filters?.created_by) {
+        query = query.eq('created_by', filters.created_by);
+    }
+    if (filters?.assigned_to) {
+        query = query.eq('assigned_to', filters.assigned_to);
     }
     if (filters?.search) {
         query = query.or(
@@ -84,8 +92,17 @@ export async function deleteTicket(id: string): Promise<void> {
     if (error) throw error;
 }
 
-export async function getTicketStats() {
-    const { data, error } = await supabase.from('tickets').select('category, priority, status');
+export async function getTicketStats(filters?: { created_by?: string; assigned_to?: string }) {
+    let query = supabase.from('tickets').select('category, priority, status');
+
+    if (filters?.created_by) {
+        query = query.eq('created_by', filters.created_by);
+    }
+    if (filters?.assigned_to) {
+        query = query.eq('assigned_to', filters.assigned_to);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     const tickets = data || [];
     return {

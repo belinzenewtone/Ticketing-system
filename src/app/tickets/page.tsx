@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats } from '@/services/tickets';
+import { getITStaff } from '@/services/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,7 +24,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -69,6 +70,7 @@ const ticketSchema = z.object({
 
 // ── Page ─────────────────────────────────────────────────────
 export default function TicketsPage() {
+    const { profile } = useAppStore();
     const [formOpen, setFormOpen] = useState(false);
     const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
     const [view, setView] = useState<'dashboard' | 'list'>('list');
@@ -76,7 +78,10 @@ export default function TicketsPage() {
     const queryClient = useQueryClient();
 
     // Queries
-    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['ticket-stats'], queryFn: getTicketStats });
+    const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
+    const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name; return acc; }, {} as Record<string, string>) || {};
+
+    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['ticket-stats'], queryFn: () => getTicketStats() });
     const { data: tickets, isLoading } = useQuery({
         queryKey: ['tickets', ticketCategory, ticketPriority, ticketStatus, ticketSearch, ticketDateRange],
         queryFn: () => getTickets({
@@ -116,6 +121,11 @@ export default function TicketsPage() {
         onSuccess: () => { invalidate(); toast.success('Status updated'); },
     });
 
+    const assignMut = useMutation({
+        mutationFn: ({ id, assigned_to }: { id: string; assigned_to: string }) => updateTicket(id, { assigned_to, status: 'in-progress' }),
+        onSuccess: () => { invalidate(); toast.success('Ticket assigned & In Progress'); },
+    });
+
     // Form
     const form = useForm<CreateTicketInput>({
         resolver: zodResolver(ticketSchema),
@@ -124,6 +134,7 @@ export default function TicketsPage() {
 
     const [editStatus, setEditStatus] = useState<TicketStatus>('open');
     const [editResolution, setEditResolution] = useState('');
+    const [editAssignee, setEditAssignee] = useState<string>('unassigned');
 
     const handleEdit = (ticket: TicketType) => {
         setEditingTicket(ticket);
@@ -138,18 +149,29 @@ export default function TicketsPage() {
         });
         setEditStatus(ticket.status);
         setEditResolution(ticket.resolution_notes || '');
+        setEditAssignee(ticket.assigned_to || 'unassigned');
         setFormOpen(true);
     };
 
     const handleSubmit = (data: CreateTicketInput) => {
         if (editingTicket) {
-            updateMut.mutate({ id: editingTicket.id, data: { ...data, status: editStatus, resolution_notes: editResolution } });
+            updateMut.mutate({
+                id: editingTicket.id,
+                data: {
+                    ...data,
+                    status: editStatus,
+                    resolution_notes: editResolution,
+                    assigned_to: editAssignee === 'unassigned' ? null : editAssignee
+                }
+            });
         } else {
-            createMut.mutate(data);
+            createMut.mutate({
+                ...data,
+            });
         }
     };
 
-    useEffect(() => { if (!formOpen) { setEditingTicket(null); setEditResolution(''); } }, [formOpen]);
+    useEffect(() => { if (!formOpen) { setEditingTicket(null); setEditResolution(''); setEditAssignee('unassigned'); } }, [formOpen]);
 
     // Stats cards
     const statCards = [
@@ -170,8 +192,8 @@ export default function TicketsPage() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground">🎫 Ticketing</h1>
-                    <p className="text-muted-foreground mt-1">Log and track IT support tickets</p>
+                    <h1 className="text-3xl font-bold text-foreground">🎫 IT Ticketing</h1>
+                    <p className="text-muted-foreground mt-1">Manage and assign IT support tickets</p>
                 </div>
                 <Button onClick={() => { setEditingTicket(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                     <Plus className="h-4 w-4 mr-2" /> New Ticket
@@ -296,44 +318,59 @@ export default function TicketsPage() {
                                     <TableRow>
                                         <TableHead>#</TableHead>
                                         <TableHead>Date</TableHead>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead>Subject</TableHead>
+                                        <TableHead>User / Dept</TableHead>
                                         <TableHead>Category</TableHead>
-                                        <TableHead>Priority</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>Status / Priority</TableHead>
+                                        <TableHead>Assigned To</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                                         <TableRow key={i}>
-                                            {Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                                            {Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
                                         </TableRow>
                                     )) : tickets?.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No tickets found</TableCell>
+                                            <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">No tickets found</TableCell>
                                         </TableRow>
                                     ) : tickets?.map((ticket) => (
                                         <TableRow key={ticket.id} className={ticket.status === 'closed' ? 'opacity-60' : ''}>
                                             <TableCell className="font-mono font-medium">{ticket.number}</TableCell>
-                                            <TableCell className="text-muted-foreground whitespace-nowrap">{ticket.ticket_date}</TableCell>
-                                            <TableCell className="font-medium">{ticket.employee_name}</TableCell>
-                                            <TableCell className="max-w-[200px] truncate">{ticket.subject}</TableCell>
+                                            <TableCell className="text-muted-foreground whitespace-nowrap text-sm">{ticket.ticket_date}</TableCell>
+                                            <TableCell>
+                                                <div className="font-medium" title={ticket.subject}>{ticket.employee_name}</div>
+                                                <div className="text-xs text-muted-foreground">{ticket.department || 'N/A'}</div>
+                                            </TableCell>
                                             <TableCell>
                                                 <span className="text-sm whitespace-nowrap">{categoryConfig[ticket.category]?.icon} {categoryConfig[ticket.category]?.label}</span>
+                                                <div className="text-xs text-muted-foreground max-w-[120px] truncate" title={ticket.subject}>{ticket.subject}</div>
+                                            </TableCell>
+                                            <TableCell className="space-y-1">
+                                                <div>
+                                                    <Badge variant="outline" className={statusConfig[ticket.status]?.color}>
+                                                        {statusConfig[ticket.status]?.label}
+                                                    </Badge>
+                                                </div>
+                                                <div>
+                                                    <Badge variant="outline" className={priorityConfig[ticket.priority]?.color}>
+                                                        {priorityConfig[ticket.priority]?.label}
+                                                    </Badge>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className={priorityConfig[ticket.priority]?.color}>
-                                                    {priorityConfig[ticket.priority]?.label}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant="outline" className={statusConfig[ticket.status]?.color}>
-                                                    {statusConfig[ticket.status]?.label}
-                                                </Badge>
+                                                <span className="text-sm font-medium text-foreground">
+                                                    {ticket.assigned_to && staffMap[ticket.assigned_to] ? staffMap[ticket.assigned_to] : <span className="text-slate-400 italic">Unassigned</span>}
+                                                </span>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-1">
+                                                    {/* Quick Assing to Me button */}
+                                                    {profile?.id && ticket.assigned_to !== profile.id && ticket.status !== 'closed' && (
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => assignMut.mutate({ id: ticket.id, assigned_to: profile.id })} title="Assign to me">
+                                                            <UserPlus className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     {/* Quick status buttons */}
                                                     {ticket.status === 'open' && (
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500 hover:text-amber-400" onClick={() => statusMut.mutate({ id: ticket.id, status: 'in-progress' })} title="Start Working">
@@ -345,7 +382,7 @@ export default function TicketsPage() {
                                                             <CheckCircle2 className="h-4 w-4" />
                                                         </Button>
                                                     )}
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => handleEdit(ticket)} title="Edit">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" onClick={() => handleEdit(ticket)} title="Edit">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
                                                     <AlertDialog>
@@ -431,10 +468,22 @@ export default function TicketsPage() {
                             <Textarea placeholder="Detailed description of the issue..." className="min-h-[80px]" {...form.register('description')} />
                         </div>
 
-                        {/* Status + Resolution Notes — only visible when editing */}
+                        {/* Status + Assignee + Resolution Notes — only visible when editing */}
                         {editingTicket && (
                             <>
                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Assigned To</Label>
+                                        <Select value={editAssignee} onValueChange={setEditAssignee}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="unassigned">Unassigned</SelectItem>
+                                                {staffList?.map(staff => (
+                                                    <SelectItem key={staff.id} value={staff.id}>{staff.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                     <div className="space-y-2">
                                         <Label>Status</Label>
                                         <Select value={editStatus} onValueChange={(v) => setEditStatus(v as TicketStatus)}>

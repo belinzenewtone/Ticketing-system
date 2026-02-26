@@ -2,7 +2,7 @@
 // Database Types — matches original system
 // ============================================================
 
-export type UserRole = 'ADMIN' | 'IT_STAFF';
+export type UserRole = 'ADMIN' | 'IT_STAFF' | 'USER';
 export type ResolutionType = 'sorted' | 'alt-email' | 'alt-phone' | 'alt-both' | 'never-used' | 'licensing';
 export type ImportanceLevel = 'urgent' | 'important' | 'neutral';
 export type MachineReason = 'old-hardware' | 'faulty' | 'new-user';
@@ -107,6 +107,7 @@ export interface Ticket {
     description: string;
     resolution_notes: string;
     created_by: string | null;
+    assigned_to: string | null;
     created_at: string;
     updated_at: string;
 }
