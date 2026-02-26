@@ -1,7 +1,22 @@
 import { createClient } from '@/lib/supabase/client';
-import type { Ticket, CreateTicketInput, TicketCategory, TicketPriority, TicketStatus } from '@/types/database';
+import type { Ticket, CreateTicketInput, TicketCategory, TicketPriority, TicketStatus, CannedResponse } from '@/types/database';
 
 const supabase = createClient();
+
+// SLA Timeframes in hours
+const SLA_HOURS: Record<TicketPriority, number> = {
+    critical: 2,
+    high: 8,
+    medium: 24,
+    low: 48,
+};
+
+export function calculateDueDate(priority: TicketPriority): string {
+    const hours = SLA_HOURS[priority];
+    const due = new Date();
+    due.setHours(due.getHours() + hours);
+    return due.toISOString();
+}
 
 export async function getTickets(filters?: {
     category?: TicketCategory;
@@ -57,19 +72,25 @@ export async function getTickets(filters?: {
                 start = now.toISOString().split('T')[0];
                 break;
         }
-        query = query.gte('ticket_date', start);
+        if (start!) {
+            query = query.gte('ticket_date', start);
+        }
     }
 
     const { data, error } = await query;
     if (error) throw error;
-    return data;
+    return data as Ticket[];
 }
 
 export async function addTicket(input: CreateTicketInput): Promise<Ticket> {
     const { data: { user } } = await supabase.auth.getUser();
+
+    // Calculate initial SLA due date
+    const due_date = calculateDueDate(input.priority);
+
     const { data, error } = await supabase
         .from('tickets')
-        .insert({ ...input, created_by: user?.id })
+        .insert({ ...input, created_by: user?.id, due_date })
         .select('*')
         .single();
     if (error) throw error;
@@ -77,6 +98,11 @@ export async function addTicket(input: CreateTicketInput): Promise<Ticket> {
 }
 
 export async function updateTicket(id: string, updates: Partial<Ticket>): Promise<Ticket> {
+    // Re-calculate SLA if priority changed manually during an update
+    if (updates.priority) {
+        updates.due_date = calculateDueDate(updates.priority);
+    }
+
     const { data, error } = await supabase
         .from('tickets')
         .update(updates)
@@ -112,4 +138,33 @@ export async function getTicketStats(filters?: { created_by?: string; assigned_t
         resolved: tickets.filter(t => t.status === 'resolved').length,
         closed: tickets.filter(t => t.status === 'closed').length,
     };
+}
+
+// ── Canned Responses ──────────────────────────────────────────
+
+export async function getCannedResponses(): Promise<CannedResponse[]> {
+    const { data, error } = await supabase
+        .from('canned_responses')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+}
+
+export async function addCannedResponse(title: string, content: string): Promise<CannedResponse> {
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await supabase
+        .from('canned_responses')
+        .insert({ title, content, created_by: user?.id })
+        .select('*')
+        .single();
+
+    if (error) throw error;
+    return data;
+}
+
+export async function deleteCannedResponse(id: string): Promise<void> {
+    const { error } = await supabase.from('canned_responses').delete().eq('id', id);
+    if (error) throw error;
 }

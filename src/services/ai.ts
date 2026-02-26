@@ -1,85 +1,113 @@
 'use server';
 
-import type { TicketCategory, TicketPriority } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketSentiment } from '@/types/database';
 
 export interface DeflectionSuggestion {
     title: string;
     description: string;
 }
 
+const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+
+async function callOpenAI(systemPrompt: string, userMessage: string, forceJson: boolean = false) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+        throw new Error("OPENAI_API_KEY is missing from environment variables.");
+    }
+
+    const payload: any = {
+        model: 'gpt-4o-mini',
+        messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userMessage }
+        ]
+    };
+
+    if (forceJson) {
+        payload.response_format = { type: 'json_object' };
+    }
+
+    const res = await fetch(OPENAI_API_URL, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        const errorData = await res.text();
+        throw new Error(`OpenAI API Error: ${res.status} - ${errorData}`);
+    }
+
+    const data = await res.json();
+    return data.choices[0].message.content;
+}
+
 export async function generateDeflectionSuggestions(subject: string, description: string): Promise<DeflectionSuggestion[]> {
-    // Mock API delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const systemPrompt = `You are an IT Support AI. 
+Analyze the user's issue and provide 0 to 2 potential self-service solutions. 
+If the issue requires IT intervention (like physical hardware replacement), return an empty array.
+If it's common (like printer, password reset), provide clear steps.
+Respond STRICTLY as a JSON object containing an array called "suggestions", where each object has "title" and "description".`;
 
-    const text = `${subject} ${description}`.toLowerCase();
-
-    if (text.includes('password') || text.includes('login') || text.includes('account')) {
-        return [
-            { title: 'Self-Service Password Reset', description: 'You can reset your password using the "Forgot Password" link on the login page.' },
-            { title: 'Account Lockout Helper', description: 'Accounts automatically unlock after 15 minutes of inactivity.' }
-        ];
+    try {
+        const result = await callOpenAI(systemPrompt, `Subject: ${subject}\n\nDescription: ${description}`, true);
+        const parsed = JSON.parse(result);
+        return parsed.suggestions || [];
+    } catch (e: any) {
+        console.error("Deflection AI Error:", e);
+        return []; // Fail gracefully back to empty list 
     }
-
-    if (text.includes('printer') || text.includes('printing')) {
-        return [
-            { title: 'Connecting to Office Printers', description: 'Make sure you are on the corporate network, then add the printer via Windows Settings -> Devices.' }
-        ];
-    }
-
-    if (text.includes('vpn') || text.includes('network')) {
-        return [
-            { title: 'VPN Troubleshooting Guide', description: 'Ensure your Cisco AnyConnect client is up to date and restart your device before trying again.' }
-        ];
-    }
-
-    // Return empty array if no obvious deflections are found
-    return [];
 }
 
 export async function categorizeAndPrioritizeTicket(
     subject: string,
     description: string
-): Promise<{ category: TicketCategory; priority: TicketPriority }> {
-    // Mock API delay
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+): Promise<{ category: TicketCategory; priority: TicketPriority; sentiment: TicketSentiment }> {
 
-    const text = `${subject} ${description}`.toLowerCase();
+    const systemPrompt = `Analyze the IT support ticket and classify it.
+Reply STRICTLY with a JSON object containing exactly 3 keys:
+1. "category": Must be exactly one of ["email", "account-login", "password-reset", "hardware", "software", "network-vpn", "other"]
+2. "priority": Must be exactly one of ["critical", "high", "medium", "low"]
+3. "sentiment": Analyze the tone of the user's text. Must be exactly one of ["positive", "neutral", "frustrated", "angry"]. If they use swear words, exclamation marks, all caps complaining, aggressive language about blockers, classify as angry or frustrated. Otherwise neutral.
 
-    let category: TicketCategory = 'other';
-    let priority: TicketPriority = 'medium';
+Always return valid JSON.`;
 
-    // Heuristics for category
-    if (text.includes('password') || text.includes('login')) {
-        category = 'account-login';
-    } else if (text.includes('email') || text.includes('outlook')) {
-        category = 'email';
-    } else if (text.includes('vpn') || text.includes('wifi') || text.includes('internet') || text.includes('network')) {
-        category = 'network-vpn';
-    } else if (text.includes('laptop') || text.includes('monitor') || text.includes('keyboard') || text.includes('hardware')) {
-        category = 'hardware';
-    } else if (text.includes('install') || text.includes('app') || text.includes('software')) {
-        category = 'software';
+    try {
+        const result = await callOpenAI(systemPrompt, `Subject: ${subject}\n\nDescription: ${description}`, true);
+        const parsed = JSON.parse(result);
+        return {
+            category: parsed.category as TicketCategory || 'other',
+            priority: parsed.priority as TicketPriority || 'medium',
+            sentiment: parsed.sentiment as TicketSentiment || 'neutral'
+        };
+    } catch (e: any) {
+        console.error("Categorize AI Error:", e);
+        // Fail gracefully to defaults if API fails or key is missing
+        return { category: 'other', priority: 'medium', sentiment: 'neutral' };
     }
-
-    // Heuristics for priority
-    if (text.includes('urgent') || text.includes('emergency') || text.includes('critical') || text.includes('down')) {
-        priority = 'critical';
-    } else if (text.includes('asap') || text.includes('high') || text.includes('blocked')) {
-        priority = 'high';
-    } else if (text.includes('minor') || text.includes('low') || text.includes('whenever')) {
-        priority = 'low';
-    }
-
-    return { category, priority };
 }
 
 export async function generateTicketSummary(description: string, resolution_notes?: string): Promise<string> {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (description.length < 100) {
+    if (description.length < 100 && !resolution_notes) {
         return "Ticket description is short; no summary needed.";
     }
 
-    return `AI Summary: The user encountered a technical issue requiring IT support. ${resolution_notes ? 'The issue has since been addressed.' : 'Awaiting resolution.'
-        }`;
+    const systemPrompt = `You are an IT Assistant. Summarize this ticket in exactly 1-2 short sentences so an IT admin can glance at it and know exactly what is going on.
+If resolution notes are provided, include how it was resolved final sentence.`;
+
+    let prompt = `Description: ${description}`;
+    if (resolution_notes) {
+        prompt += `\n\nResolution Notes: ${resolution_notes}`;
+    }
+
+    try {
+        const summary = await callOpenAI(systemPrompt, prompt);
+        return summary.trim();
+    } catch (e: any) {
+        console.error("Summary AI Error:", e);
+        return "AI Summary is temporarily unavailable.";
+    }
 }

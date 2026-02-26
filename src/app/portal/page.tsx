@@ -181,7 +181,7 @@ export default function PortalPage() {
             aiResult = await categorizeAndPrioritizeTicket(data.subject, data.description || '');
         } catch (error) {
             toast.error('AI analysis failed, falling back to defaults.');
-            aiResult = { category: 'other' as TicketCategory, priority: 'medium' as TicketPriority };
+            aiResult = { category: 'other' as TicketCategory, priority: 'medium' as TicketPriority, sentiment: 'neutral' as const };
         }
         setIsAiAnalyzing(false);
 
@@ -205,6 +205,7 @@ export default function PortalPage() {
             attachment_url,
             category: data.category,
             priority: aiResult.priority,
+            sentiment: aiResult.sentiment,
             subject: data.subject,
             description: data.description,
         };

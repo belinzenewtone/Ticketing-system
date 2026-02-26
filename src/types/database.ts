@@ -93,6 +93,7 @@ export interface CreateMachineInput {
 export type TicketCategory = 'email' | 'account-login' | 'password-reset' | 'hardware' | 'software' | 'network-vpn' | 'other';
 export type TicketPriority = 'critical' | 'high' | 'medium' | 'low';
 export type TicketStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
+export type TicketSentiment = 'positive' | 'neutral' | 'frustrated' | 'angry';
 
 export interface Ticket {
     id: string;
@@ -103,9 +104,12 @@ export interface Ticket {
     category: TicketCategory;
     priority: TicketPriority;
     status: TicketStatus;
+    sentiment?: TicketSentiment;
     subject: string;
     description: string;
     resolution_notes: string;
+    internal_notes: string | null;
+    due_date: string | null;
     created_by: string | null;
     assigned_to: string | null;
     attachment_url: string | null;
@@ -119,8 +123,21 @@ export interface CreateTicketInput {
     department?: string;
     category: TicketCategory;
     priority: TicketPriority;
+    status?: TicketStatus; // Added this as it's missing from the original CreateTicketInput and usually needed for initial status
+    sentiment?: TicketSentiment;
     subject: string;
     description?: string;
     created_by?: string;
     attachment_url?: string | null;
+    internal_notes?: string | null;
+    due_date?: string | null;
+}
+
+// Canned Responses
+export interface CannedResponse {
+    id: string;
+    title: string;
+    content: string;
+    created_by: string | null;
+    created_at: string;
 }

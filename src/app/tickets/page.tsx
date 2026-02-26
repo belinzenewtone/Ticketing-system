@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats } from '@/services/tickets';
+import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats, getCannedResponses, addCannedResponse, deleteCannedResponse } from '@/services/tickets';
 import { getITStaff } from '@/services/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,13 +24,13 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment } from '@/types/database';
 import { generateTicketSummary } from '@/services/ai';
 
 // ── Config maps ──────────────────────────────────────────────
@@ -58,6 +58,13 @@ const statusConfig: Record<TicketStatus, { label: string; color: string; icon: R
     closed: { label: 'Closed', color: 'bg-slate-600/20 text-slate-400 border-slate-600/30 hover:bg-slate-600/20', icon: Archive },
 };
 
+const sentimentConfig: Record<TicketSentiment, { label: string; color: string; icon: string }> = {
+    positive: { label: 'Positive', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20', icon: '😊' },
+    neutral: { label: 'Neutral', color: 'text-slate-500 bg-slate-500/10 border-slate-500/20', icon: '😐' },
+    frustrated: { label: 'Frustrated', color: 'text-orange-600 bg-orange-600/10 border-orange-600/20', icon: '😤' },
+    angry: { label: 'Angry', color: 'text-red-600 bg-red-600/10 border-red-600/20', icon: '😡' },
+};
+
 // ── Validation ───────────────────────────────────────────────
 const ticketSchema = z.object({
     ticket_date: z.string().min(1, 'Date required'),
@@ -73,6 +80,7 @@ const ticketSchema = z.object({
 export default function TicketsPage() {
     const { profile } = useAppStore();
     const [formOpen, setFormOpen] = useState(false);
+    const [cannedResponsesOpen, setCannedResponsesOpen] = useState(false);
     const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
     const [view, setView] = useState<'dashboard' | 'list'>('list');
     const { ticketCategory, ticketPriority, ticketStatus, ticketSearch, ticketDateRange, setTicketCategory, setTicketPriority, setTicketStatus, setTicketSearch, setTicketDateRange } = useAppStore();
@@ -97,6 +105,8 @@ export default function TicketsPage() {
             dateRange: ticketDateRange,
         }),
     });
+
+    const { data: cannedResponses } = useQuery({ queryKey: ['canned-responses'], queryFn: getCannedResponses });
 
     // Mutations
     const invalidate = () => {
@@ -137,8 +147,26 @@ export default function TicketsPage() {
         defaultValues: { ticket_date: new Date().toISOString().split('T')[0], employee_name: '', department: '', category: 'email', priority: 'medium', subject: '', description: '' },
     });
 
+    // Canned Response Form 
+    const macroForm = useForm<{ title: string, content: string }>({
+        defaultValues: { title: '', content: '' }
+    });
+
+    const addMacroMut = useMutation({
+        mutationFn: (data: { title: string, content: string }) => addCannedResponse(data.title, data.content),
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['canned-responses'] }); toast.success('Macro added'); macroForm.reset(); },
+        onError: (e: Error) => toast.error(e.message),
+    });
+
+    const deleteMacroMut = useMutation({
+        mutationFn: deleteCannedResponse,
+        onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['canned-responses'] }); toast.success('Macro deleted'); },
+        onError: (e: Error) => toast.error(e.message),
+    });
+
     const [editStatus, setEditStatus] = useState<TicketStatus>('open');
     const [editResolution, setEditResolution] = useState('');
+    const [editInternalNotes, setEditInternalNotes] = useState('');
     const [editAssignee, setEditAssignee] = useState<string>('unassigned');
 
     const handleEdit = (ticket: TicketType) => {
@@ -154,6 +182,7 @@ export default function TicketsPage() {
         });
         setEditStatus(ticket.status);
         setEditResolution(ticket.resolution_notes || '');
+        setEditInternalNotes(ticket.internal_notes || '');
         setEditAssignee(ticket.assigned_to || 'unassigned');
         setAiSummary(null); // Reset summary
         setFormOpen(true);
@@ -180,6 +209,7 @@ export default function TicketsPage() {
                     ...data,
                     status: editStatus,
                     resolution_notes: editResolution,
+                    internal_notes: editInternalNotes,
                     assigned_to: editAssignee === 'unassigned' ? null : editAssignee
                 }
             });
@@ -194,6 +224,7 @@ export default function TicketsPage() {
         if (!formOpen) {
             setEditingTicket(null);
             setEditResolution('');
+            setEditInternalNotes('');
             setEditAssignee('unassigned');
             setAiSummary(null);
         }
@@ -221,9 +252,14 @@ export default function TicketsPage() {
                     <h1 className="text-3xl font-bold text-foreground">🎫 IT Ticketing</h1>
                     <p className="text-muted-foreground mt-1">Manage and assign IT support tickets</p>
                 </div>
-                <Button onClick={() => { setEditingTicket(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <Plus className="h-4 w-4 mr-2" /> New Ticket
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" onClick={() => setCannedResponsesOpen(true)} className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/30">
+                        <BookTemplate className="h-4 w-4 mr-2" /> Macros
+                    </Button>
+                    <Button onClick={() => { setEditingTicket(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Plus className="h-4 w-4 mr-2" /> New Ticket
+                    </Button>
+                </div>
             </div>
 
             {/* View Toggle */}
@@ -370,7 +406,12 @@ export default function TicketsPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="text-sm whitespace-nowrap">{categoryConfig[ticket.category]?.icon} {categoryConfig[ticket.category]?.label}</span>
-                                                <div className="text-xs text-muted-foreground max-w-[120px] truncate" title={ticket.subject}>{ticket.subject}</div>
+                                                <div className="text-xs text-muted-foreground max-w-[120px] truncate flex items-center gap-1" title={ticket.subject}>
+                                                    {ticket.sentiment && ticket.sentiment !== 'neutral' && ticket.sentiment !== 'positive' && (
+                                                        <span title={`Sentiment: ${ticket.sentiment}`}>{sentimentConfig[ticket.sentiment]?.icon}</span>
+                                                    )}
+                                                    {ticket.subject}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="space-y-1">
                                                 <div>
@@ -378,10 +419,16 @@ export default function TicketsPage() {
                                                         {statusConfig[ticket.status]?.label}
                                                     </Badge>
                                                 </div>
-                                                <div>
+                                                <div className="flex items-center gap-2">
                                                     <Badge variant="outline" className={priorityConfig[ticket.priority]?.color}>
                                                         {priorityConfig[ticket.priority]?.label}
                                                     </Badge>
+                                                    {ticket.due_date && ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+                                                        <span className={`text-[10px] font-mono flex items-center gap-1 leading-none ${new Date(ticket.due_date) < new Date() ? 'text-red-500 font-bold' : 'text-slate-500'}`} title={`SLA Due: ${new Date(ticket.due_date).toLocaleString()}`}>
+                                                            {new Date(ticket.due_date) < new Date() ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                                            {new Date(ticket.due_date) < new Date() ? 'SLA BREACHED' : 'Due ' + new Date(ticket.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -439,8 +486,24 @@ export default function TicketsPage() {
 
             {/* ===== CREATE / EDIT DIALOG ===== */}
             <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader><DialogTitle>{editingTicket ? `Edit Ticket #${editingTicket.number}` : 'New Ticket'}</DialogTitle></DialogHeader>
+                <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6">
+                            <span>{editingTicket ? `Ticket #${editingTicket.number} Details` : 'New Ticket'}</span>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {editingTicket?.sentiment && editingTicket.sentiment !== 'neutral' && (
+                                    <Badge variant="outline" className={sentimentConfig[editingTicket.sentiment]?.color}>
+                                        {sentimentConfig[editingTicket.sentiment]?.icon} {sentimentConfig[editingTicket.sentiment]?.label}
+                                    </Badge>
+                                )}
+                                {editingTicket?.due_date && (
+                                    <Badge variant="outline" className={new Date(editingTicket.due_date) < new Date() && editingTicket.status !== 'resolved' && editingTicket.status !== 'closed' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-500'}>
+                                        SLA Due: {new Date(editingTicket.due_date).toLocaleString()}
+                                    </Badge>
+                                )}
+                            </div>
+                        </DialogTitle>
+                    </DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
@@ -564,7 +627,31 @@ export default function TicketsPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Resolution Notes</Label>
+                                    <Label className="flex items-center text-amber-600 dark:text-amber-500">
+                                        <AlertTriangle className="h-3 w-3 mr-1" />
+                                        Internal IT Notes (Hidden from Employee)
+                                    </Label>
+                                    <Textarea placeholder="Private staff notes, debugging steps, etc." className="min-h-[60px] bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/50" value={editInternalNotes} onChange={(e) => setEditInternalNotes(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label>Public Resolution Notes</Label>
+                                        {cannedResponses && cannedResponses.length > 0 && (
+                                            <Select onValueChange={(v) => {
+                                                const macro = cannedResponses.find(c => c.id === v);
+                                                if (macro) setEditResolution((prev) => prev ? prev + '\n\n' + macro.content : macro.content);
+                                            }}>
+                                                <SelectTrigger className="h-7 w-[180px] text-xs">
+                                                    <SelectValue placeholder="Insert canned response..." />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {cannedResponses.map(c => (
+                                                        <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        )}
+                                    </div>
                                     <Textarea placeholder="What was done to resolve this..." className="min-h-[60px]" value={editResolution} onChange={(e) => setEditResolution(e.target.value)} />
                                 </div>
                             </>
@@ -577,6 +664,58 @@ export default function TicketsPage() {
                             </Button>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* ===== CANNED RESPONSES (MACRO) DIALOG ===== */}
+            <Dialog open={cannedResponsesOpen} onOpenChange={setCannedResponsesOpen}>
+                <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>IT Macros (Canned Responses)</DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 space-y-6">
+                        {/* List Macros */}
+                        <div className="space-y-3">
+                            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Existing Macros</h4>
+                            {cannedResponses?.length === 0 ? (
+                                <p className="text-xs text-muted-foreground italic">No macros saved yet.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {cannedResponses?.map(macro => (
+                                        <div key={macro.id} className="flex flex-col sm:flex-row gap-2 sm:items-center justify-between p-3 border rounded-md bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-semibold text-foreground truncate">{macro.title}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{macro.content}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" onClick={() => deleteMacroMut.mutate(macro.id)} disabled={deleteMacroMut.isPending}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Add New Macro Form */}
+                        <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <h4 className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Create New Macro</h4>
+                            <form className="space-y-3" onSubmit={macroForm.handleSubmit((data) => addMacroMut.mutate(data))}>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-slate-500">Macro Title</Label>
+                                    <Input placeholder="e.g. Printer Reset Instructions" {...macroForm.register('title', { required: true })} />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-xs text-slate-500">Response Content</Label>
+                                    <Textarea placeholder="The actual text that will be pasted into the resolution box..." className="min-h-[80px]" {...macroForm.register('content', { required: true })} />
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                    <Button type="submit" disabled={addMacroMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm h-8">
+                                        {addMacroMut.isPending ? 'Saving...' : 'Save Macro'}
+                                    </Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>
