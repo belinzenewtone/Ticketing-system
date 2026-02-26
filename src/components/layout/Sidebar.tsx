@@ -16,7 +16,6 @@ const navItems = [
     { href: '/machines', label: 'Machines', icon: Monitor },
     { href: '/tickets', label: 'Ticketing', icon: Ticket },
     { href: '/reports', label: 'Reports', icon: FileBarChart },
-    { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
 export function Sidebar() {
@@ -116,14 +115,24 @@ export function Sidebar() {
                         )}
                         <ThemeToggle />
                     </div>
-                    <Button
-                        variant="ghost"
-                        className="w-full justify-start gap-3 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                        onClick={handleLogout}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        Logout
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            className="flex-1 justify-center gap-2"
+                            onClick={() => router.push('/dashboard/profile')}
+                        >
+                            <User className="h-4 w-4" />
+                            Profile
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            className="flex-1 justify-center gap-2 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            onClick={handleLogout}
+                        >
+                            <LogOut className="h-4 w-4" />
+                            Logout
+                        </Button>
+                    </div>
                 </div>
             </aside>
         </>
