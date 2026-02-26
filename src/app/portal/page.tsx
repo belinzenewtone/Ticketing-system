@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTickets, addTicket } from '@/services/tickets';
+import { getTickets, addTicket, updateTicket, deleteTicket } from '@/services/tickets';
 import { uploadTicketAttachment } from '@/services/storage';
 import { getITStaff } from '@/services/auth';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,12 @@ import {
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+    AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip } from 'lucide-react';
+import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -55,6 +59,7 @@ const statusConfig: Record<TicketStatus, { label: string; color: string; icon: R
 
 // ── Validation ───────────────────────────────────────────────
 const ticketSchema = z.object({
+    category: z.enum(['email', 'account-login', 'password-reset', 'hardware', 'software', 'network-vpn', 'other']),
     subject: z.string().min(3, 'Subject required'),
     description: z.string().optional(),
 });
@@ -67,6 +72,7 @@ export default function PortalPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
+    const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -93,9 +99,26 @@ export default function PortalPage() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
             toast.success('Ticket submitted successfully');
-            form.reset();
-            setAttachment(null);
-            setFormOpen(false);
+            handleOpenChange(false);
+        },
+        onError: (e: Error) => toast.error(e.message),
+    });
+
+    const updateMut = useMutation({
+        mutationFn: ({ id, data }: { id: string; data: Partial<TicketType> }) => updateTicket(id, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
+            toast.success('Ticket updated successfully');
+            handleOpenChange(false);
+        },
+        onError: (e: Error) => toast.error(e.message),
+    });
+
+    const deleteMut = useMutation({
+        mutationFn: deleteTicket,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
+            toast.success('Ticket deleted successfully');
         },
         onError: (e: Error) => toast.error(e.message),
     });
@@ -103,8 +126,27 @@ export default function PortalPage() {
     // Form
     const form = useForm<FormValues>({
         resolver: zodResolver(ticketSchema),
-        defaultValues: { subject: '', description: '' },
+        defaultValues: { category: 'email', subject: '', description: '' },
     });
+
+    const handleOpenChange = (open: boolean) => {
+        setFormOpen(open);
+        if (!open) {
+            setEditingTicketId(null);
+            setAttachment(null);
+            form.reset({ category: 'email', subject: '', description: '' });
+        }
+    };
+
+    const handleEdit = (ticket: TicketType) => {
+        setEditingTicketId(ticket.id);
+        form.reset({
+            category: ticket.category,
+            subject: ticket.subject,
+            description: ticket.description || '',
+        });
+        setFormOpen(true);
+    };
 
     const handleCheckSolutions = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -161,12 +203,17 @@ export default function PortalPage() {
             department: 'Employee Portal', // Simplified
             created_by: profile.id,
             attachment_url,
-            category: aiResult.category,
+            category: data.category,
             priority: aiResult.priority,
             subject: data.subject,
             description: data.description,
         };
-        createMut.mutate(fullData);
+
+        if (editingTicketId) {
+            updateMut.mutate({ id: editingTicketId, data: fullData });
+        } else {
+            createMut.mutate(fullData);
+        }
     };
 
     return (
@@ -255,11 +302,35 @@ export default function PortalPage() {
                                             </span>
                                         </div>
 
-                                        {ticket.resolution_notes && (
-                                            <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 -mr-2" onClick={() => setViewNotesTicket(ticket)}>
-                                                <MessageSquare className="h-4 w-4 mr-2" /> Notes
-                                            </Button>
-                                        )}
+                                        <div className="flex items-center gap-1">
+                                            {ticket.status !== 'closed' && ticket.status !== 'resolved' && (
+                                                <>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" onClick={() => handleEdit(ticket)} title="Edit">
+                                                        <Pencil className="h-4 w-4" />
+                                                    </Button>
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400" title="Delete"><Trash2 className="h-4 w-4" /></Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent className="z-[9999]">
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Delete Ticket #{ticket.number}?</AlertDialogTitle>
+                                                                <AlertDialogDescription>This action cannot be undone. Are you sure you want to delete this ticket?</AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteMut.mutate(ticket.id)}>Delete</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </>
+                                            )}
+                                            {ticket.resolution_notes && (
+                                                <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 ml-2" onClick={() => setViewNotesTicket(ticket)}>
+                                                    <MessageSquare className="h-4 w-4 mr-2" /> Notes
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="text-[10px] text-slate-400 font-medium bg-white/80 dark:bg-slate-900/80 px-2 py-1 rounded backdrop-blur border">
@@ -274,11 +345,11 @@ export default function PortalPage() {
             </div>
 
             {/* ===== REPORT ISSUE DIALOG ===== */}
-            <Dialog open={formOpen} onOpenChange={setFormOpen}>
-                <DialogContent className="sm:max-w-[500px]">
+            <Dialog open={formOpen} onOpenChange={handleOpenChange}>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Report an Issue</DialogTitle>
-                        <DialogDescription>Describe the problem. AI will auto-categorize and route your ticket.</DialogDescription>
+                        <DialogTitle>{editingTicketId ? 'Edit Ticket' : 'Report an Issue'}</DialogTitle>
+                        <DialogDescription>{editingTicketId ? 'Update your ticket details.' : 'Describe the problem. AI will auto-prioritize your ticket.'}</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
 
@@ -302,6 +373,18 @@ export default function PortalPage() {
                                 </p>
                             </div>
                         )}
+                        <div className="space-y-2">
+                            <Label>Category</Label>
+                            <Select onValueChange={(v) => form.setValue('category', v as TicketCategory)} value={form.watch('category')}>
+                                <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
+                                <SelectContent>
+                                    {Object.entries(categoryConfig).map(([k, v]) => (
+                                        <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {form.formState.errors.category && <p className="text-red-500 text-xs">{form.formState.errors.category.message}</p>}
+                        </div>
                         <div className="space-y-2">
                             <Label>Subject</Label>
                             <Input placeholder="Short summary of the issue" {...form.register('subject')} />
@@ -337,11 +420,11 @@ export default function PortalPage() {
                             </Button>
 
                             <div className="flex items-center gap-3 w-full sm:w-auto">
-                                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)} className="flex-1 sm:flex-none">Cancel</Button>
-                                <Button type="submit" disabled={createMut.isPending || isUploading || isAiAnalyzing} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 flex-1 sm:flex-none">
-                                    {(createMut.isPending || isUploading || isAiAnalyzing)
-                                        ? (isUploading ? 'Uploading file...' : isAiAnalyzing ? 'AI Analyzing...' : 'Submitting...')
-                                        : 'Submit Ticket'
+                                <Button type="button" variant="ghost" onClick={() => handleOpenChange(false)} className="flex-1 sm:flex-none">Cancel</Button>
+                                <Button type="submit" disabled={createMut.isPending || updateMut.isPending || isUploading || isAiAnalyzing} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 flex-1 sm:flex-none">
+                                    {(createMut.isPending || updateMut.isPending || isUploading || isAiAnalyzing)
+                                        ? (isUploading ? 'Uploading file...' : isAiAnalyzing ? 'AI Analyzing...' : 'Saving...')
+                                        : (editingTicketId ? 'Save Changes' : 'Submit Ticket')
                                     }
                                 </Button>
                             </div>
