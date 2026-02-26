@@ -46,7 +46,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
             <header className="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md">
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <Link href="/portal" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
                             <Ticket className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
@@ -56,7 +56,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                             </h1>
                             <p className="text-[10px] text-slate-500 uppercase tracking-widest">JTL Internal</p>
                         </div>
-                    </div>
+                    </Link>
 
                     <div className="flex items-center gap-4">
                         <div className="hidden sm:block text-right">

@@ -65,12 +65,12 @@ export function Sidebar() {
             >
                 {/* Header with close button inside */}
                 <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
-                    <div>
+                    <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
                         <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
                             Ticketing System
                         </h1>
                         <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
-                    </div>
+                    </Link>
                     <Button
                         variant="ghost"
                         size="icon"
