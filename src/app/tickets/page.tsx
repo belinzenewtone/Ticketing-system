@@ -24,7 +24,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -467,6 +467,23 @@ export default function TicketsPage() {
                             <Label>Description</Label>
                             <Textarea placeholder="Detailed description of the issue..." className="min-h-[80px]" {...form.register('description')} />
                         </div>
+
+                        {editingTicket?.attachment_url && (
+                            <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
+                                <Label className="text-muted-foreground flex items-center gap-2">
+                                    <Paperclip className="h-4 w-4" />
+                                    Attachment Provided
+                                </Label>
+                                <a
+                                    href={editingTicket.attachment_url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline underline-offset-4"
+                                >
+                                    View attached file
+                                </a>
+                            </div>
+                        )}
 
                         {/* Status + Assignee + Resolution Notes — only visible when editing */}
                         {editingTicket && (

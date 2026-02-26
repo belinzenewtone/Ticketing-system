@@ -108,6 +108,7 @@ export interface Ticket {
     resolution_notes: string;
     created_by: string | null;
     assigned_to: string | null;
+    attachment_url: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -120,4 +121,6 @@ export interface CreateTicketInput {
     priority: TicketPriority;
     subject: string;
     description?: string;
+    created_by?: string;
+    attachment_url?: string | null;
 }

@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Mail, CheckSquare, Monitor, FileBarChart, LogOut, Menu, X, Ticket } from 'lucide-react';
+import { Mail, CheckSquare, Monitor, FileBarChart, LogOut, Menu, X, Ticket, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut } from '@/services/auth';
@@ -16,6 +16,7 @@ const navItems = [
     { href: '/machines', label: 'Machines', icon: Monitor },
     { href: '/tickets', label: 'Ticketing', icon: Ticket },
     { href: '/reports', label: 'Reports', icon: FileBarChart },
+    { href: '/dashboard/profile', label: 'Profile', icon: User },
 ];
 
 export function Sidebar() {

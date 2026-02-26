@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket } from '@/services/tickets';
+import { uploadTicketAttachment } from '@/services/storage';
 import { getITStaff } from '@/services/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,16 +12,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import {
-    Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare } from 'lucide-react';
+import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -69,6 +67,8 @@ export default function PortalPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
+    const [attachment, setAttachment] = useState<File | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
     const queryClient = useQueryClient();
 
     // Fetch IT Staff mapping
@@ -88,6 +88,7 @@ export default function PortalPage() {
             queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
             toast.success('Ticket submitted successfully');
             form.reset();
+            setAttachment(null);
             setFormOpen(false);
         },
         onError: (e: Error) => toast.error(e.message),
@@ -99,13 +100,27 @@ export default function PortalPage() {
         defaultValues: { category: 'email', priority: 'medium', subject: '', description: '' },
     });
 
-    const handleSubmit = (data: FormValues) => {
+    const handleSubmit = async (data: FormValues) => {
         if (!profile) return toast.error('Profile not loaded');
+
+        let attachment_url = null;
+        if (attachment) {
+            setIsUploading(true);
+            try {
+                attachment_url = await uploadTicketAttachment(attachment);
+            } catch (error: any) {
+                setIsUploading(false);
+                return toast.error(`Attachment failed: ${error.message}`);
+            }
+            setIsUploading(false);
+        }
 
         const fullData: CreateTicketInput = {
             ticket_date: new Date().toISOString().split('T')[0],
             employee_name: profile.name,
             department: 'Employee Portal', // Simplified
+            created_by: profile.id,
+            attachment_url,
             ...data
         };
         createMut.mutate(fullData);
@@ -134,70 +149,85 @@ export default function PortalPage() {
                     </div>
                 </div>
 
-                <Card className="border shadow-sm overflow-hidden bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-                    <div className="overflow-x-auto">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-slate-50/50 dark:bg-slate-800/50">
-                                    <TableHead>Ticket #</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Subject</TableHead>
-                                    <TableHead>Category</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Handler</TableHead>
-                                    <TableHead className="text-right">Actions</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? Array.from({ length: 3 }).map((_, i) => (
-                                    <TableRow key={i}>
-                                        {Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
-                                    </TableRow>
-                                )) : tickets?.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-16">
-                                            <div className="flex flex-col items-center text-muted-foreground space-y-3">
-                                                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                                                    <Ticket className="h-6 w-6 opacity-50" />
-                                                </div>
-                                                <p>You haven't reported any issues yet.</p>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                ) : tickets?.map((ticket) => (
-                                    <TableRow key={ticket.id}>
-                                        <TableCell className="font-mono font-medium">#{ticket.number}</TableCell>
-                                        <TableCell className="text-muted-foreground whitespace-nowrap text-sm">{ticket.ticket_date}</TableCell>
-                                        <TableCell className="font-medium max-w-[200px] truncate" title={ticket.subject}>{ticket.subject}</TableCell>
-                                        <TableCell>
-                                            <span className="text-sm whitespace-nowrap flex items-center gap-1.5">
-                                                <span>{categoryConfig[ticket.category]?.icon}</span>
-                                                {categoryConfig[ticket.category]?.label}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={statusConfig[ticket.status]?.color}>
-                                                {statusConfig[ticket.status]?.label}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {isLoading ? (
+                        Array.from({ length: 6 }).map((_, i) => (
+                            <Card key={i} className="p-5 border shadow-sm">
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <Skeleton className="h-4 w-16" />
+                                        <Skeleton className="h-5 w-24 rounded-full" />
+                                    </div>
+                                    <Skeleton className="h-5 w-3/4" />
+                                    <Skeleton className="h-4 w-1/2" />
+                                    <div className="pt-4 border-t mt-4 flex justify-between">
+                                        <Skeleton className="h-4 w-20" />
+                                        <Skeleton className="h-8 w-24" />
+                                    </div>
+                                </div>
+                            </Card>
+                        ))
+                    ) : tickets?.length === 0 ? (
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-16 bg-white/50 dark:bg-slate-900/50 rounded-2xl border border-dashed">
+                            <div className="flex flex-col items-center text-muted-foreground space-y-3">
+                                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
+                                    <Ticket className="h-6 w-6 opacity-50" />
+                                </div>
+                                <p>You haven't reported any issues yet.</p>
+                                <Button variant="outline" onClick={() => setFormOpen(true)}>Report your first issue</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        tickets?.map((ticket) => (
+                            <Card key={ticket.id} className="group relative overflow-hidden border shadow-sm hover:shadow-md transition-all hover:border-emerald-200 dark:hover:border-emerald-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex flex-col h-full">
+                                {/* Top Color Bar indicating Priority */}
+                                <div className={`absolute top-0 left-0 right-0 h-1 ${ticket.priority === 'critical' ? 'bg-red-500' : ticket.priority === 'high' ? 'bg-orange-500' : ticket.priority === 'medium' ? 'bg-blue-500' : 'bg-slate-400'}`} />
+
+                                <div className="p-5 flex-1 flex flex-col">
+                                    <div className="flex justify-between items-start mb-3">
+                                        <span className="font-mono text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                            #{ticket.number}
+                                        </span>
+                                        <Badge variant="outline" className={`${statusConfig[ticket.status]?.color} border py-0.5`}>
+                                            {statusConfig[ticket.status]?.label}
+                                        </Badge>
+                                    </div>
+
+                                    <h4 className="font-semibold text-foreground text-lg mb-2 line-clamp-2" title={ticket.subject}>
+                                        {ticket.subject}
+                                    </h4>
+
+                                    <div className="flex items-center gap-2 mb-4 text-sm text-slate-600 dark:text-slate-400">
+                                        <span className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
+                                            <span>{categoryConfig[ticket.category]?.icon}</span>
+                                            {categoryConfig[ticket.category]?.label}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-medium">Assigned To</span>
+                                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
                                                 {ticket.assigned_to && staffMap[ticket.assigned_to] ? staffMap[ticket.assigned_to] : <span className="text-slate-400 italic font-normal">Unassigned</span>}
                                             </span>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            {ticket.resolution_notes && (
-                                                <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" onClick={() => setViewNotesTicket(ticket)}>
-                                                    <MessageSquare className="h-4 w-4 mr-2" /> View Notes
-                                                </Button>
-                                            )}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </Card>
+                                        </div>
+
+                                        {ticket.resolution_notes && (
+                                            <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 -mr-2" onClick={() => setViewNotesTicket(ticket)}>
+                                                <MessageSquare className="h-4 w-4 mr-2" /> Notes
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="text-[10px] text-slate-400 font-medium bg-white/80 dark:bg-slate-900/80 px-2 py-1 rounded backdrop-blur border">
+                                            {new Date(ticket.ticket_date).toLocaleDateString()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))
+                    )}
+                </div>
             </div>
 
             {/* ===== REPORT ISSUE DIALOG ===== */}
@@ -240,11 +270,23 @@ export default function PortalPage() {
                             <Label>Description</Label>
                             <Textarea placeholder="More details about what's going wrong..." className="min-h-[100px]" {...form.register('description')} />
                         </div>
+                        <div className="space-y-2">
+                            <Label>Attachment (Optional)</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    type="file"
+                                    onChange={(e) => setAttachment(e.target.files?.[0] || null)}
+                                    className="cursor-pointer file:text-emerald-600 file:bg-emerald-50 dark:file:bg-emerald-950/30 file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 file:font-medium text-sm"
+                                    accept="image/*,.pdf,.doc,.docx"
+                                />
+                            </div>
+                            <p className="text-xs text-slate-500">Attach screenshots or error logs if available.</p>
+                        </div>
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
                             <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={createMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20">
-                                {createMut.isPending ? 'Submitting...' : 'Submit Ticket'}
+                            <Button type="submit" disabled={createMut.isPending || isUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20">
+                                {createMut.isPending || isUploading ? (isUploading ? 'Uploading file...' : 'Submitting...') : 'Submit Ticket'}
                             </Button>
                         </div>
                     </form>

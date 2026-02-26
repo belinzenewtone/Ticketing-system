@@ -2,8 +2,9 @@
 
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
-import { LogOut, Ticket } from 'lucide-react';
+import { LogOut, Ticket, User } from 'lucide-react';
 import { signOut } from '@/services/auth';
+import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
 
@@ -43,6 +44,12 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                             <p className="text-xs text-slate-500">{profile?.email}</p>
                         </div>
                         <ThemeToggle />
+                        <Link href="/portal/profile">
+                            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-emerald-600 dark:hover:bg-emerald-950/30">
+                                <User className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Profile</span>
+                            </Button>
+                        </Link>
                         <Button
                             variant="ghost"
                             size="sm"

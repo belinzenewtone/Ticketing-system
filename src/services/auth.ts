@@ -49,3 +49,20 @@ export async function getITStaff(): Promise<Profile[]> {
     if (error) throw error;
     return data || [];
 }
+
+export async function updateUserName(name: string): Promise<void> {
+    const user = await getCurrentUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ name })
+        .eq('id', user.id);
+
+    if (error) throw error;
+}
+
+export async function updateUserPassword(password: string): Promise<void> {
+    const { error } = await supabase.auth.updateUser({ password });
+    if (error) throw error;
+}
