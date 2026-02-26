@@ -71,9 +71,13 @@ export default function ProfilePage() {
             setPasswordLoading(false);
         }
     };
-
-    if (!profile) return null;
-
+    if (!profile) {
+        return (
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+            </div>
+        );
+    }
     return (
         <div className="space-y-6 max-w-4xl mx-auto">
             <div>

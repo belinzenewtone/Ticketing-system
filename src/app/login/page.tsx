@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { signIn, getCurrentProfile, signOut } from '@/services/auth';
 import { Loader2, Lock, Users, ShieldAlert } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 export default function LoginPage() {
     const [loginType, setLoginType] = useState<'employee' | 'staff'>('employee');
@@ -16,6 +17,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
+    const { setProfile } = useAppStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -40,6 +42,10 @@ export default function LoginPage() {
             if (loginType === 'staff' && profile?.role === 'USER') {
                 await signOut().catch(() => { });
                 throw new Error('Access denied. Please use Employee login.');
+            }
+
+            if (profile) {
+                setProfile(profile);
             }
 
             // Route based on role

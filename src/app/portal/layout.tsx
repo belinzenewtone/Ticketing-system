@@ -1,9 +1,10 @@
 'use client';
 
+import { useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { LogOut, Ticket, User } from 'lucide-react';
-import { signOut } from '@/services/auth';
+import { signOut, getCurrentProfile } from '@/services/auth';
 import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import { useRouter } from 'next/navigation';
@@ -11,6 +12,25 @@ import { useRouter } from 'next/navigation';
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
     const { profile, setProfile } = useAppStore();
     const router = useRouter();
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            if (!profile) {
+                try {
+                    const currentProfile = await getCurrentProfile();
+                    if (currentProfile) {
+                        setProfile(currentProfile);
+                    } else {
+                        router.push('/login');
+                    }
+                } catch (error) {
+                    console.error('Failed to load profile', error);
+                    router.push('/login');
+                }
+            }
+        };
+        loadProfile();
+    }, [profile, setProfile, router]);
 
     const handleLogout = async () => {
         try {
@@ -44,12 +64,15 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                             <p className="text-xs text-slate-500">{profile?.email}</p>
                         </div>
                         <ThemeToggle />
-                        <Link href="/portal/profile">
-                            <Button variant="ghost" size="sm" className="text-slate-500 hover:text-emerald-600 dark:hover:bg-emerald-950/30">
-                                <User className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Profile</span>
-                            </Button>
-                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-slate-500 hover:text-emerald-600 dark:hover:bg-emerald-950/30"
+                            onClick={() => router.push('/portal/profile')}
+                        >
+                            <User className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Profile</span>
+                        </Button>
                         <Button
                             variant="ghost"
                             size="sm"
