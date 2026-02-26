@@ -20,23 +20,19 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+
+        if (!email.toLowerCase().endsWith('@jtl.co.ke')) {
+            setError('Access Denied. Only @jtl.co.ke email addresses are allowed.');
+            return;
+        }
+
         setLoading(true);
 
         try {
             await signIn(email, password);
             const profile = await getCurrentProfile();
 
-            // Validate that the selected login type matches their actual role
-            if (loginType === 'employee' && profile?.role !== 'USER') {
-                await signOut();
-                throw new Error('Please select IT Staff login for admin accounts.');
-            }
-            if (loginType === 'staff' && profile?.role === 'USER') {
-                await signOut();
-                throw new Error('Access denied. Please use Employee login.');
-            }
-
-            // Route based on role
+            // Route based on actual role regardless of which tab they clicked
             if (profile?.role === 'USER') {
                 router.push('/portal');
             } else {
@@ -46,6 +42,8 @@ export default function LoginPage() {
         } catch (err: unknown) {
             const message = err instanceof Error ? err.message : 'Invalid credentials';
             setError(message);
+            // Sign out if login fails to parse profile or route properly
+            await signOut().catch(() => { });
         } finally {
             setLoading(false);
         }
@@ -107,7 +105,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder={loginType === 'staff' ? "admin@jtl.co.ke" : "employee@jtl.co.ke"}
+                                placeholder={loginType === 'staff' ? "admin@jtl.co.ke" : "user@jtl.co.ke"}
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
