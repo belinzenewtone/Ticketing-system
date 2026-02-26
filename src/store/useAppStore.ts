@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Profile, ImportanceLevel, MachineReason, MachineStatus } from '@/types/database';
+import type { Profile, ImportanceLevel, MachineReason, MachineStatus, TicketCategory, TicketPriority, TicketStatus } from '@/types/database';
 
 interface AppState {
     profile: Profile | null;
@@ -32,6 +32,18 @@ interface AppState {
     setMachineReason: (r: MachineReason | 'all') => void;
     setMachineStatus: (s: MachineStatus | 'all') => void;
     setMachineSearch: (s: string) => void;
+
+    // Ticket filters
+    ticketCategory: TicketCategory | 'all';
+    ticketPriority: TicketPriority | 'all';
+    ticketStatus: TicketStatus | 'all';
+    ticketSearch: string;
+    ticketDateRange: 'today' | 'week' | 'month' | 'year' | undefined;
+    setTicketCategory: (c: TicketCategory | 'all') => void;
+    setTicketPriority: (p: TicketPriority | 'all') => void;
+    setTicketStatus: (s: TicketStatus | 'all') => void;
+    setTicketSearch: (s: string) => void;
+    setTicketDateRange: (r: 'today' | 'week' | 'month' | 'year' | undefined) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -62,4 +74,15 @@ export const useAppStore = create<AppState>((set) => ({
     setMachineReason: (machineReason) => set({ machineReason }),
     setMachineStatus: (machineStatus) => set({ machineStatus }),
     setMachineSearch: (machineSearch) => set({ machineSearch }),
+
+    ticketCategory: 'all',
+    ticketPriority: 'all',
+    ticketStatus: 'all',
+    ticketSearch: '',
+    ticketDateRange: undefined,
+    setTicketCategory: (ticketCategory) => set({ ticketCategory }),
+    setTicketPriority: (ticketPriority) => set({ ticketPriority }),
+    setTicketStatus: (ticketStatus) => set({ ticketStatus }),
+    setTicketSearch: (ticketSearch) => set({ ticketSearch }),
+    setTicketDateRange: (ticketDateRange) => set({ ticketDateRange }),
 }));

@@ -88,3 +88,35 @@ export interface CreateMachineInput {
     importance: ImportanceLevel;
     notes?: string;
 }
+
+// Tickets
+export type TicketCategory = 'email' | 'account-login' | 'password-reset' | 'hardware' | 'software' | 'network-vpn' | 'other';
+export type TicketPriority = 'critical' | 'high' | 'medium' | 'low';
+export type TicketStatus = 'open' | 'in-progress' | 'resolved' | 'closed';
+
+export interface Ticket {
+    id: string;
+    number: number;
+    ticket_date: string;
+    employee_name: string;
+    department: string;
+    category: TicketCategory;
+    priority: TicketPriority;
+    status: TicketStatus;
+    subject: string;
+    description: string;
+    resolution_notes: string;
+    created_by: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateTicketInput {
+    ticket_date: string;
+    employee_name: string;
+    department?: string;
+    category: TicketCategory;
+    priority: TicketPriority;
+    subject: string;
+    description?: string;
+}
