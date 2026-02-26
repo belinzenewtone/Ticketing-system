@@ -32,7 +32,17 @@ export default function LoginPage() {
             await signIn(email, password);
             const profile = await getCurrentProfile();
 
-            // Route based on actual role regardless of which tab they clicked
+            // Validate that the selected login type matches their actual role
+            if (loginType === 'employee' && profile?.role !== 'USER') {
+                await signOut().catch(() => { });
+                throw new Error('Please select IT Staff login for admin accounts.');
+            }
+            if (loginType === 'staff' && profile?.role === 'USER') {
+                await signOut().catch(() => { });
+                throw new Error('Access denied. Please use Employee login.');
+            }
+
+            // Route based on role
             if (profile?.role === 'USER') {
                 router.push('/portal');
             } else {
