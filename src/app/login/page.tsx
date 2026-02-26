@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { signIn, getCurrentProfile } from '@/services/auth';
+import { signIn, getCurrentProfile, signOut } from '@/services/auth';
 import { Loader2, Lock, Users, ShieldAlert } from 'lucide-react';
 
 export default function LoginPage() {
@@ -25,6 +25,16 @@ export default function LoginPage() {
         try {
             await signIn(email, password);
             const profile = await getCurrentProfile();
+
+            // Validate that the selected login type matches their actual role
+            if (loginType === 'employee' && profile?.role !== 'USER') {
+                await signOut();
+                throw new Error('Please select IT Staff login for admin accounts.');
+            }
+            if (loginType === 'staff' && profile?.role === 'USER') {
+                await signOut();
+                throw new Error('Access denied. Please use Employee login.');
+            }
 
             // Route based on role
             if (profile?.role === 'USER') {
@@ -67,8 +77,8 @@ export default function LoginPage() {
                             type="button"
                             onClick={() => setLoginType('employee')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'employee'
-                                    ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                         >
                             <Users className="h-4 w-4" /> Employee
@@ -77,8 +87,8 @@ export default function LoginPage() {
                             type="button"
                             onClick={() => setLoginType('staff')}
                             className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'staff'
-                                    ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
-                                    : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
+                                ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
+                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
                                 }`}
                         >
                             <ShieldAlert className="h-4 w-4" /> IT Staff
