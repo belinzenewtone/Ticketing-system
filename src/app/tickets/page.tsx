@@ -24,13 +24,14 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType } from '@/types/database';
+import { generateTicketSummary } from '@/services/ai';
 
 // ── Config maps ──────────────────────────────────────────────
 const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = {
@@ -76,6 +77,10 @@ export default function TicketsPage() {
     const [view, setView] = useState<'dashboard' | 'list'>('list');
     const { ticketCategory, ticketPriority, ticketStatus, ticketSearch, ticketDateRange, setTicketCategory, setTicketPriority, setTicketStatus, setTicketSearch, setTicketDateRange } = useAppStore();
     const queryClient = useQueryClient();
+
+    // AI Summary State
+    const [isSummarizing, setIsSummarizing] = useState(false);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
 
     // Queries
     const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
@@ -150,7 +155,21 @@ export default function TicketsPage() {
         setEditStatus(ticket.status);
         setEditResolution(ticket.resolution_notes || '');
         setEditAssignee(ticket.assigned_to || 'unassigned');
+        setAiSummary(null); // Reset summary
         setFormOpen(true);
+    };
+
+    const handleGenerateSummary = async () => {
+        if (!editingTicket?.description) return;
+        setIsSummarizing(true);
+        try {
+            const sum = await generateTicketSummary(editingTicket.description, editResolution);
+            setAiSummary(sum);
+        } catch (error) {
+            toast.error('Failed to generate summary');
+        } finally {
+            setIsSummarizing(false);
+        }
     };
 
     const handleSubmit = (data: CreateTicketInput) => {
@@ -171,7 +190,14 @@ export default function TicketsPage() {
         }
     };
 
-    useEffect(() => { if (!formOpen) { setEditingTicket(null); setEditResolution(''); setEditAssignee('unassigned'); } }, [formOpen]);
+    useEffect(() => {
+        if (!formOpen) {
+            setEditingTicket(null);
+            setEditResolution('');
+            setEditAssignee('unassigned');
+            setAiSummary(null);
+        }
+    }, [formOpen]);
 
     // Stats cards
     const statCards = [
@@ -464,7 +490,30 @@ export default function TicketsPage() {
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label>Description</Label>
+                            <div className="flex justify-between items-center">
+                                <Label>Description</Label>
+                                {editingTicket && editingTicket.description && editingTicket.description.length > 50 && (
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-6 px-2 text-xs text-emerald-600 hover:text-emerald-700 bg-emerald-50 max-w-fit"
+                                        onClick={handleGenerateSummary}
+                                        disabled={isSummarizing}
+                                    >
+                                        {isSummarizing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
+                                        AI Summary
+                                    </Button>
+                                )}
+                            </div>
+
+                            {aiSummary && (
+                                <div className="text-sm p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-md mb-2 flex gap-2">
+                                    <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
+                                    <span>{aiSummary}</span>
+                                </div>
+                            )}
+
                             <Textarea placeholder="Detailed description of the issue..." className="min-h-[80px]" {...form.register('description')} />
                         </div>
 

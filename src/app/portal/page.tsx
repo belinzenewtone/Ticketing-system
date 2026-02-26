@@ -25,6 +25,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType } from '@/types/database';
+import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
+import { Bot, Sparkles } from 'lucide-react';
 
 // ── Config maps ──────────────────────────────────────────────
 const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = {
@@ -53,8 +55,6 @@ const statusConfig: Record<TicketStatus, { label: string; color: string; icon: R
 
 // ── Validation ───────────────────────────────────────────────
 const ticketSchema = z.object({
-    category: z.enum(['email', 'account-login', 'password-reset', 'hardware', 'software', 'network-vpn', 'other']),
-    priority: z.enum(['critical', 'high', 'medium', 'low']),
     subject: z.string().min(3, 'Subject required'),
     description: z.string().optional(),
 });
@@ -69,6 +69,12 @@ export default function PortalPage() {
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // AI State
+    const [deflections, setDeflections] = useState<DeflectionSuggestion[]>([]);
+    const [isCheckingDeflection, setIsCheckingDeflection] = useState(false);
+    const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+
     const queryClient = useQueryClient();
 
     // Fetch IT Staff mapping
@@ -97,11 +103,45 @@ export default function PortalPage() {
     // Form
     const form = useForm<FormValues>({
         resolver: zodResolver(ticketSchema),
-        defaultValues: { category: 'email', priority: 'medium', subject: '', description: '' },
+        defaultValues: { subject: '', description: '' },
     });
+
+    const handleCheckSolutions = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        const subject = form.getValues('subject');
+        const description = form.getValues('description');
+        if (!subject && !description) {
+            toast.error('Please enter a subject or description first.');
+            return;
+        }
+
+        setIsCheckingDeflection(true);
+        try {
+            const suggestions = await generateDeflectionSuggestions(subject, description || '');
+            setDeflections(suggestions);
+            if (suggestions.length === 0) {
+                toast.info('No immediate solutions found. Please submit your ticket.');
+            }
+        } catch (error) {
+            toast.error('AI analysis failed.');
+        } finally {
+            setIsCheckingDeflection(false);
+        }
+    };
 
     const handleSubmit = async (data: FormValues) => {
         if (!profile) return toast.error('Profile not loaded');
+
+        // AI Auto-Categorization
+        setIsAiAnalyzing(true);
+        let aiResult;
+        try {
+            aiResult = await categorizeAndPrioritizeTicket(data.subject, data.description || '');
+        } catch (error) {
+            toast.error('AI analysis failed, falling back to defaults.');
+            aiResult = { category: 'other' as TicketCategory, priority: 'medium' as TicketPriority };
+        }
+        setIsAiAnalyzing(false);
 
         let attachment_url = null;
         if (attachment) {
@@ -121,7 +161,10 @@ export default function PortalPage() {
             department: 'Employee Portal', // Simplified
             created_by: profile.id,
             attachment_url,
-            ...data
+            category: aiResult.category,
+            priority: aiResult.priority,
+            subject: data.subject,
+            description: data.description,
         };
         createMut.mutate(fullData);
     };
@@ -235,32 +278,30 @@ export default function PortalPage() {
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
                         <DialogTitle>Report an Issue</DialogTitle>
-                        <DialogDescription>Describe the problem you are experiencing. IT will investigate and resolve it.</DialogDescription>
+                        <DialogDescription>Describe the problem. AI will auto-categorize and route your ticket.</DialogDescription>
                     </DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Category</Label>
-                            <Select onValueChange={(v) => form.setValue('category', v as TicketCategory)} defaultValue={form.getValues('category')}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    {Object.entries(categoryConfig).map(([k, v]) => (
-                                        <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
+
+                        {/* AI Deflection Suggestions Panel */}
+                        {deflections.length > 0 && (
+                            <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50 rounded-lg p-4 mb-4">
+                                <h4 className="flex items-center text-sm font-semibold text-emerald-800 dark:text-emerald-400 mb-2">
+                                    <Sparkles className="w-4 h-4 mr-2" />
+                                    Suggested Solutions
+                                </h4>
+                                <div className="space-y-3">
+                                    {deflections.map((def, idx) => (
+                                        <div key={idx} className="bg-white dark:bg-slate-900 p-3 rounded shadow-sm text-sm">
+                                            <p className="font-medium text-slate-800 dark:text-slate-200">{def.title}</p>
+                                            <p className="text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">{def.description}</p>
+                                        </div>
                                     ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Urgency</Label>
-                            <Select onValueChange={(v) => form.setValue('priority', v as TicketPriority)} defaultValue={form.getValues('priority')}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="critical">🔴 Critical (Blocks entirely)</SelectItem>
-                                    <SelectItem value="high">🟠 High (Major inconvenience)</SelectItem>
-                                    <SelectItem value="medium">🔵 Medium (Normal issue)</SelectItem>
-                                    <SelectItem value="low">⚪ Low (Minor request)</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                </div>
+                                <p className="text-xs text-emerald-600 dark:text-emerald-500 mt-3 italic">
+                                    Still need help? Submit your ticket below.
+                                </p>
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label>Subject</Label>
                             <Input placeholder="Short summary of the issue" {...form.register('subject')} />
@@ -283,11 +324,27 @@ export default function PortalPage() {
                             <p className="text-xs text-slate-500">Attach screenshots or error logs if available.</p>
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-4 border-t border-border mt-6">
-                            <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={createMut.isPending || isUploading} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20">
-                                {createMut.isPending || isUploading ? (isUploading ? 'Uploading file...' : 'Submitting...') : 'Submit Ticket'}
+                        <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-border mt-6">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleCheckSolutions}
+                                disabled={isCheckingDeflection}
+                                className="w-full sm:w-auto text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                            >
+                                {isCheckingDeflection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bot className="w-4 h-4 mr-2" />}
+                                Check for Solutions
                             </Button>
+
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                                <Button type="button" variant="ghost" onClick={() => setFormOpen(false)} className="flex-1 sm:flex-none">Cancel</Button>
+                                <Button type="submit" disabled={createMut.isPending || isUploading || isAiAnalyzing} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 flex-1 sm:flex-none">
+                                    {(createMut.isPending || isUploading || isAiAnalyzing)
+                                        ? (isUploading ? 'Uploading file...' : isAiAnalyzing ? 'AI Analyzing...' : 'Submitting...')
+                                        : 'Submit Ticket'
+                                    }
+                                </Button>
+                            </div>
                         </div>
                     </form>
                 </DialogContent>
