@@ -22,7 +22,12 @@ function serializeEntry(e: any): Entry {
     };
 }
 
-export async function getEntries(filters?: { search?: string; created_by?: string }): Promise<Entry[]> {
+export async function getEntries(filters?: {
+    search?: string;
+    created_by?: string;
+    completed?: boolean;
+    dateRange?: 'today' | 'week' | 'month' | 'year';
+}): Promise<Entry[]> {
     let sql = 'SELECT * FROM entries WHERE 1=1';
     const params: any[] = [];
 
@@ -31,10 +36,34 @@ export async function getEntries(filters?: { search?: string; created_by?: strin
         params.push(filters.created_by);
     }
 
+    if (filters?.completed !== undefined) {
+        sql += ' AND completed = ?';
+        params.push(filters.completed ? 1 : 0);
+    }
+
     if (filters?.search) {
         sql += ' AND (employee_name LIKE ? OR work_email LIKE ? OR alt_email LIKE ?)';
         const s = `%${filters.search}%`;
         params.push(s, s, s);
+    }
+
+    if (filters?.dateRange) {
+        const now = new Date();
+        let from: string;
+        if (filters.dateRange === 'today') {
+            from = now.toISOString().split('T')[0];
+        } else if (filters.dateRange === 'week') {
+            const d = new Date(now); d.setDate(d.getDate() - 7);
+            from = d.toISOString().split('T')[0];
+        } else if (filters.dateRange === 'month') {
+            const d = new Date(now); d.setMonth(d.getMonth() - 1);
+            from = d.toISOString().split('T')[0];
+        } else {
+            const d = new Date(now); d.setFullYear(d.getFullYear() - 1);
+            from = d.toISOString().split('T')[0];
+        }
+        sql += ' AND entry_date >= ?';
+        params.push(from);
     }
 
     sql += ' ORDER BY number DESC';
@@ -108,7 +137,7 @@ export async function getEntryStats(filters?: { created_by?: string }) {
     const rows = await query<any>(sql, ...params);
     return {
         total: rows.length,
-        completed: rows.filter(r => r.completed === 1).length,
+        sorted: rows.filter(r => r.completed === 1).length,
         pending: rows.filter(r => r.completed === 0).length,
     };
 }

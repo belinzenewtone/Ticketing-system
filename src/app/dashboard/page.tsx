@@ -58,7 +58,7 @@ export default function DashboardPage() {
 
     const { data: stats, isLoading: statsLoading } = useQuery({
         queryKey: ['entry-stats'],
-        queryFn: getEntryStats,
+        queryFn: () => getEntryStats(),
     });
 
     const { data: entries, isLoading } = useQuery({
