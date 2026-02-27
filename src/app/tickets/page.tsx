@@ -161,13 +161,15 @@ export default function TicketsPage() {
         }
     }, [formOpen, dialogTab, editingTicket, ticketComments, markTicketAsRead]);
 
-    // Scroll to bottom when comments tab is loaded
+    // Scroll to bottom when comments tab is loaded or updated
     const messagesEndRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (dialogTab === 'comments' && ticketComments && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
         }
-    }, [dialogTab, ticketComments]);
+    }, [dialogTab, ticketComments?.length]);
 
     // ── Mutations ────────────────────────────────────────────
     const invalidate = () => {

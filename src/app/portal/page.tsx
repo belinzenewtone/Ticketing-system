@@ -167,12 +167,15 @@ export default function PortalPage() {
         }
     }, [viewCommentsTicket, viewComments, markTicketAsRead]);
 
-    // Scroll to bottom when comments loaded
+    // Scroll to bottom when comments loaded or updated
     useEffect(() => {
         if (viewComments && viewCommentsTicket && messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            // Use timeout to allow DOM to paint the new items first
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
         }
-    }, [viewComments, viewCommentsTicket]);
+    }, [viewComments?.length, viewCommentsTicket]);
 
     const handleOpenChange = (open: boolean) => {
         setFormOpen(open);
