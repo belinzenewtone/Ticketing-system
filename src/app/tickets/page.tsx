@@ -154,6 +154,13 @@ export default function TicketsPage() {
         enabled: !!editingTicket?.id && formOpen,
     });
 
+    // Clear unread indicator ONLY when the user explicitly views the comments tab
+    useEffect(() => {
+        if (formOpen && dialogTab === 'comments' && editingTicket && ticketComments) {
+            markTicketAsRead(editingTicket.id, ticketComments.length);
+        }
+    }, [formOpen, dialogTab, editingTicket, ticketComments, markTicketAsRead]);
+
     // ── Mutations ────────────────────────────────────────────
     const invalidate = () => {
         queryClient.invalidateQueries({ queryKey: ['tickets'] });
@@ -728,7 +735,13 @@ export default function TicketsPage() {
             )}
 
             {/* ===== CREATE / EDIT DIALOG ===== */}
-            <Dialog open={formOpen} onOpenChange={setFormOpen}>
+            <Dialog open={formOpen} onOpenChange={(open) => {
+                setFormOpen(open);
+                if (!open) {
+                    setEditingTicket(null);
+                    setDialogTab('details');
+                }
+            }}>
                 <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pr-6">

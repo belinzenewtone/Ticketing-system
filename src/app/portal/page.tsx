@@ -25,7 +25,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { Plus, Search, Ticket, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -68,6 +68,7 @@ type FormValues = z.infer<typeof ticketSchema>;
 // ── Page ─────────────────────────────────────────────────────
 export default function PortalPage() {
     const { profile } = useAppStore();
+    const { readCounts, markTicketAsRead } = useUnreadComments();
     const [formOpen, setFormOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
@@ -157,6 +158,13 @@ export default function PortalPage() {
         queryFn: () => getComments(viewCommentsTicket!.id, false),
         enabled: !!viewCommentsTicket?.id,
     });
+
+    // Clear unread indicator ONLY when the user explicitly views the comments dialog
+    useEffect(() => {
+        if (viewCommentsTicket && viewComments) {
+            markTicketAsRead(viewCommentsTicket.id, viewComments.length);
+        }
+    }, [viewCommentsTicket, viewComments, markTicketAsRead]);
 
     const handleOpenChange = (open: boolean) => {
         setFormOpen(open);
