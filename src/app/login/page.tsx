@@ -7,11 +7,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { signIn, getCurrentProfile, signOut } from '@/services/auth';
-import { Loader2, Lock, Users, ShieldAlert } from 'lucide-react';
+import { Loader2, Lock } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function LoginPage() {
-    const [loginType, setLoginType] = useState<'employee' | 'staff'>('employee');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -34,16 +33,6 @@ export default function LoginPage() {
             await signIn(email, password);
             const profile = await getCurrentProfile();
 
-            // Validate that the selected login type matches their actual role
-            if (loginType === 'employee' && profile?.role !== 'USER') {
-                await signOut().catch(() => { });
-                throw new Error('Please select IT Staff login for admin accounts.');
-            }
-            if (loginType === 'staff' && profile?.role === 'USER') {
-                await signOut().catch(() => { });
-                throw new Error('Access denied. Please use Employee login.');
-            }
-
             if (profile) {
                 setProfile(profile);
             }
@@ -56,8 +45,8 @@ export default function LoginPage() {
             }
             router.refresh();
         } catch (err: unknown) {
-            const message = err instanceof Error ? err.message : 'Invalid credentials';
-            setError(message);
+            // Secure error reporting (hide specifics from user)
+            setError('Invalid email or password.');
             // Sign out if login fails to parse profile or route properly
             await signOut().catch(() => { });
         } finally {
@@ -85,30 +74,6 @@ export default function LoginPage() {
                 </CardHeader>
 
                 <CardContent>
-                    {/* Login Type Toggle */}
-                    <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mb-6">
-                        <button
-                            type="button"
-                            onClick={() => setLoginType('employee')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'employee'
-                                ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
-                        >
-                            <Users className="h-4 w-4" /> Employee
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setLoginType('staff')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${loginType === 'staff'
-                                ? 'bg-white dark:bg-slate-950 text-emerald-600 shadow-sm'
-                                : 'text-slate-500 hover:text-slate-700 dark:hover:text-slate-300'
-                                }`}
-                        >
-                            <ShieldAlert className="h-4 w-4" /> IT Staff
-                        </button>
-                    </div>
-
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
                             <div className="bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 rounded-lg p-3 text-sm animate-in fade-in">
@@ -121,7 +86,7 @@ export default function LoginPage() {
                             <Input
                                 id="email"
                                 type="email"
-                                placeholder={loginType === 'staff' ? "admin@jtl.co.ke" : "user@jtl.co.ke"}
+                                placeholder="email@jtl.co.ke"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -153,7 +118,7 @@ export default function LoginPage() {
                                     Signing in...
                                 </>
                             ) : (
-                                loginType === 'staff' ? 'Staff Sign In' : 'Employee Sign In'
+                                'Sign In'
                             )}
                         </Button>
                     </form>
