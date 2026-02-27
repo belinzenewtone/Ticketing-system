@@ -3,9 +3,10 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { UserRole } from "@prisma/client";
+import { authConfig } from "./auth.config";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+    ...authConfig,
     adapter: PrismaAdapter(prisma),
     session: { strategy: "jwt" },
     providers: [
@@ -41,31 +42,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     id: user.id,
                     email: user.email,
                     name: user.name,
-                    role: user.role, // Attach custom role to the session
+                    role: user.role,
                 };
             },
         }),
     ],
-    callbacks: {
-        async jwt({ token, user, trigger, session }) {
-            if (user) {
-                token.role = user.role;
-                token.id = user.id;
-            }
-            if (trigger === "update" && session?.name) {
-                token.name = session.name;
-            }
-            return token;
-        },
-        async session({ session, token }) {
-            if (session.user) {
-                session.user.role = token.role as UserRole;
-                session.user.id = token.id as string;
-            }
-            return session;
-        },
-    },
-    pages: {
-        signIn: "/login",
-    },
 });
+
