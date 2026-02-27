@@ -61,7 +61,7 @@ export async function addMachineRequest(input: CreateMachineInput): Promise<Mach
         input.work_email,
         toEnum(input.reason),
         input.importance,
-        toEnum(input.status || 'pending'),
+        toEnum('pending'),
         input.notes ?? null,
         session?.user?.id ?? null,
         now,
@@ -79,4 +79,32 @@ export async function updateMachineStatus(id: string, status: MachineStatus): Pr
 
 export async function deleteMachineRequest(id: string): Promise<void> {
     await execute('DELETE FROM machine_requests WHERE id = ?', id);
+}
+
+export async function getMachineStats() {
+    const rows = await query<any>('SELECT status FROM machine_requests');
+    return {
+        total: rows.length,
+        pending: rows.filter(r => r.status === 'pending').length,
+        approved: rows.filter(r => r.status === 'approved').length,
+        fulfilled: rows.filter(r => r.status === 'fulfilled').length,
+        rejected: rows.filter(r => r.status === 'rejected').length,
+    };
+}
+
+export const getMachines = getMachineRequests;
+export const addMachine = addMachineRequest;
+export const deleteMachine = deleteMachineRequest;
+
+export async function updateMachine(id: string, data: Partial<{ status: MachineStatus; notes: string }>): Promise<void> {
+    const fields: string[] = [];
+    const params: any[] = [];
+    if (data.status !== undefined) { fields.push('status = ?'); params.push(toEnum(data.status)); }
+    if (data.notes !== undefined) { fields.push('notes = ?'); params.push(data.notes); }
+    if (fields.length > 0) {
+        fields.push('updated_at = ?');
+        params.push(new Date().toISOString());
+        params.push(id);
+        await execute(`UPDATE machine_requests SET ${fields.join(', ')} WHERE id = ?`, ...params);
+    }
 }

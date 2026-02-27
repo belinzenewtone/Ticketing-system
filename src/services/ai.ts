@@ -29,3 +29,31 @@ export async function summarizeTicket(ticketId: string) {
 
     return { summary: `Summary of ticket ${ticket.number}: ${ticket.subject}. Assigned to ${ticket.assigned_to || 'unassigned'}.` };
 }
+
+export async function generateTicketSummary(ticketId: string) {
+    return summarizeTicket(ticketId);
+}
+
+export async function generateDeflectionSuggestions(subject: string, _description: string) {
+    const articles = await query<any>(
+        'SELECT id, title, category FROM kb_articles WHERE title LIKE ? OR content LIKE ? LIMIT 3',
+        `%${subject}%`, `%${subject}%`
+    );
+    return { suggestions: articles };
+}
+
+export async function categorizeAndPrioritizeTicket(subject: string, description: string) {
+    const s = subject.toLowerCase();
+    const d = description.toLowerCase();
+
+    let category = 'other';
+    if (s.includes('email') || d.includes('email')) category = 'email';
+    else if (s.includes('password') || d.includes('password')) category = 'password-reset';
+    else if (s.includes('login') || d.includes('login')) category = 'account-login';
+    else if (s.includes('hardware') || d.includes('hardware')) category = 'hardware';
+    else if (s.includes('software') || d.includes('software')) category = 'software';
+    else if (s.includes('network') || d.includes('vpn')) category = 'network-vpn';
+
+    const priority = (s.includes('urgent') || d.includes('urgent')) ? 'high' : 'medium';
+    return { category, priority };
+}

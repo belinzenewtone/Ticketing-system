@@ -16,7 +16,9 @@ function serializeKb(k: any): KbArticle {
     };
 }
 
-export async function getKbArticles(category?: TicketCategory, search?: string): Promise<KbArticle[]> {
+export async function getKbArticles(opts?: { category?: TicketCategory; search?: string }): Promise<KbArticle[]> {
+    const category = opts?.category;
+    const search = opts?.search;
     let sql = 'SELECT * FROM kb_articles WHERE 1=1';
     const params: any[] = [];
 

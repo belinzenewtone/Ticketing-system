@@ -17,7 +17,7 @@ function serializeTask(t: any): Task {
     };
 }
 
-export async function getTasks(filters?: { created_by?: string }): Promise<Task[]> {
+export async function getTasks(filters?: { created_by?: string; completed?: boolean; importance?: string; search?: string }): Promise<Task[]> {
     let sql = 'SELECT * FROM tasks WHERE 1=1';
     const params: any[] = [];
 
@@ -25,10 +25,35 @@ export async function getTasks(filters?: { created_by?: string }): Promise<Task[
         sql += ' AND created_by = ?';
         params.push(filters.created_by);
     }
+    if (filters?.completed !== undefined) {
+        sql += ' AND completed = ?';
+        params.push(filters.completed ? 1 : 0);
+    }
+    if (filters?.importance) {
+        sql += ' AND importance = ?';
+        params.push(filters.importance);
+    }
+    if (filters?.search) {
+        sql += ' AND text LIKE ?';
+        params.push(`%${filters.search}%`);
+    }
 
     sql += ' ORDER BY created_at DESC';
     const rows = await query<any>(sql, ...params);
     return rows.map(serializeTask);
+}
+
+export async function getTaskStats(filters?: { created_by?: string }) {
+    let sql = 'SELECT completed, importance FROM tasks WHERE 1=1';
+    const params: any[] = [];
+    if (filters?.created_by) { sql += ' AND created_by = ?'; params.push(filters.created_by); }
+    const rows = await query<any>(sql, ...params);
+    return {
+        total: rows.length,
+        completed: rows.filter((r: any) => r.completed === 1).length,
+        pending: rows.filter((r: any) => r.completed === 0).length,
+        urgent: rows.filter((r: any) => r.importance === 'urgent' && r.completed === 0).length,
+    };
 }
 
 export async function addTask(input: CreateTaskInput): Promise<Task> {
@@ -43,7 +68,7 @@ export async function addTask(input: CreateTaskInput): Promise<Task> {
         input.date ?? null,
         input.text,
         input.importance,
-        input.completed ? 1 : 0,
+        0,
         session?.user?.id ?? null,
         now,
         now
@@ -54,7 +79,7 @@ export async function addTask(input: CreateTaskInput): Promise<Task> {
         date: input.date ?? null,
         text: input.text,
         importance: input.importance,
-        completed: input.completed ?? false,
+        completed: false,
         created_by: session?.user?.id ?? null,
         created_at: now,
         updated_at: now,

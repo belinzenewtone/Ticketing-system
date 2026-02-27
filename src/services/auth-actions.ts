@@ -1,6 +1,6 @@
 'use server';
 
-import { queryOne, execute } from '@/lib/db';
+import { query, queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
 import { hash } from 'bcryptjs';
 
@@ -34,4 +34,23 @@ export async function updateProfile(data: { name?: string; image?: string }) {
     }
 
     return { success: true };
+}
+
+export async function getCurrentProfile() {
+    const session = await auth();
+    if (!session?.user?.id) return null;
+    const user = await queryOne<any>('SELECT id, name, email, role, image, createdAt FROM User WHERE id = ?', session.user.id);
+    return user ?? null;
+}
+
+export async function getITStaff() {
+    return await query<any>("SELECT id, name, email, role FROM User WHERE role IN ('IT_STAFF', 'ADMIN') ORDER BY name ASC");
+}
+
+export async function updateUserName(name: string) {
+    return updateProfile({ name });
+}
+
+export async function updateUserPassword(password: string) {
+    return updatePassword(password);
 }
