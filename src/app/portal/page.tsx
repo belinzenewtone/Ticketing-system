@@ -1,5 +1,6 @@
 'use client';
 
+import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket, updateTicket, deleteTicket } from '@/services/tickets';
 import { uploadTicketAttachment } from '@/services/storage';
@@ -548,27 +549,50 @@ export default function PortalPage() {
                         <DialogDescription>#{viewCommentsTicket?.number}: {viewCommentsTicket?.subject}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
-                        {/* Public comments thread */}
-                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                        {/* Public comments thread - WhatsApp Style */}
+                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 pb-2">
                             {!viewComments ? (
-                                <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
+                                <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-16 w-3/4 rounded-2xl" />)}</div>
                             ) : viewComments.length === 0 ? (
                                 <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                                     <MessageSquare className="h-8 w-8 mb-2 opacity-30" />
                                     <p className="text-sm">No updates from IT yet.</p>
                                 </div>
-                            ) : viewComments.map(comment => (
-                                <div key={comment.id} className="p-3 rounded-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <div className="h-6 w-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                            {comment.author_name.charAt(0).toUpperCase()}
+                            ) : viewComments.map(comment => {
+                                const isMe = comment.user_id === profile?.id;
+
+                                return (
+                                    <div key={comment.id} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
+                                        <div className="flex items-end gap-2 max-w-[85%]">
+                                            {!isMe && (
+                                                <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                                                    {comment.author_name.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
+
+                                            <div className={`relative px-4 py-2.5 rounded-2xl shadow-sm text-sm ${isMe
+                                                ? 'bg-emerald-600 text-white rounded-br-sm'
+                                                : 'bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900 text-foreground rounded-bl-sm'}`}>
+
+                                                {/* Author Name for received messages */}
+                                                {!isMe && <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-0.5">{comment.author_name}</div>}
+
+                                                <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+
+                                                <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
+                                                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                                                </div>
+                                            </div>
+
+                                            {isMe && (
+                                                <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                    {comment.author_name.charAt(0).toUpperCase()}
+                                                </div>
+                                            )}
                                         </div>
-                                        <span className="text-sm font-medium text-foreground">{comment.author_name}</span>
-                                        <span className="text-[10px] text-muted-foreground ml-auto">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
                                     </div>
-                                    <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
 
                         {/* Employee reply */}

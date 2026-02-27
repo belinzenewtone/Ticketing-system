@@ -1,5 +1,6 @@
 'use client';
 
+import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats, getCannedResponses, addCannedResponse, deleteCannedResponse, mergeTickets } from '@/services/tickets';
 import { getITStaff } from '@/services/auth';
@@ -101,6 +102,8 @@ export default function TicketsPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [cannedResponsesOpen, setCannedResponsesOpen] = useState(false);
     const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
+    const { readCounts, markTicketAsRead } = useUnreadComments();
+
     const [view, setView] = useState<'dashboard' | 'list'>('list');
     const [showOverdueOnly, setShowOverdueOnly] = useState(false);
     const [dialogTab, setDialogTab] = useState<'details' | 'comments' | 'activity'>('details');
@@ -626,6 +629,15 @@ export default function TicketsPage() {
                                                                 <GitMerge className="h-3 w-3" /> Merged
                                                             </span>
                                                         )}
+                                                        {(ticket as any).comment_count > (readCounts[ticket.id] || 0) && (
+                                                            <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                <span className="relative flex h-2 w-2 mr-0.5">
+                                                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                                </span>
+                                                                Unread Reply
+                                                            </span>
+                                                        )}
                                                     </div>
                                                 </TableCell>
 
@@ -903,40 +915,79 @@ export default function TicketsPage() {
                     {/* ── COMMENTS TAB ── */}
                     {editingTicket && dialogTab === 'comments' && (
                         <div className="mt-4 space-y-4">
-                            <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
+                            {/* Comments Thread - WhatsApp Style */}
+                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-2">
                                 {!ticketComments ? (
-                                    <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-16 w-full rounded-lg" />)}</div>
+                                    <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className={`h-16 w-3/4 rounded-2xl ${i % 2 === 0 ? 'ml-auto' : ''}`} />)}</div>
                                 ) : ticketComments.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                         <MessageSquare className="h-10 w-10 mb-2 opacity-30" />
                                         <p className="text-sm">No comments yet. Be the first to comment.</p>
                                     </div>
-                                ) : ticketComments.map(comment => (
-                                    <div key={comment.id} className={`p-3 rounded-lg border ${comment.is_internal ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/50' : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800'}`}>
-                                        <div className="flex items-center justify-between mb-1.5">
-                                            <div className="flex items-center gap-2">
-                                                <div className="h-6 w-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                                                    {comment.author_name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <span className="text-sm font-medium text-foreground">{comment.author_name}</span>
-                                                {comment.is_internal && (
-                                                    <Badge variant="outline" className="text-[10px] py-0 h-4 bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
-                                                        <Lock className="h-2.5 w-2.5 mr-0.5" /> Internal
-                                                    </Badge>
+                                ) : ticketComments.map(comment => {
+                                    const isMe = comment.user_id === profile?.id;
+                                    const isInternal = comment.is_internal;
+
+                                    return (
+                                        <div key={comment.id} className={`flex flex-col w-full ${isMe || isInternal ? 'items-end' : 'items-start'}`}>
+                                            <div className="flex items-end gap-2 max-w-[85%]">
+                                                {!isMe && !isInternal && (
+                                                    <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
+                                                        {comment.author_name.charAt(0).toUpperCase()}
+                                                    </div>
                                                 )}
-                                            </div>
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
-                                                {comment.user_id === profile?.id && (
-                                                    <Button variant="ghost" size="icon" className="h-5 w-5 text-red-400 hover:text-red-500" onClick={() => deleteCommentMut.mutate(comment.id)}>
-                                                        <Trash2 className="h-3 w-3" />
-                                                    </Button>
+
+                                                <div className={`relative px-4 py-2.5 shadow-sm text-sm group
+                                                    ${isInternal
+                                                        ? 'bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/50 text-amber-900 dark:text-amber-100 rounded-2xl rounded-tr-sm'
+                                                        : isMe
+                                                            ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm'
+                                                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-foreground rounded-2xl rounded-bl-sm'}`}
+                                                >
+                                                    {/* Header info */}
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        {(!isMe || isInternal) && (
+                                                            <div className={`text-xs font-semibold ${isInternal ? 'text-amber-700 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
+                                                                {comment.author_name}
+                                                            </div>
+                                                        )}
+                                                        {isInternal && (
+                                                            <div className="flex items-center text-[10px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-500 gap-1 bg-amber-200/50 dark:bg-amber-950 px-1.5 py-0.5 rounded">
+                                                                <Lock className="h-2.5 w-2.5" /> Internal
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
+
+                                                    <div className={`flex items-center justify-end gap-2 mt-1.5 text-[10px] ${isInternal ? 'text-amber-600/70 dark:text-amber-400/70' :
+                                                        isMe ? 'text-emerald-100' : 'text-slate-400'
+                                                        }`}>
+                                                        <span>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                                                        {comment.user_id === profile?.id && (
+                                                            <button
+                                                                onClick={(e) => { e.preventDefault(); deleteCommentMut.mutate(comment.id); }}
+                                                                className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full ${isInternal ? 'hover:bg-amber-200 dark:hover:bg-amber-800' : 'hover:bg-emerald-700/50'
+                                                                    }`}
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {(isMe || isInternal) && (
+                                                    <div className={`h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${isInternal
+                                                        ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
+                                                        : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
+                                                        }`}>
+                                                        {comment.author_name.charAt(0).toUpperCase()}
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
-                                        <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
 
                             {/* New comment form */}
