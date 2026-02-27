@@ -100,7 +100,7 @@ export default function ProfileSettings() {
                         <form onSubmit={nameForm.handleSubmit(onNameSubmit)} className="space-y-4">
                             <div className="space-y-2">
                                 <Label>Email</Label>
-                                <Input value={profile.email} disabled className="bg-slate-50 dark:bg-slate-900/50" />
+                                <Input value={profile.email ?? ''} disabled className="bg-slate-50 dark:bg-slate-900/50" />
                                 <p className="text-xs text-muted-foreground mr-1">Email cannot be changed directly.</p>
                             </div>
                             <div className="space-y-2">
