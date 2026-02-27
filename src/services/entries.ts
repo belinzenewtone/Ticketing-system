@@ -60,7 +60,7 @@ export async function getEntries(filters?: {
     }
 
     const entries = await prisma.entry.findMany({
-        where: where as Parameters<typeof prisma.entry.findMany>[0]['where'],
+        where: where as any,
         orderBy: { number: 'desc' },
     });
     return entries.map(serializeEntry);
@@ -96,7 +96,7 @@ export async function updateEntry(id: string, updates: Partial<Entry>): Promise<
 
     const entry = await prisma.entry.update({
         where: { id },
-        data: data as Parameters<typeof prisma.entry.update>[0]['data'],
+        data: data as any,
     });
     return serializeEntry(entry);
 }

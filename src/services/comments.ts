@@ -24,7 +24,7 @@ export async function getComments(ticket_id: string, includeInternal: boolean = 
     if (!includeInternal) where.isInternal = false;
 
     const comments = await prisma.ticketComment.findMany({
-        where: where as Parameters<typeof prisma.ticketComment.findMany>[0]['where'],
+        where: where as any,
         orderBy: { createdAt: 'asc' },
     });
     return comments.map(serializeComment);

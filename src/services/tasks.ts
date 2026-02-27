@@ -32,7 +32,7 @@ export async function getTasks(filters?: {
     if (filters?.search) where.text = { contains: filters.search, mode: 'insensitive' };
 
     const tasks = await prisma.task.findMany({
-        where: where as Parameters<typeof prisma.task.findMany>[0]['where'],
+        where: where as any,
         orderBy: { date: 'desc' },
     });
     return tasks.map(serializeTask);
@@ -60,7 +60,7 @@ export async function updateTask(id: string, updates: Partial<Task>): Promise<Ta
 
     const task = await prisma.task.update({
         where: { id },
-        data: data as Parameters<typeof prisma.task.update>[0]['data'],
+        data: data as any,
     });
     return serializeTask(task);
 }

@@ -49,7 +49,7 @@ export async function getMachines(filters?: {
     }
 
     const machines = await prisma.machineRequest.findMany({
-        where: where as Parameters<typeof prisma.machineRequest.findMany>[0]['where'],
+        where: where as any,
         orderBy: { number: 'desc' },
     });
     return machines.map(serializeMachine);
@@ -85,7 +85,7 @@ export async function updateMachine(id: string, updates: Partial<MachineRequest>
 
     const machine = await prisma.machineRequest.update({
         where: { id },
-        data: data as Parameters<typeof prisma.machineRequest.update>[0]['data'],
+        data: data as any,
     });
     return serializeMachine(machine);
 }

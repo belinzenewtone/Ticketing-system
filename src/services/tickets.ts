@@ -96,7 +96,7 @@ export async function getTickets(filters?: {
     }
 
     const tickets = await prisma.ticket.findMany({
-        where: where as Parameters<typeof prisma.ticket.findMany>[0]['where'],
+        where: where as any,
         include: { comments: { select: { id: true, isInternal: true } } },
         orderBy: { number: 'desc' },
     });
@@ -152,7 +152,7 @@ export async function updateTicket(id: string, updates: Partial<Ticket>, previou
 
     const ticket = await prisma.ticket.update({
         where: { id },
-        data: data as Parameters<typeof prisma.ticket.update>[0]['data'],
+        data: data as any,
         include: { comments: { select: { id: true, isInternal: true } } },
     });
 
@@ -193,7 +193,7 @@ export async function getTicketStats(filters?: { created_by?: string; assigned_t
     if (filters?.assigned_to) where.assignedToId = filters.assigned_to;
 
     const tickets: Array<{ status: string }> = await prisma.ticket.findMany({
-        where: where as Parameters<typeof prisma.ticket.findMany>[0]['where'],
+        where: where as any,
         select: { status: true },
     });
     return {

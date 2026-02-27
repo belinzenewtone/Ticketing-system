@@ -38,7 +38,7 @@ export async function getKbArticles(filters?: {
     }
 
     const articles = await prisma.kbArticle.findMany({
-        where: where as Parameters<typeof prisma.kbArticle.findMany>[0]['where'],
+        where: where as any,
         orderBy: { createdAt: 'desc' },
     });
     return articles.map(serializeKbArticle);
@@ -65,7 +65,7 @@ export async function updateKbArticle(id: string, updates: Partial<KbArticle>): 
 
     const article = await prisma.kbArticle.update({
         where: { id },
-        data: data as Parameters<typeof prisma.kbArticle.update>[0]['data'],
+        data: data as any,
     });
     return serializeKbArticle(article);
 }
