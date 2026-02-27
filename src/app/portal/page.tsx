@@ -342,7 +342,7 @@ export default function PortalPage() {
                                             <span>{categoryConfig[ticket.category]?.icon}</span>
                                             {categoryConfig[ticket.category]?.label}
                                         </span>
-                                        {(ticket as any).comment_count > (readCounts[ticket.id] || 0) && (
+                                        {(ticket as any).public_comment_count > (readCounts[ticket.id] || 0) && (
                                             <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
