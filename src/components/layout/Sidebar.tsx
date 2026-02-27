@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Mail, CheckSquare, Monitor, FileBarChart, LogOut, Menu, X, Ticket, User, BookOpen } from 'lucide-react';
+import { FileBarChart, LogOut, Menu, X, Ticket, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut } from '@/services/auth';
@@ -11,12 +11,8 @@ import { cn } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
 const navItems = [
-    { href: '/dashboard', label: 'Email', icon: Mail },
-    { href: '/tasks', label: 'Tasks', icon: CheckSquare },
-    { href: '/machines', label: 'Machines', icon: Monitor },
-    { href: '/tickets', label: 'Ticketing', icon: Ticket },
-    { href: '/knowledge-base', label: 'Knowledge Base', icon: BookOpen },
-    { href: '/reports', label: 'Reports', icon: FileBarChart },
+    { href: '/tickets', label: 'Ticketing System', icon: Ticket },
+    { href: '/dashboard', label: 'Reports Dashboard', icon: FileBarChart },
 ];
 
 export function Sidebar() {
@@ -85,8 +81,8 @@ export function Sidebar() {
                 <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
                     {navItems.map((item) => {
                         const isActive = item.href === '/dashboard'
-                            ? pathname === '/dashboard'
-                            : pathname.startsWith(item.href);
+                            ? ['/dashboard', '/tasks', '/machines', '/reports'].includes(pathname)
+                            : ['/tickets', '/knowledge-base'].includes(pathname);
                         return (
                             <Link
                                 key={item.href}

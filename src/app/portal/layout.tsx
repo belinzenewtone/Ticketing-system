@@ -59,7 +59,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                     </Link>
 
                     <div className="flex items-center gap-4">
-                        <div className="hidden sm:block text-right">
+                        <div className="hidden sm:block text-left">
                             <p className="text-sm font-medium text-foreground">{profile?.name || 'Employee'}</p>
                             <p className="text-xs text-slate-500">{profile?.email}</p>
                         </div>
