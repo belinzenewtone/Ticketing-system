@@ -113,6 +113,7 @@ export interface Ticket {
     created_by: string | null;
     assigned_to: string | null;
     attachment_url: string | null;
+    merged_into: string | null;
     created_at: string;
     updated_at: string;
 }
@@ -140,4 +141,48 @@ export interface CannedResponse {
     content: string;
     created_by: string | null;
     created_at: string;
+}
+
+// Ticket Activity Log
+export interface TicketActivity {
+    id: string;
+    ticket_id: string;
+    user_id: string | null;
+    action: string;
+    metadata: Record<string, string> | null;
+    created_at: string;
+}
+
+// Knowledge Base
+export interface KbArticle {
+    id: string;
+    title: string;
+    content: string;
+    category: TicketCategory | null;
+    created_by: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateKbArticleInput {
+    title: string;
+    content: string;
+    category?: TicketCategory | null;
+}
+
+// Ticket Comments
+export interface TicketComment {
+    id: string;
+    ticket_id: string;
+    user_id: string | null;
+    author_name: string;
+    content: string;
+    is_internal: boolean;
+    created_at: string;
+}
+
+export interface CreateCommentInput {
+    ticket_id: string;
+    content: string;
+    is_internal?: boolean;
 }

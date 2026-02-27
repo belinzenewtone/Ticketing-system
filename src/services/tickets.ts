@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import type { Ticket, CreateTicketInput, TicketCategory, TicketPriority, TicketStatus, CannedResponse } from '@/types/database';
+import { logActivity } from './activity';
 
 const supabase = createClient();
 
@@ -94,10 +95,14 @@ export async function addTicket(input: CreateTicketInput): Promise<Ticket> {
         .select('*')
         .single();
     if (error) throw error;
+
+    // Log creation activity
+    await logActivity(data.id, 'created', { by: input.employee_name });
+
     return data;
 }
 
-export async function updateTicket(id: string, updates: Partial<Ticket>): Promise<Ticket> {
+export async function updateTicket(id: string, updates: Partial<Ticket>, previousTicket?: Partial<Ticket>): Promise<Ticket> {
     // Re-calculate SLA if priority changed manually during an update
     if (updates.priority) {
         updates.due_date = calculateDueDate(updates.priority);
@@ -110,12 +115,48 @@ export async function updateTicket(id: string, updates: Partial<Ticket>): Promis
         .select('*')
         .single();
     if (error) throw error;
+
+    // Log activity for meaningful changes
+    if (previousTicket) {
+        if (updates.status && updates.status !== previousTicket.status) {
+            await logActivity(id, 'status_changed', {
+                from: previousTicket.status ?? '',
+                to: updates.status,
+            });
+        }
+        if (updates.assigned_to !== undefined && updates.assigned_to !== previousTicket.assigned_to) {
+            await logActivity(id, 'assigned', {
+                agent: updates.assigned_to ?? 'unassigned',
+            });
+        }
+        if (updates.priority && updates.priority !== previousTicket.priority) {
+            await logActivity(id, 'priority_changed', {
+                from: previousTicket.priority ?? '',
+                to: updates.priority,
+            });
+        }
+        if (updates.resolution_notes && updates.resolution_notes !== previousTicket.resolution_notes) {
+            await logActivity(id, 'note_added', {});
+        }
+    }
+
     return data;
 }
 
 export async function deleteTicket(id: string): Promise<void> {
     const { error } = await supabase.from('tickets').delete().eq('id', id);
     if (error) throw error;
+}
+
+export async function mergeTickets(sourceId: string, targetId: string): Promise<void> {
+    const { error } = await supabase
+        .from('tickets')
+        .update({ merged_into: targetId, status: 'closed' })
+        .eq('id', sourceId);
+    if (error) throw error;
+
+    await logActivity(sourceId, 'merged', { into: targetId });
+    await logActivity(targetId, 'merged', { from: sourceId });
 }
 
 export async function getTicketStats(filters?: { created_by?: string; assigned_to?: string }) {

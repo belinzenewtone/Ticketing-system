@@ -22,15 +22,18 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle } from '@/types/database';
 import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
 import { Bot, Sparkles } from 'lucide-react';
+import { getKbArticles } from '@/services/knowledgeBase';
+import { getComments, addComment } from '@/services/comments';
+import { formatDistanceToNow } from 'date-fns';
 
 // ── Config maps ──────────────────────────────────────────────
 const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = {
@@ -81,6 +84,15 @@ export default function PortalPage() {
     const [isCheckingDeflection, setIsCheckingDeflection] = useState(false);
     const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
 
+    // KB article suggestions
+    const [kbArticles, setKbArticles] = useState<KbArticle[]>([]);
+    const [expandedKbId, setExpandedKbId] = useState<string | null>(null);
+
+    // Comments (for viewing public replies per ticket)
+    const [viewCommentsTicket, setViewCommentsTicket] = useState<TicketType | null>(null);
+    const [newComment, setNewComment] = useState('');
+    const [isPostingComment, setIsPostingComment] = useState(false);
+
     const queryClient = useQueryClient();
 
     // Fetch IT Staff mapping
@@ -123,6 +135,25 @@ export default function PortalPage() {
         onError: (e: Error) => toast.error(e.message),
     });
 
+    // KB article search (triggered on subject blur)
+    const handleSubjectBlur = useCallback(async () => {
+        const subject = form.getValues('subject');
+        if (!subject || subject.length < 3) return;
+        try {
+            const results = await getKbArticles({ search: subject });
+            setKbArticles(results.slice(0, 3));
+        } catch {
+            // silently ignore
+        }
+    }, [form]);
+
+    // Comments query for viewing public replies
+    const { data: viewComments, refetch: refetchComments } = useQuery({
+        queryKey: ['portal-comments', viewCommentsTicket?.id],
+        queryFn: () => getComments(viewCommentsTicket!.id, false),
+        enabled: !!viewCommentsTicket?.id,
+    });
+
     // Form
     const form = useForm<FormValues>({
         resolver: zodResolver(ticketSchema),
@@ -134,6 +165,8 @@ export default function PortalPage() {
         if (!open) {
             setEditingTicketId(null);
             setAttachment(null);
+            setKbArticles([]);
+            setExpandedKbId(null);
             form.reset({ category: 'email', subject: '', description: '' });
         }
     };
@@ -331,6 +364,9 @@ export default function PortalPage() {
                                                     <MessageSquare className="h-4 w-4 mr-2" /> Notes
                                                 </Button>
                                             )}
+                                            <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => setViewCommentsTicket(ticket)}>
+                                                <MessageSquare className="h-4 w-4 mr-1.5" /> Updates
+                                            </Button>
                                         </div>
                                     </div>
                                     <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -388,9 +424,40 @@ export default function PortalPage() {
                         </div>
                         <div className="space-y-2">
                             <Label>Subject</Label>
-                            <Input placeholder="Short summary of the issue" {...form.register('subject')} />
+                            <Input placeholder="Short summary of the issue" {...form.register('subject')} onBlur={handleSubjectBlur} />
                             {form.formState.errors.subject && <p className="text-red-500 text-xs">{form.formState.errors.subject.message}</p>}
                         </div>
+
+                        {/* KB article suggestions */}
+                        {kbArticles.length > 0 && (
+                            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/50 rounded-lg p-4">
+                                <h4 className="flex items-center text-sm font-semibold text-blue-800 dark:text-blue-400 mb-3">
+                                    <BookOpen className="w-4 h-4 mr-2" /> Relevant Help Articles
+                                </h4>
+                                <div className="space-y-2">
+                                    {kbArticles.map((article) => (
+                                        <div key={article.id} className="bg-white dark:bg-slate-900 p-3 rounded-md border border-blue-100 dark:border-blue-900/40 text-sm">
+                                            <p className="font-medium text-slate-800 dark:text-slate-200">{article.title}</p>
+                                            <p className={`text-slate-600 dark:text-slate-400 mt-1 leading-relaxed ${expandedKbId === article.id ? '' : 'line-clamp-2'}`}>
+                                                {article.content}
+                                            </p>
+                                            {article.content.length > 120 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setExpandedKbId(expandedKbId === article.id ? null : article.id)}
+                                                    className="text-xs text-blue-600 hover:text-blue-700 mt-1 font-medium"
+                                                >
+                                                    {expandedKbId === article.id ? 'Show less' : 'Read more'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                <p className="text-xs text-blue-600 dark:text-blue-500 mt-3 italic">
+                                    Did one of these solve your issue? If not, continue below to submit a ticket.
+                                </p>
+                            </div>
+                        )}
                         <div className="space-y-2">
                             <Label>Description</Label>
                             <Textarea placeholder="More details about what's going wrong..." className="min-h-[100px]" {...form.register('description')} />
@@ -431,6 +498,80 @@ export default function PortalPage() {
                             </div>
                         </div>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* ===== VIEW UPDATES / COMMENTS DIALOG ===== */}
+            <Dialog open={!!viewCommentsTicket} onOpenChange={(open) => { if (!open) { setViewCommentsTicket(null); setNewComment(''); } }}>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <MessageSquare className="h-5 w-5 text-blue-500" /> Ticket Updates
+                        </DialogTitle>
+                        <DialogDescription>#{viewCommentsTicket?.number}: {viewCommentsTicket?.subject}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        {/* Public comments thread */}
+                        <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                            {!viewComments ? (
+                                <div className="space-y-2">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}</div>
+                            ) : viewComments.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                                    <MessageSquare className="h-8 w-8 mb-2 opacity-30" />
+                                    <p className="text-sm">No updates from IT yet.</p>
+                                </div>
+                            ) : viewComments.map(comment => (
+                                <div key={comment.id} className="p-3 rounded-lg border bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <div className="h-6 w-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                                            {comment.author_name.charAt(0).toUpperCase()}
+                                        </div>
+                                        <span className="text-sm font-medium text-foreground">{comment.author_name}</span>
+                                        <span className="text-[10px] text-muted-foreground ml-auto">{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
+                                    </div>
+                                    <p className="text-sm text-foreground whitespace-pre-wrap">{comment.content}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Employee reply */}
+                        <div className="border-t pt-4 space-y-3">
+                            <Label className="text-sm">Reply to IT Support</Label>
+                            <Textarea
+                                placeholder="Add a follow-up message..."
+                                className="min-h-[80px]"
+                                value={newComment}
+                                onChange={(e) => setNewComment(e.target.value)}
+                            />
+                            <div className="flex justify-end">
+                                <Button
+                                    size="sm"
+                                    disabled={!newComment.trim() || isPostingComment}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    onClick={async () => {
+                                        if (!newComment.trim() || !viewCommentsTicket || !profile) return;
+                                        setIsPostingComment(true);
+                                        try {
+                                            await addComment(
+                                                { ticket_id: viewCommentsTicket.id, content: newComment.trim(), is_internal: false },
+                                                profile.name
+                                            );
+                                            setNewComment('');
+                                            refetchComments();
+                                            toast.success('Reply sent');
+                                        } catch (e: any) {
+                                            toast.error(e.message);
+                                        } finally {
+                                            setIsPostingComment(false);
+                                        }
+                                    }}
+                                >
+                                    <Send className="h-3.5 w-3.5 mr-1.5" />
+                                    {isPostingComment ? 'Sending...' : 'Send Reply'}
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </DialogContent>
             </Dialog>
 
