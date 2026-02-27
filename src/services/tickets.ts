@@ -30,7 +30,7 @@ export async function getTickets(filters?: {
 }): Promise<Ticket[]> {
     let query = supabase
         .from('tickets')
-        .select('*')
+        .select('*, ticket_comments(count)')
         .order('number', { ascending: false });
 
     if (filters?.category) {
@@ -80,7 +80,14 @@ export async function getTickets(filters?: {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data as Ticket[];
+
+    // Map ticket_comments(count) array into a scalar property
+    return (data || []).map((t: any) => ({
+        ...t,
+        comment_count: Array.isArray(t.ticket_comments) && t.ticket_comments.length > 0
+            ? t.ticket_comments[0].count
+            : 0
+    })) as Ticket[];
 }
 
 export async function addTicket(input: CreateTicketInput): Promise<Ticket> {
