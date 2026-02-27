@@ -778,8 +778,10 @@ export default function TicketsPage() {
                                     {tab === 'comments' && <MessageSquare className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab === 'activity' && <Activity className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                    {tab === 'comments' && ticketComments && ticketComments.length > 0 && (
-                                        <span className="ml-1.5 text-[10px] bg-white/20 dark:bg-black/20 rounded-full px-1.5 py-0.5">{ticketComments.length}</span>
+                                    {tab === 'comments' && ticketComments && ticketComments.length > (readCounts[editingTicket.id] || 0) && (
+                                        <span className="ml-1.5 text-[10px] bg-red-500 text-white dark:bg-red-500 rounded-full px-1.5 py-0.5 font-bold shadow-sm">
+                                            {ticketComments.length - (readCounts[editingTicket.id] || 0)}
+                                        </span>
                                     )}
                                 </Button>
                             ))}
