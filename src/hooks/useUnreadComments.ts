@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * A simple hook to track if a ticket has unread comments based on the number of comments 
@@ -22,8 +22,11 @@ export function useUnreadComments() {
         }
     }, []);
 
-    const markTicketAsRead = (ticketId: string, currentCommentCount: number) => {
+    const markTicketAsRead = useCallback((ticketId: string, currentCommentCount: number) => {
         setReadCounts(prev => {
+            if (prev[ticketId] === currentCommentCount) {
+                return prev;
+            }
             const next = { ...prev, [ticketId]: currentCommentCount };
             try {
                 localStorage.setItem('ticket_read_counts', JSON.stringify(next));
@@ -32,12 +35,12 @@ export function useUnreadComments() {
             }
             return next;
         });
-    };
+    }, []);
 
-    const hasUnread = (ticketId: string, currentCommentCount: number) => {
+    const hasUnread = useCallback((ticketId: string, currentCommentCount: number) => {
         const lastSeen = readCounts[ticketId] || 0;
         return currentCommentCount > lastSeen;
-    };
+    }, [readCounts]);
 
     return {
         readCounts,
