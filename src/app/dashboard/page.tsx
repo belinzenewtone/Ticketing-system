@@ -334,7 +334,7 @@ export default function DashboardPage() {
                                                 </button>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-1">
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleEdit(entry)} title="Edit">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>

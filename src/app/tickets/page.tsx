@@ -664,7 +664,7 @@ export default function TicketsPage() {
                                                 </TableCell>
 
                                                 <TableCell className="text-right w-[160px]">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-1">
                                                         {profile?.id && ticket.assigned_to !== profile.id && ticket.status !== 'closed' && !ticket.merged_into && (
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => assignMut.mutate({ id: ticket.id, assigned_to: profile.id })} title="Assign to me">
                                                                 <UserPlus className="h-4 w-4" />
