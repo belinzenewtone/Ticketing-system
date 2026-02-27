@@ -52,12 +52,18 @@ If the issue requires IT intervention (like physical hardware replacement), retu
 If it's common (like printer, password reset), provide clear steps.
 Respond STRICTLY as a JSON object containing an array called "suggestions", where each object has "title" and "description".`;
 
+    // Validation & Length Limiting
+    const safeSubject = subject.trim().substring(0, 150);
+    const safeDesc = description.trim().substring(0, 1000);
+
+    if (!safeSubject && !safeDesc) return [];
+
     try {
-        const result = await callOpenAI(systemPrompt, `Subject: ${subject}\n\nDescription: ${description}`, true);
+        const result = await callOpenAI(systemPrompt, `Subject: ${safeSubject}\n\nDescription: ${safeDesc}`, true);
         const parsed = JSON.parse(result);
         return parsed.suggestions || [];
     } catch (e: any) {
-        console.error("Deflection AI Error:", e);
+        console.error("Deflection AI Error:", e.message || e);
         return []; // Fail gracefully back to empty list 
     }
 }
@@ -75,8 +81,12 @@ Reply STRICTLY with a JSON object containing exactly 3 keys:
 
 Always return valid JSON.`;
 
+    // Validation & Length Limiting
+    const safeSubject = subject.trim().substring(0, 150);
+    const safeDesc = description.trim().substring(0, 1000);
+
     try {
-        const result = await callOpenAI(systemPrompt, `Subject: ${subject}\n\nDescription: ${description}`, true);
+        const result = await callOpenAI(systemPrompt, `Subject: ${safeSubject}\n\nDescription: ${safeDesc}`, true);
         const parsed = JSON.parse(result);
         return {
             category: parsed.category as TicketCategory || 'other',
@@ -84,7 +94,7 @@ Always return valid JSON.`;
             sentiment: parsed.sentiment as TicketSentiment || 'neutral'
         };
     } catch (e: any) {
-        console.error("Categorize AI Error:", e);
+        console.error("Categorize AI Error:", e.message || e);
         // Fail gracefully to defaults if API fails or key is missing
         return { category: 'other', priority: 'medium', sentiment: 'neutral' };
     }

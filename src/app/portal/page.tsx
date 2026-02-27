@@ -84,6 +84,7 @@ export default function PortalPage() {
     const [deflections, setDeflections] = useState<DeflectionSuggestion[]>([]);
     const [isCheckingDeflection, setIsCheckingDeflection] = useState(false);
     const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+    const [aiCooldown, setAiCooldown] = useState(false);
 
     // KB article suggestions
     const [kbArticles, setKbArticles] = useState<KbArticle[]>([]);
@@ -191,7 +192,16 @@ export default function PortalPage() {
             return;
         }
 
+        if (aiCooldown) {
+            toast.info('Please wait a moment before asking AI again.');
+            return;
+        }
+
         setIsCheckingDeflection(true);
+        setAiCooldown(true);
+
+        // Cooldown timer (10 seconds)
+        setTimeout(() => setAiCooldown(false), 10000);
         try {
             const suggestions = await generateDeflectionSuggestions(subject, description || '');
             setDeflections(suggestions);
@@ -511,11 +521,11 @@ export default function PortalPage() {
                                 type="button"
                                 variant="outline"
                                 onClick={handleCheckSolutions}
-                                disabled={isCheckingDeflection}
+                                disabled={isCheckingDeflection || aiCooldown}
                                 className="w-full sm:w-auto text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
                             >
                                 {isCheckingDeflection ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Bot className="w-4 h-4 mr-2" />}
-                                Check for Solutions
+                                {aiCooldown ? 'Wait...' : 'Check for Solutions'}
                             </Button>
 
                             <div className="flex items-center gap-3 w-full sm:w-auto">
