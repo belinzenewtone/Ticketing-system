@@ -135,6 +135,12 @@ export default function PortalPage() {
         onError: (e: Error) => toast.error(e.message),
     });
 
+    // Form — must be declared before any hook/callback that references it
+    const form = useForm<FormValues>({
+        resolver: zodResolver(ticketSchema),
+        defaultValues: { category: 'email', subject: '', description: '' },
+    });
+
     // KB article search (triggered on subject blur)
     const handleSubjectBlur = useCallback(async () => {
         const subject = form.getValues('subject');
@@ -152,12 +158,6 @@ export default function PortalPage() {
         queryKey: ['portal-comments', viewCommentsTicket?.id],
         queryFn: () => getComments(viewCommentsTicket!.id, false),
         enabled: !!viewCommentsTicket?.id,
-    });
-
-    // Form
-    const form = useForm<FormValues>({
-        resolver: zodResolver(ticketSchema),
-        defaultValues: { category: 'email', subject: '', description: '' },
     });
 
     const handleOpenChange = (open: boolean) => {
