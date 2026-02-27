@@ -17,7 +17,7 @@ const SLA_HOURS: Record<TicketPriority, number> = {
     low: 48,
 };
 
-export function calculateDueDate(priority: TicketPriority): string {
+function calculateDueDate(priority: TicketPriority): string {
     const hours = SLA_HOURS[priority];
     const due = new Date();
     due.setHours(due.getHours() + hours);
