@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { LogOut, Ticket, User } from 'lucide-react';
@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
     const { profile, setProfile } = useAppStore();
     const router = useRouter();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -34,13 +35,26 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
     const handleLogout = async () => {
         try {
+            setIsLoggingOut(true);
             await signOut();
             setProfile(null);
             router.push('/login');
         } catch (error) {
             console.error('Error signing out:', error);
+            setIsLoggingOut(false);
         }
     };
+
+    if (isLoggingOut) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Signing out...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FileBarChart, LogOut, Menu, X, Ticket, User } from 'lucide-react';
@@ -19,6 +19,7 @@ export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { profile, sidebarOpen, toggleSidebar } = useAppStore();
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     // Lock body scroll when sidebar is open on mobile
     useEffect(() => {
@@ -31,9 +32,26 @@ export function Sidebar() {
     }, [sidebarOpen]);
 
     const handleLogout = async () => {
-        await signOut();
-        router.push('/login');
+        setIsLoggingOut(true);
+        try {
+            await signOut();
+            router.push('/login');
+        } catch (error) {
+            setIsLoggingOut(false);
+            console.error('Error signing out', error);
+        }
     };
+
+    if (isLoggingOut) {
+        return (
+            <div className="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Signing out...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
