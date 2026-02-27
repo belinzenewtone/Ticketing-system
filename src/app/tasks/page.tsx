@@ -25,7 +25,7 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { Plus, Search, Trash2, CheckCircle, Circle, ListTodo, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -101,7 +101,6 @@ export default function TasksPage() {
         }
     };
 
-    useEffect(() => { if (!formOpen) setEditingId(null); }, [formOpen]);
 
     const statCards = [
         { label: 'Total Tasks', value: stats?.total ?? 0, icon: ListTodo, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -297,7 +296,7 @@ export default function TasksPage() {
                 </>
             )}
 
-            <Dialog open={formOpen} onOpenChange={setFormOpen}>
+            <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingId(null); }}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader><DialogTitle>{editingId ? 'Edit Task' : 'New Task'}</DialogTitle></DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">

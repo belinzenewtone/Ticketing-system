@@ -15,7 +15,7 @@ async function callOpenAI(systemPrompt: string, userMessage: string, forceJson: 
         throw new Error("OPENAI_API_KEY is missing from environment variables.");
     }
 
-    const payload: any = {
+    const payload: Record<string, unknown> = {
         model: 'gpt-4o-mini',
         messages: [
             { role: 'system', content: systemPrompt },
@@ -62,8 +62,8 @@ Respond STRICTLY as a JSON object containing an array called "suggestions", wher
         const result = await callOpenAI(systemPrompt, `Subject: ${safeSubject}\n\nDescription: ${safeDesc}`, true);
         const parsed = JSON.parse(result);
         return parsed.suggestions || [];
-    } catch (e: any) {
-        console.error("Deflection AI Error:", e.message || e);
+    } catch (e: unknown) {
+        console.error("Deflection AI Error:", (e as Error).message || e);
         return []; // Fail gracefully back to empty list 
     }
 }
@@ -93,8 +93,8 @@ Always return valid JSON.`;
             priority: parsed.priority as TicketPriority || 'medium',
             sentiment: parsed.sentiment as TicketSentiment || 'neutral'
         };
-    } catch (e: any) {
-        console.error("Categorize AI Error:", e.message || e);
+    } catch (e: unknown) {
+        console.error("Categorize AI Error:", (e as Error).message || e);
         // Fail gracefully to defaults if API fails or key is missing
         return { category: 'other', priority: 'medium', sentiment: 'neutral' };
     }
@@ -116,7 +116,7 @@ If resolution notes are provided, include how it was resolved final sentence.`;
     try {
         const summary = await callOpenAI(systemPrompt, prompt);
         return summary.trim();
-    } catch (e: any) {
+    } catch (e: unknown) {
         console.error("Summary AI Error:", e);
         return "AI Summary is temporarily unavailable.";
     }

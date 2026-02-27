@@ -22,7 +22,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, CheckCircle, Circle, Mail, Clock, BarChart3, Pencil, LayoutDashboard, List } from 'lucide-react';
+import { Plus, Search, Trash2, CheckCircle, Circle, Mail, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';

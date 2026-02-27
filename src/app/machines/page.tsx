@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -25,18 +24,13 @@ import {
 import { useAppStore } from '@/store/useAppStore';
 import { Plus, Search, Trash2, Monitor, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { MachineReason, MachineStatus, CreateMachineInput } from '@/types/database';
 
-const statusConfig: Record<MachineStatus, { label: string; color: string }> = {
-    pending: { label: '⏳ Pending', color: 'bg-slate-600 text-white hover:bg-slate-600' },
-    approved: { label: '✅ Approved', color: 'bg-blue-600 text-white hover:bg-blue-600' },
-    fulfilled: { label: '📦 Fulfilled', color: 'bg-emerald-600 text-white hover:bg-emerald-600' },
-    rejected: { label: '❌ Rejected', color: 'bg-red-600 text-white hover:bg-red-600' },
-};
+
 
 const reasonLabels: Record<MachineReason, string> = {
     'old-hardware': 'Old Hardware',
@@ -113,7 +107,6 @@ export default function MachinesPage() {
         else { createMut.mutate(data); }
     };
 
-    useEffect(() => { if (!formOpen) setEditingId(null); }, [formOpen]);
 
     const statCards = [
         { label: 'Total', value: stats?.total ?? 0, icon: Monitor, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -322,7 +315,7 @@ export default function MachinesPage() {
                 </>
             )}
 
-            <Dialog open={formOpen} onOpenChange={setFormOpen}>
+            <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingId(null); }}>
                 <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
                     <DialogHeader><DialogTitle>{editingId ? 'Edit Machine Request' : 'New Machine Request'}</DialogTitle></DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">

@@ -52,8 +52,8 @@ export default function ProfileSettings() {
             await updateUserName(data.name);
             setProfile({ ...profile, name: data.name });
             toast.success('Profile updated successfully');
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to update profile');
+        } catch (error: unknown) {
+            toast.error((error as Error).message || 'Failed to update profile');
         } finally {
             setNameLoading(false);
         }
@@ -65,8 +65,8 @@ export default function ProfileSettings() {
             await updateUserPassword(data.password);
             toast.success('Password updated successfully');
             passwordForm.reset();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to update password');
+        } catch (error: unknown) {
+            toast.error((error as Error).message || 'Failed to update password');
         } finally {
             setPasswordLoading(false);
         }

@@ -1,0 +1,60 @@
+
+> employee-management-web@0.1.0 lint
+> eslint
+
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\dashboard\page.tsx
+   25:66  warning  'BarChart3' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  411:30  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\dashboard\page.tsx:411:30
+  409 |                                 </Select>
+  410 |                             </div>
+> 411 |                             {form.watch('alt_email_status') !== 'exists' && (
+      |                              ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  412 |                                 <div className="space-y-2">
+  413 |                                     <Label>Alternative Email</Label>
+  414 |                                     <Input placeholder="alt@gmail.com" {...form.register('alt_email')} />  react-hooks/incompatible-library
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\knowledge-base\page.tsx
+  272:40  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\knowledge-base\page.tsx:272:40
+  270 |                             <Label>Category</Label>
+  271 |                             <Select
+> 272 |                                 value={form.watch('category') || 'all'}
+      |                                        ^^^^ React Hook Form's `useForm()` API returns a `watch()` function which cannot be memoized safely.
+  273 |                                 onValueChange={(v) => form.setValue('category', v)}
+  274 |                             >
+  275 |                                 <SelectTrigger><SelectValue placeholder="Select category (optional)" /></SelectTrigger>  react-hooks/incompatible-library
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\machines\page.tsx
+  27:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\app\tasks\page.tsx
+  28:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\components\ThemeToggle.tsx
+  12:21  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Users\belinze.newtone\.gemini\antigravity\scratch\Ticketing-system\src\components\ThemeToggle.tsx:12:21
+  10 |     const [mounted, setMounted] = useState(false);
+  11 |
+> 12 |     useEffect(() => setMounted(true), []);
+     |                     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  13 |
+  14 |     if (!mounted) return null;
+  15 |  react-hooks/set-state-in-effect
+
+Γ£û 6 problems (1 error, 5 warnings)
+

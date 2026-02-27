@@ -22,7 +22,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, Lock, X } from 'lucide-react';
+import { Plus, Search, Ticket, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
@@ -46,12 +46,7 @@ const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = 
     other: { label: 'Other', icon: '📋' },
 };
 
-const priorityConfig: Record<TicketPriority, { label: string; color: string }> = {
-    critical: { label: 'Critical', color: 'bg-red-600/20 text-red-500 border-red-600/30' },
-    high: { label: 'High', color: 'bg-orange-600/20 text-orange-500 border-orange-600/30' },
-    medium: { label: 'Medium', color: 'bg-blue-600/20 text-blue-500 border-blue-600/30' },
-    low: { label: 'Low', color: 'bg-slate-600/20 text-slate-400 border-slate-600/30' },
-};
+
 
 const statusConfig: Record<TicketStatus, { label: string; color: string; icon: React.ElementType }> = {
     open: { label: 'Open', color: 'bg-blue-600/20 text-blue-500 border-blue-600/30', icon: Ticket },
@@ -208,7 +203,7 @@ export default function PortalPage() {
             if (suggestions.length === 0) {
                 toast.info('No immediate solutions found. Please submit your ticket.');
             }
-        } catch (error) {
+        } catch {
             toast.error('AI analysis failed.');
         } finally {
             setIsCheckingDeflection(false);
@@ -223,7 +218,7 @@ export default function PortalPage() {
         let aiResult;
         try {
             aiResult = await categorizeAndPrioritizeTicket(data.subject, data.description || '');
-        } catch (error) {
+        } catch {
             toast.error('AI analysis failed, falling back to defaults.');
             aiResult = { category: 'other' as TicketCategory, priority: 'medium' as TicketPriority, sentiment: 'neutral' as const };
         }
@@ -234,9 +229,10 @@ export default function PortalPage() {
             setIsUploading(true);
             try {
                 attachment_url = await uploadTicketAttachment(attachment);
-            } catch (error: any) {
+            } catch (error: unknown) {
                 setIsUploading(false);
-                return toast.error(`Attachment failed: ${error.message}`);
+                const msg = error instanceof Error ? error.message : "Upload failed";
+                return toast.error(`Attachment failed: ${msg}`);
             }
             setIsUploading(false);
         }
@@ -308,7 +304,7 @@ export default function PortalPage() {
                                 <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
                                     <Ticket className="h-6 w-6 opacity-50" />
                                 </div>
-                                <p>You haven't reported any issues yet.</p>
+                                <p>You haven&apos;t reported any issues yet.</p>
                                 <Button variant="outline" onClick={() => setFormOpen(true)}>Report your first issue</Button>
                             </div>
                         </div>
@@ -600,8 +596,9 @@ export default function PortalPage() {
                                             setNewComment('');
                                             refetchComments();
                                             toast.success('Reply sent');
-                                        } catch (e: any) {
-                                            toast.error(e.message);
+                                        } catch (e: unknown) {
+                                            const msg = e instanceof Error ? e.message : "Failed to send";
+                                            toast.error(msg);
                                         } finally {
                                             setIsPostingComment(false);
                                         }
