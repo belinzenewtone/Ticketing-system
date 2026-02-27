@@ -1,13 +1,13 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
-import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { D1Adapter } from "@/lib/auth-adapter-d1";
+import { queryOne } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: PrismaAdapter(prisma),
+    adapter: D1Adapter(),
     session: { strategy: "jwt" },
     providers: [
         CredentialsProvider({
@@ -21,9 +21,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     return null;
                 }
 
-                const user = await prisma.user.findUnique({
-                    where: { email: credentials.email as string },
-                });
+                // Native D1 lookup
+                const user = await queryOne<any>(
+                    'SELECT * FROM User WHERE email = ?',
+                    credentials.email as string
+                );
 
                 if (!user || !user.password) {
                     return null;
@@ -48,4 +50,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }),
     ],
 });
-

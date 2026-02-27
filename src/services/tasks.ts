@@ -1,84 +1,93 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { query, queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
 import type { Task, CreateTaskInput, ImportanceLevel } from '@/types/database';
 
-function serializeTask(t: {
-    id: string; date: Date | null; text: string; importance: string;
-    completed: boolean; createdById: string | null; createdAt: Date; updatedAt: Date;
-}): Task {
+function serializeTask(t: any): Task {
     return {
         id: t.id,
-        date: t.date?.toISOString().split('T')[0] ?? '',
+        date: t.date,
         text: t.text,
         importance: t.importance as ImportanceLevel,
-        completed: t.completed,
-        created_by: t.createdById,
-        created_at: t.createdAt.toISOString(),
-        updated_at: t.updatedAt.toISOString(),
+        completed: Boolean(t.completed),
+        created_by: t.created_by ?? null,
+        created_at: t.created_at,
+        updated_at: t.updated_at,
     };
 }
 
-export async function getTasks(filters?: {
-    completed?: boolean;
-    importance?: ImportanceLevel;
-    search?: string;
-}): Promise<Task[]> {
-    const where: Record<string, unknown> = {};
+export async function getTasks(filters?: { created_by?: string }): Promise<Task[]> {
+    let sql = 'SELECT * FROM tasks WHERE 1=1';
+    const params: any[] = [];
 
-    if (filters?.completed !== undefined) where.completed = filters.completed;
-    if (filters?.importance) where.importance = filters.importance;
-    if (filters?.search) where.text = { contains: filters.search, mode: 'insensitive' };
+    if (filters?.created_by) {
+        sql += ' AND created_by = ?';
+        params.push(filters.created_by);
+    }
 
-    const tasks = await prisma.task.findMany({
-        where: where as any,
-        orderBy: { date: 'desc' },
-    });
-    return tasks.map(serializeTask);
+    sql += ' ORDER BY created_at DESC';
+    const rows = await query<any>(sql, ...params);
+    return rows.map(serializeTask);
 }
 
 export async function addTask(input: CreateTaskInput): Promise<Task> {
     const session = await auth();
-    const task = await prisma.task.create({
-        data: {
-            date: input.date ? new Date(input.date) : null,
-            text: input.text,
-            importance: input.importance as never,
-            createdById: session?.user?.id ?? null,
-        },
-    });
-    return serializeTask(task);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await execute(
+        `INSERT INTO tasks (id, date, text, importance, completed, created_by, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        id,
+        input.date ?? null,
+        input.text,
+        input.importance,
+        input.completed ? 1 : 0,
+        session?.user?.id ?? null,
+        now,
+        now
+    );
+
+    return {
+        id,
+        date: input.date ?? null,
+        text: input.text,
+        importance: input.importance,
+        completed: input.completed ?? false,
+        created_by: session?.user?.id ?? null,
+        created_at: now,
+        updated_at: now,
+    };
 }
 
 export async function updateTask(id: string, updates: Partial<Task>): Promise<Task> {
-    const data: Record<string, unknown> = {};
-    if (updates.date !== undefined) data.date = updates.date ? new Date(updates.date) : null;
-    if (updates.text !== undefined) data.text = updates.text;
-    if (updates.importance !== undefined) data.importance = updates.importance;
-    if (updates.completed !== undefined) data.completed = updates.completed;
+    const fields: string[] = [];
+    const params: any[] = [];
 
-    const task = await prisma.task.update({
-        where: { id },
-        data: data as any,
-    });
-    return serializeTask(task);
+    if (updates.date !== undefined) { fields.push("date = ?"); params.push(updates.date); }
+    if (updates.text !== undefined) { fields.push("text = ?"); params.push(updates.text); }
+    if (updates.importance !== undefined) { fields.push("importance = ?"); params.push(updates.importance); }
+    if (updates.completed !== undefined) { fields.push("completed = ?"); params.push(updates.completed ? 1 : 0); }
+
+    fields.push("updated_at = ?");
+    params.push(new Date().toISOString());
+
+    if (fields.length > 1) {
+        const sql = `UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`;
+        params.push(id);
+        await execute(sql, ...params);
+    }
+
+    const row = await queryOne<any>('SELECT * FROM tasks WHERE id = ?', id);
+    return serializeTask(row);
 }
 
 export async function deleteTask(id: string): Promise<void> {
-    await prisma.task.delete({ where: { id } });
+    await execute('DELETE FROM tasks WHERE id = ?', id);
 }
 
-export async function getTaskStats() {
-    const tasks: Array<{ importance: string; completed: boolean }> = await prisma.task.findMany({
-        select: { importance: true, completed: true },
-    });
-    return {
-        total: tasks.length,
-        completed: tasks.filter(t => t.completed).length,
-        pending: tasks.filter(t => !t.completed).length,
-        urgent: tasks.filter(t => t.importance === 'urgent').length,
-        important: tasks.filter(t => t.importance === 'important').length,
-        neutral: tasks.filter(t => t.importance === 'neutral').length,
-    };
+export async function toggleTask(id: string, completed: boolean): Promise<void> {
+    await execute('UPDATE tasks SET completed = ?, updated_at = ? WHERE id = ?',
+        completed ? 1 : 0, new Date().toISOString(), id);
 }

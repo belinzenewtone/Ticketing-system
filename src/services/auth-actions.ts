@@ -1,55 +1,37 @@
 'use server';
 
+import { queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
-import { prisma } from '@/lib/prisma';
-import type { Profile } from '@/types/database';
+import { hash } from 'bcryptjs';
 
-export async function getSession() {
-    return auth();
-}
-
-export async function getCurrentUser() {
+export async function updatePassword(password: string) {
     const session = await auth();
-    return session?.user || null;
+    if (!session?.user?.id) throw new Error('Unauthorized');
+
+    const hashedPassword = await hash(password, 12);
+    await execute('UPDATE User SET password = ?, updatedAt = ? WHERE id = ?',
+        hashedPassword, new Date().toISOString(), session.user.id);
+
+    return { success: true };
 }
 
-export async function getCurrentProfile(): Promise<Profile | null> {
+export async function updateProfile(data: { name?: string; image?: string }) {
     const session = await auth();
-    if (!session?.user?.id) return null;
+    if (!session?.user?.id) throw new Error('Unauthorized');
 
-    const user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-    });
+    const fields: string[] = [];
+    const params: any[] = [];
 
-    if (!user) return null;
-    return user as unknown as Profile;
-}
+    if (data.name !== undefined) { fields.push("name = ?"); params.push(data.name); }
+    if (data.image !== undefined) { fields.push("image = ?"); params.push(data.image); }
 
-export async function getITStaff() {
-    return prisma.user.findMany({
-        where: { role: { in: ['ADMIN', 'IT_STAFF'] } },
-    });
-}
+    if (fields.length > 0) {
+        fields.push("updatedAt = ?");
+        params.push(new Date().toISOString());
+        params.push(session.user.id);
 
-export async function updateUserName(name: string): Promise<void> {
-    const session = await auth();
-    if (!session?.user?.id) throw new Error('Not authenticated');
+        await execute(`UPDATE User SET ${fields.join(', ')} WHERE id = ?`, ...params);
+    }
 
-    await prisma.user.update({
-        where: { id: session.user.id },
-        data: { name },
-    });
-}
-
-export async function updateUserPassword(password: string): Promise<void> {
-    const session = await auth();
-    if (!session?.user?.id) throw new Error('Not authenticated');
-
-    const bcrypt = await import('bcryptjs');
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    await prisma.user.update({
-        where: { id: session.user.id },
-        data: { password: hashedPassword },
-    });
+    return { success: true };
 }

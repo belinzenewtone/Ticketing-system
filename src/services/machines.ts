@@ -1,110 +1,82 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { query, queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
-import type { MachineRequest, CreateMachineInput, MachineReason, MachineStatus } from '@/types/database';
+import type { MachineRequest, CreateMachineInput, MachineReason, ImportanceLevel, MachineStatus } from '@/types/database';
 
-// Prisma enum values use underscores; our TypeScript interfaces use hyphens
-function fromEnum(val: string): string { return val.replace(/_/g, '-'); }
 function toEnum(val: string): string { return val.replace(/-/g, '_'); }
+function fromEnum(val: string): string { return val.replace(/_/g, '-'); }
 
-function serializeMachine(m: {
-    id: string; number: number; date: Date | null; requesterName: string;
-    userName: string; workEmail: string; reason: string; importance: string;
-    status: string; notes: string | null; createdById: string | null;
-    createdAt: Date; updatedAt: Date;
-}): MachineRequest {
+function serializeMachine(m: any): MachineRequest {
     return {
         id: m.id,
         number: m.number,
-        date: m.date?.toISOString().split('T')[0] ?? '',
-        requester_name: m.requesterName,
-        user_name: m.userName,
-        work_email: m.workEmail,
+        date: m.date,
+        requester_name: m.requester_name,
+        user_name: m.user_name,
+        work_email: m.work_email,
         reason: fromEnum(m.reason) as MachineReason,
-        importance: m.importance as MachineRequest['importance'],
-        status: m.status as MachineStatus,
-        notes: m.notes ?? '',
-        created_by: m.createdById,
-        created_at: m.createdAt.toISOString(),
-        updated_at: m.updatedAt.toISOString(),
+        importance: m.importance as ImportanceLevel,
+        status: fromEnum(m.status) as MachineStatus,
+        notes: m.notes ?? null,
+        created_by: m.created_by ?? null,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
     };
 }
 
-export async function getMachines(filters?: {
-    reason?: MachineReason;
-    status?: MachineStatus;
-    search?: string;
-}): Promise<MachineRequest[]> {
-    const where: Record<string, unknown> = {};
+export async function getMachineRequests(filters?: { status?: MachineStatus; search?: string }): Promise<MachineRequest[]> {
+    let sql = 'SELECT * FROM machine_requests WHERE 1=1';
+    const params: any[] = [];
 
-    if (filters?.reason) where.reason = toEnum(filters.reason);
-    if (filters?.status) where.status = filters.status;
-    if (filters?.search) {
-        where.OR = [
-            { requesterName: { contains: filters.search, mode: 'insensitive' } },
-            { userName: { contains: filters.search, mode: 'insensitive' } },
-            { workEmail: { contains: filters.search, mode: 'insensitive' } },
-        ];
+    if (filters?.status) {
+        sql += ' AND status = ?';
+        params.push(toEnum(filters.status));
     }
 
-    const machines = await prisma.machineRequest.findMany({
-        where: where as any,
-        orderBy: { number: 'desc' },
-    });
-    return machines.map(serializeMachine);
+    if (filters?.search) {
+        sql += ' AND (requester_name LIKE ? OR user_name LIKE ? OR work_email LIKE ?)';
+        const s = `%${filters.search}%`;
+        params.push(s, s, s);
+    }
+
+    sql += ' ORDER BY number DESC';
+    const rows = await query<any>(sql, ...params);
+    return rows.map(serializeMachine);
 }
 
-export async function addMachine(input: CreateMachineInput): Promise<MachineRequest> {
+export async function addMachineRequest(input: CreateMachineInput): Promise<MachineRequest> {
     const session = await auth();
-    const machine = await prisma.machineRequest.create({
-        data: {
-            date: input.date ? new Date(input.date) : null,
-            requesterName: input.requester_name,
-            userName: input.user_name,
-            workEmail: input.work_email,
-            reason: toEnum(input.reason) as never,
-            importance: input.importance as never,
-            notes: input.notes,
-            createdById: session?.user?.id ?? null,
-        },
-    });
-    return serializeMachine(machine);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await execute(
+        `INSERT INTO machine_requests (
+            id, date, requester_name, user_name, work_email, reason, importance, status, notes, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id,
+        input.date ?? null,
+        input.requester_name,
+        input.user_name,
+        input.work_email,
+        toEnum(input.reason),
+        input.importance,
+        toEnum(input.status || 'pending'),
+        input.notes ?? null,
+        session?.user?.id ?? null,
+        now,
+        now
+    );
+
+    const row = await queryOne<any>('SELECT * FROM machine_requests WHERE id = ?', id);
+    return serializeMachine(row);
 }
 
-export async function updateMachine(id: string, updates: Partial<MachineRequest>): Promise<MachineRequest> {
-    const data: Record<string, unknown> = {};
-    if (updates.date !== undefined) data.date = updates.date ? new Date(updates.date) : null;
-    if (updates.requester_name !== undefined) data.requesterName = updates.requester_name;
-    if (updates.user_name !== undefined) data.userName = updates.user_name;
-    if (updates.work_email !== undefined) data.workEmail = updates.work_email;
-    if (updates.reason !== undefined) data.reason = toEnum(updates.reason);
-    if (updates.importance !== undefined) data.importance = updates.importance;
-    if (updates.status !== undefined) data.status = updates.status;
-    if (updates.notes !== undefined) data.notes = updates.notes;
-
-    const machine = await prisma.machineRequest.update({
-        where: { id },
-        data: data as any,
-    });
-    return serializeMachine(machine);
+export async function updateMachineStatus(id: string, status: MachineStatus): Promise<void> {
+    await execute('UPDATE machine_requests SET status = ?, updated_at = ? WHERE id = ?',
+        toEnum(status), new Date().toISOString(), id);
 }
 
-export async function deleteMachine(id: string): Promise<void> {
-    await prisma.machineRequest.delete({ where: { id } });
-}
-
-export async function getMachineStats() {
-    const machines: Array<{ reason: string; status: string; importance: string }> = await prisma.machineRequest.findMany({
-        select: { reason: true, status: true, importance: true },
-    });
-    return {
-        total: machines.length,
-        pending: machines.filter(m => m.status === 'pending').length,
-        fulfilled: machines.filter(m => m.status === 'fulfilled').length,
-        rejected: machines.filter(m => m.status === 'rejected').length,
-        oldHardware: machines.filter(m => m.reason === 'old_hardware').length,
-        faulty: machines.filter(m => m.reason === 'faulty').length,
-        newUser: machines.filter(m => m.reason === 'new_user').length,
-    };
+export async function deleteMachineRequest(id: string): Promise<void> {
+    await execute('DELETE FROM machine_requests WHERE id = ?', id);
 }

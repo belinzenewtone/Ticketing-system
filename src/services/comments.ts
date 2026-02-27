@@ -1,49 +1,58 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { query, execute } from '@/lib/db';
 import { auth } from '@/auth';
 import type { TicketComment, CreateCommentInput } from '@/types/database';
 
-function serializeComment(c: {
-    id: string; ticketId: string; userId: string | null;
-    authorName: string; content: string; isInternal: boolean; createdAt: Date;
-}): TicketComment {
+function serializeComment(c: any): TicketComment {
     return {
         id: c.id,
-        ticket_id: c.ticketId,
-        user_id: c.userId,
-        author_name: c.authorName,
+        ticket_id: c.ticket_id,
+        user_id: c.user_id,
+        author_name: c.author_name,
         content: c.content,
-        is_internal: c.isInternal,
-        created_at: c.createdAt.toISOString(),
+        is_internal: Boolean(c.is_internal),
+        created_at: c.created_at,
     };
 }
 
 export async function getComments(ticket_id: string, includeInternal: boolean = false): Promise<TicketComment[]> {
-    const where: Record<string, unknown> = { ticketId: ticket_id };
-    if (!includeInternal) where.isInternal = false;
+    const sql = includeInternal
+        ? 'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC'
+        : 'SELECT * FROM ticket_comments WHERE ticket_id = ? AND is_internal = 0 ORDER BY created_at ASC';
 
-    const comments = await prisma.ticketComment.findMany({
-        where: where as any,
-        orderBy: { createdAt: 'asc' },
-    });
+    const comments = await query<any>(sql, ticket_id);
     return comments.map(serializeComment);
 }
 
 export async function addComment(input: CreateCommentInput, authorName: string): Promise<TicketComment> {
     const session = await auth();
-    const comment = await prisma.ticketComment.create({
-        data: {
-            ticketId: input.ticket_id,
-            content: input.content,
-            isInternal: input.is_internal ?? false,
-            userId: session?.user?.id ?? null,
-            authorName,
-        },
-    });
-    return serializeComment(comment);
+    const id = crypto.randomUUID();
+    const created_at = new Date().toISOString();
+
+    await execute(
+        `INSERT INTO ticket_comments (id, ticket_id, user_id, author_name, content, is_internal, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        id,
+        input.ticket_id,
+        session?.user?.id ?? null,
+        authorName,
+        input.content,
+        input.is_internal ? 1 : 0,
+        created_at
+    );
+
+    return {
+        id,
+        ticket_id: input.ticket_id,
+        user_id: session?.user?.id ?? null,
+        author_name: authorName,
+        content: input.content,
+        is_internal: input.is_internal ?? false,
+        created_at,
+    };
 }
 
 export async function deleteComment(id: string): Promise<void> {
-    await prisma.ticketComment.delete({ where: { id } });
+    await execute('DELETE FROM ticket_comments WHERE id = ?', id);
 }

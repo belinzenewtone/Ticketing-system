@@ -1,75 +1,61 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { query, queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
-import type { KbArticle, CreateKbArticleInput, TicketCategory } from '@/types/database';
+import type { KbArticle, TicketCategory } from '@/types/database';
 
-// Prisma enum values use underscores; our TypeScript interfaces use hyphens
-function fromEnum(val: string): string { return val.replace(/_/g, '-'); }
-function toEnum(val: string): string { return val.replace(/-/g, '_'); }
-
-function serializeKbArticle(a: {
-    id: string; title: string; content: string; category: string | null;
-    createdById: string | null; createdAt: Date; updatedAt: Date;
-}): KbArticle {
+function serializeKb(k: any): KbArticle {
     return {
-        id: a.id,
-        title: a.title,
-        content: a.content,
-        category: a.category ? fromEnum(a.category) as TicketCategory : null,
-        created_by: a.createdById,
-        created_at: a.createdAt.toISOString(),
-        updated_at: a.updatedAt.toISOString(),
+        id: k.id,
+        title: k.title,
+        content: k.content,
+        category: (k.category?.replace(/_/g, '-') as TicketCategory) || null,
+        created_by: k.created_by ?? null,
+        created_at: k.created_at,
+        updated_at: k.updated_at,
     };
 }
 
-export async function getKbArticles(filters?: {
-    category?: TicketCategory | null;
-    search?: string;
-}): Promise<KbArticle[]> {
-    const where: Record<string, unknown> = {};
+export async function getKbArticles(category?: TicketCategory, search?: string): Promise<KbArticle[]> {
+    let sql = 'SELECT * FROM kb_articles WHERE 1=1';
+    const params: any[] = [];
 
-    if (filters?.category) where.category = toEnum(filters.category);
-    if (filters?.search) {
-        where.OR = [
-            { title: { contains: filters.search, mode: 'insensitive' } },
-            { content: { contains: filters.search, mode: 'insensitive' } },
-        ];
+    if (category) {
+        sql += ' AND category = ?';
+        params.push(category.replace(/-/g, '_'));
     }
 
-    const articles = await prisma.kbArticle.findMany({
-        where: where as any,
-        orderBy: { createdAt: 'desc' },
-    });
-    return articles.map(serializeKbArticle);
+    if (search) {
+        sql += ' AND (title LIKE ? OR content LIKE ?)';
+        const s = `%${search}%`;
+        params.push(s, s);
+    }
+
+    sql += ' ORDER BY created_at DESC';
+    const rows = await query<any>(sql, ...params);
+    return rows.map(serializeKb);
 }
 
-export async function addKbArticle(input: CreateKbArticleInput): Promise<KbArticle> {
+export async function addKbArticle(title: string, content: string, category: TicketCategory): Promise<KbArticle> {
     const session = await auth();
-    const article = await prisma.kbArticle.create({
-        data: {
-            title: input.title,
-            content: input.content,
-            category: input.category ? toEnum(input.category) as never : null,
-            createdById: session?.user?.id ?? null,
-        },
-    });
-    return serializeKbArticle(article);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await execute(
+        'INSERT INTO kb_articles (id, title, content, category, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        id, title, content, category.replace(/-/g, '_'), session?.user?.id ?? null, now, now
+    );
+
+    return { id, title, content, category, created_by: session?.user?.id ?? null, created_at: now, updated_at: now };
 }
 
-export async function updateKbArticle(id: string, updates: Partial<KbArticle>): Promise<KbArticle> {
-    const data: Record<string, unknown> = {};
-    if (updates.title !== undefined) data.title = updates.title;
-    if (updates.content !== undefined) data.content = updates.content;
-    if (updates.category !== undefined) data.category = updates.category ? toEnum(updates.category) : null;
-
-    const article = await prisma.kbArticle.update({
-        where: { id },
-        data: data as any,
-    });
-    return serializeKbArticle(article);
+export async function updateKbArticle(id: string, title: string, content: string, category: TicketCategory): Promise<void> {
+    await execute(
+        'UPDATE kb_articles SET title = ?, content = ?, category = ?, updated_at = ? WHERE id = ?',
+        title, content, category.replace(/-/g, '_'), new Date().toISOString(), id
+    );
 }
 
 export async function deleteKbArticle(id: string): Promise<void> {
-    await prisma.kbArticle.delete({ where: { id } });
+    await execute('DELETE FROM kb_articles WHERE id = ?', id);
 }

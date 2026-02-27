@@ -1,15 +1,15 @@
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { query, queryOne, execute } from '@/lib/db';
 import { auth } from '@/auth';
 import type { Ticket, CreateTicketInput, TicketCategory, TicketPriority, TicketStatus, CannedResponse } from '@/types/database';
 import { logActivity } from './activity';
 
-// Prisma enum values use underscores; our TypeScript interfaces use hyphens
-function fromEnum(val: string): string { return val.replace(/_/g, '-'); }
-function toEnum(val: string): string { return val.replace(/-/g, '_'); }
+// Prisma enum values used underscores; SQLite just uses strings.
+// We keep hyphen-to-underscore for safety if existing data used them.
+function fromEnum(val: string): string { return val?.replace(/_/g, '-') ?? ''; }
+function toEnum(val: string): string { return val?.replace(/-/g, '_') ?? ''; }
 
-// SLA Timeframes in hours
 const SLA_HOURS: Record<TicketPriority, number> = {
     critical: 2,
     high: 8,
@@ -24,21 +24,12 @@ function calculateDueDate(priority: TicketPriority): string {
     return due.toISOString();
 }
 
-function serializeTicket(t: {
-    id: string; number: number; ticketDate: Date | null; employeeName: string;
-    department: string | null; category: string; priority: string; status: string;
-    sentiment: string; subject: string; description: string | null;
-    resolutionNotes: string | null; internalNotes: string | null; dueDate: Date | null;
-    createdById: string | null; assignedToId: string | null; attachmentUrl: string | null;
-    mergedIntoId: string | null; createdAt: Date; updatedAt: Date;
-    comments?: Array<{ id: string; isInternal: boolean }>;
-}): Ticket {
-    const comments = t.comments ?? [];
+function serializeTicket(t: any): Ticket {
     return {
         id: t.id,
         number: t.number,
-        ticket_date: t.ticketDate?.toISOString().split('T')[0] ?? '',
-        employee_name: t.employeeName,
+        ticket_date: t.ticket_date,
+        employee_name: t.employee_name,
         department: t.department ?? '',
         category: fromEnum(t.category) as TicketCategory,
         priority: t.priority as TicketPriority,
@@ -46,18 +37,18 @@ function serializeTicket(t: {
         sentiment: t.sentiment as Ticket['sentiment'],
         subject: t.subject,
         description: t.description ?? '',
-        resolution_notes: t.resolutionNotes ?? '',
-        internal_notes: t.internalNotes ?? null,
-        due_date: t.dueDate?.toISOString() ?? null,
-        created_by: t.createdById ?? null,
-        assigned_to: t.assignedToId ?? null,
-        attachment_url: t.attachmentUrl ?? null,
-        merged_into: t.mergedIntoId ?? null,
-        created_at: t.createdAt.toISOString(),
-        updated_at: t.updatedAt.toISOString(),
-        // Computed comment counts (extra fields used by the UI)
-        ...({ comment_count: comments.length, public_comment_count: comments.filter(c => !c.isInternal).length } as object),
-    } as Ticket;
+        resolution_notes: t.resolution_notes ?? '',
+        internal_notes: t.internal_notes ?? null,
+        due_date: t.due_date,
+        created_by: t.created_by ?? null,
+        assigned_to: t.assigned_to ?? null,
+        attachment_url: t.attachment_url ?? null,
+        merged_into: t.merged_into ?? null,
+        created_at: t.created_at,
+        updated_at: t.updated_at,
+        comment_count: t.comment_count ?? 0,
+        public_comment_count: t.public_comment_count ?? 0,
+    };
 }
 
 export async function getTickets(filters?: {
@@ -69,92 +60,133 @@ export async function getTickets(filters?: {
     created_by?: string;
     assigned_to?: string;
 }): Promise<Ticket[]> {
-    const where: Record<string, unknown> = {};
+    let sql = `
+        SELECT t.*, 
+        (SELECT COUNT(*) FROM ticket_comments c WHERE c.ticket_id = t.id) as comment_count,
+        (SELECT COUNT(*) FROM ticket_comments c WHERE c.ticket_id = t.id AND c.is_internal = 0) as public_comment_count
+        FROM tickets t
+        WHERE 1=1
+    `;
+    const params: any[] = [];
 
-    if (filters?.category) where.category = toEnum(filters.category);
-    if (filters?.priority) where.priority = filters.priority;
-    if (filters?.status) where.status = toEnum(filters.status);
-    if (filters?.created_by) where.createdById = filters.created_by;
-    if (filters?.assigned_to) where.assignedToId = filters.assigned_to;
+    if (filters?.category) {
+        sql += " AND t.category = ?";
+        params.push(toEnum(filters.category));
+    }
+    if (filters?.priority) {
+        sql += " AND t.priority = ?";
+        params.push(filters.priority);
+    }
+    if (filters?.status) {
+        sql += " AND t.status = ?";
+        params.push(toEnum(filters.status));
+    }
+    if (filters?.created_by) {
+        sql += " AND t.created_by = ?";
+        params.push(filters.created_by);
+    }
+    if (filters?.assigned_to) {
+        sql += " AND t.assigned_to = ?";
+        params.push(filters.assigned_to);
+    }
     if (filters?.search) {
-        where.OR = [
-            { employeeName: { contains: filters.search, mode: 'insensitive' } },
-            { subject: { contains: filters.search, mode: 'insensitive' } },
-            { department: { contains: filters.search, mode: 'insensitive' } },
-        ];
+        sql += " AND (t.employee_name LIKE ? OR t.subject LIKE ? OR t.department LIKE ?)";
+        const searchVal = `%${filters.search}%`;
+        params.push(searchVal, searchVal, searchVal);
     }
     if (filters?.dateRange) {
+        // Simple string comparison for dates in SQLite
         const now = new Date();
-        let start: Date;
+        let start: string;
         switch (filters.dateRange) {
-            case 'today': start = new Date(now.toISOString().split('T')[0]); break;
-            case 'week': start = new Date(now); start.setDate(start.getDate() - 7); break;
-            case 'month': start = new Date(now); start.setMonth(start.getMonth() - 1); break;
-            case 'year': start = new Date(now); start.setFullYear(start.getFullYear() - 1); break;
+            case 'today': start = now.toISOString().split('T')[0]; break;
+            case 'week':
+                const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
+                start = weekAgo.toISOString().split('T')[0]; break;
+            case 'month':
+                const monthAgo = new Date(now); monthAgo.setMonth(now.getMonth() - 1);
+                start = monthAgo.toISOString().split('T')[0]; break;
+            case 'year':
+                const yearAgo = new Date(now); yearAgo.setFullYear(now.getFullYear() - 1);
+                start = yearAgo.toISOString().split('T')[0]; break;
+            default: start = '0000-00-00';
         }
-        where.ticketDate = { gte: start };
+        sql += " AND t.ticket_date >= ?";
+        params.push(start);
     }
 
-    const tickets = await prisma.ticket.findMany({
-        where: where as any,
-        include: { comments: { select: { id: true, isInternal: true } } },
-        orderBy: { number: 'desc' },
-    });
+    sql += " ORDER BY t.number DESC";
+
+    const tickets = await query<any>(sql, ...params);
     return tickets.map(serializeTicket);
 }
 
 export async function addTicket(input: CreateTicketInput): Promise<Ticket> {
     const session = await auth();
+    const id = crypto.randomUUID();
     const due_date = calculateDueDate(input.priority);
+    const now = new Date().toISOString();
 
-    const ticket = await prisma.ticket.create({
-        data: {
-            ticketDate: input.ticket_date ? new Date(input.ticket_date) : null,
-            employeeName: input.employee_name,
-            department: input.department,
-            category: toEnum(input.category) as never,
-            priority: input.priority as never,
-            status: input.status ? toEnum(input.status) as never : 'open',
-            sentiment: input.sentiment as never,
-            subject: input.subject,
-            description: input.description,
-            internalNotes: input.internal_notes,
-            dueDate: new Date(due_date),
-            attachmentUrl: input.attachment_url,
-            createdById: session?.user?.id ?? null,
-        },
-        include: { comments: { select: { id: true, isInternal: true } } },
-    });
+    await execute(
+        `INSERT INTO tickets (
+            id, ticket_date, employee_name, department, category, priority, 
+            status, sentiment, subject, description, internal_notes, 
+            due_date, attachment_url, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        id,
+        input.ticket_date ?? null,
+        input.employee_name,
+        input.department ?? null,
+        toEnum(input.category),
+        input.priority,
+        input.status ? toEnum(input.status) : 'open',
+        input.sentiment ?? 'neutral',
+        input.subject,
+        input.description ?? null,
+        input.internal_notes ?? null,
+        due_date,
+        input.attachment_url ?? null,
+        session?.user?.id ?? null,
+        now,
+        now
+    );
 
-    await logActivity(ticket.id, 'created', { by: input.employee_name });
+    await logActivity(id, 'created', { by: input.employee_name });
+
+    // Fetch the inserted ticket to get the auto-incremented 'number'
+    const ticket = await queryOne<any>('SELECT * FROM tickets WHERE id = ?', id);
     return serializeTicket(ticket);
 }
 
 export async function updateTicket(id: string, updates: Partial<Ticket>, previousTicket?: Partial<Ticket>): Promise<Ticket> {
-    const data: Record<string, unknown> = {};
+    const fields: string[] = [];
+    const params: any[] = [];
 
-    if (updates.ticket_date !== undefined) data.ticketDate = updates.ticket_date ? new Date(updates.ticket_date) : null;
-    if (updates.employee_name !== undefined) data.employeeName = updates.employee_name;
-    if (updates.department !== undefined) data.department = updates.department;
-    if (updates.category !== undefined) data.category = toEnum(updates.category);
+    if (updates.ticket_date !== undefined) { fields.push("ticket_date = ?"); params.push(updates.ticket_date); }
+    if (updates.employee_name !== undefined) { fields.push("employee_name = ?"); params.push(updates.employee_name); }
+    if (updates.department !== undefined) { fields.push("department = ?"); params.push(updates.department); }
+    if (updates.category !== undefined) { fields.push("category = ?"); params.push(toEnum(updates.category)); }
     if (updates.priority !== undefined) {
-        data.priority = updates.priority;
-        data.dueDate = new Date(calculateDueDate(updates.priority));
+        fields.push("priority = ?"); params.push(updates.priority);
+        fields.push("due_date = ?"); params.push(calculateDueDate(updates.priority));
     }
-    if (updates.status !== undefined) data.status = toEnum(updates.status);
-    if (updates.sentiment !== undefined) data.sentiment = updates.sentiment;
-    if (updates.subject !== undefined) data.subject = updates.subject;
-    if (updates.description !== undefined) data.description = updates.description;
-    if (updates.resolution_notes !== undefined) data.resolutionNotes = updates.resolution_notes;
-    if (updates.internal_notes !== undefined) data.internalNotes = updates.internal_notes;
-    if (updates.assigned_to !== undefined) data.assignedToId = updates.assigned_to;
-    if (updates.attachment_url !== undefined) data.attachmentUrl = updates.attachment_url;
+    if (updates.status !== undefined) { fields.push("status = ?"); params.push(toEnum(updates.status)); }
+    if (updates.sentiment !== undefined) { fields.push("sentiment = ?"); params.push(updates.sentiment); }
+    if (updates.subject !== undefined) { fields.push("subject = ?"); params.push(updates.subject); }
+    if (updates.description !== undefined) { fields.push("description = ?"); params.push(updates.description); }
+    if (updates.resolution_notes !== undefined) { fields.push("resolution_notes = ?"); params.push(updates.resolution_notes); }
+    if (updates.internal_notes !== undefined) { fields.push("internal_notes = ?"); params.push(updates.internal_notes); }
+    if (updates.assigned_to !== undefined) { fields.push("assigned_to = ?"); params.push(updates.assigned_to); }
+    if (updates.attachment_url !== undefined) { fields.push("attachment_url = ?"); params.push(updates.attachment_url); }
 
-    const ticket = await prisma.ticket.update({
-        where: { id },
-        data: data as any,
-        include: { comments: { select: { id: true, isInternal: true } } },
-    });
+    fields.push("updated_at = ?");
+    params.push(new Date().toISOString());
+
+    if (fields.length > 1) {
+        const sql = `UPDATE tickets SET ${fields.join(', ')} WHERE id = ?`;
+        params.push(id);
+        await execute(sql, ...params);
+    }
 
     if (previousTicket) {
         if (updates.status && updates.status !== previousTicket.status) {
@@ -171,69 +203,62 @@ export async function updateTicket(id: string, updates: Partial<Ticket>, previou
         }
     }
 
+    const ticket = await queryOne<any>('SELECT * FROM tickets WHERE id = ?', id);
     return serializeTicket(ticket);
 }
 
 export async function deleteTicket(id: string): Promise<void> {
-    await prisma.ticket.delete({ where: { id } });
+    await execute('DELETE FROM tickets WHERE id = ?', id);
 }
 
 export async function mergeTickets(sourceId: string, targetId: string): Promise<void> {
-    await prisma.ticket.update({
-        where: { id: sourceId },
-        data: { mergedIntoId: targetId, status: 'closed' },
-    });
+    await execute("UPDATE tickets SET merged_into = ?, status = 'closed' WHERE id = ?", targetId, sourceId);
     await logActivity(sourceId, 'merged', { into: targetId });
     await logActivity(targetId, 'merged', { from: sourceId });
 }
 
 export async function getTicketStats(filters?: { created_by?: string; assigned_to?: string }) {
-    const where: Record<string, unknown> = {};
-    if (filters?.created_by) where.createdById = filters.created_by;
-    if (filters?.assigned_to) where.assignedToId = filters.assigned_to;
+    let sql = 'SELECT status FROM tickets WHERE 1=1';
+    const params: any[] = [];
+    if (filters?.created_by) { sql += ' AND created_by = ?'; params.push(filters.created_by); }
+    if (filters?.assigned_to) { sql += ' AND assigned_to = ?'; params.push(filters.assigned_to); }
 
-    const tickets: Array<{ status: string }> = await prisma.ticket.findMany({
-        where: where as any,
-        select: { status: true },
-    });
+    const rows = await query<any>(sql, ...params);
     return {
-        total: tickets.length,
-        open: tickets.filter(t => t.status === 'open').length,
-        inProgress: tickets.filter(t => t.status === 'in_progress').length,
-        resolved: tickets.filter(t => t.status === 'resolved').length,
-        closed: tickets.filter(t => t.status === 'closed').length,
+        total: rows.length,
+        open: rows.filter(t => t.status === 'open').length,
+        inProgress: rows.filter(t => t.status === 'in_progress').length,
+        resolved: rows.filter(t => t.status === 'resolved').length,
+        closed: rows.filter(t => t.status === 'closed').length,
     };
 }
 
 // ── Canned Responses ──────────────────────────────────────────
 
-function serializeCannedResponse(cr: {
-    id: string; title: string; content: string; createdById: string | null; createdAt: Date;
-}): CannedResponse {
-    return {
+export async function getCannedResponses(): Promise<CannedResponse[]> {
+    const rows = await query<any>('SELECT * FROM canned_responses ORDER BY created_at DESC');
+    return rows.map(cr => ({
         id: cr.id,
         title: cr.title,
         content: cr.content,
-        created_by: cr.createdById,
-        created_at: cr.createdAt.toISOString(),
-    };
-}
-
-export async function getCannedResponses(): Promise<CannedResponse[]> {
-    const responses = await prisma.cannedResponse.findMany({
-        orderBy: { createdAt: 'desc' },
-    });
-    return responses.map(serializeCannedResponse);
+        created_by: cr.created_by,
+        created_at: cr.created_at,
+    }));
 }
 
 export async function addCannedResponse(title: string, content: string): Promise<CannedResponse> {
     const session = await auth();
-    const response = await prisma.cannedResponse.create({
-        data: { title, content, createdById: session?.user?.id ?? null },
-    });
-    return serializeCannedResponse(response);
+    const id = crypto.randomUUID();
+    const now = new Date().toISOString();
+
+    await execute(
+        'INSERT INTO canned_responses (id, title, content, created_by, created_at) VALUES (?, ?, ?, ?, ?)',
+        id, title, content, session?.user?.id ?? null, now
+    );
+
+    return { id, title, content, created_by: session?.user?.id ?? null, created_at: now };
 }
 
 export async function deleteCannedResponse(id: string): Promise<void> {
-    await prisma.cannedResponse.delete({ where: { id } });
+    await execute('DELETE FROM canned_responses WHERE id = ?', id);
 }

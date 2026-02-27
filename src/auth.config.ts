@@ -22,6 +22,17 @@ export const authConfig = {
             }
             return session;
         },
+        authorized({ auth, request: { nextUrl } }) {
+            const isLoggedIn = !!auth?.user;
+            const isLoginPage = nextUrl.pathname.startsWith('/login');
+
+            if (isLoginPage) {
+                if (isLoggedIn) return Response.redirect(new URL('/tickets', nextUrl));
+                return true;
+            }
+
+            return isLoggedIn;
+        },
     },
     providers: [], // Configured in auth.ts
 } satisfies NextAuthConfig;
