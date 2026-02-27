@@ -38,7 +38,7 @@ export async function updateSession(request: NextRequest) {
         userRole = profile?.role;
     }
 
-    const adminRoutes = ['/reports', '/dashboard/settings', '/tasks', '/machines'];
+    const adminRoutes = ['/reports', '/dashboard', '/tasks', '/machines', '/tickets'];
     const isAdminRoute = adminRoutes.some(route => request.nextUrl.pathname.startsWith(route));
 
     // Redirect unauthenticated users to login
@@ -62,7 +62,7 @@ export async function updateSession(request: NextRequest) {
     // Redirect authenticated users away from login
     if (user && request.nextUrl.pathname === '/login') {
         const url = request.nextUrl.clone();
-        url.pathname = '/tickets';
+        url.pathname = (userRole === 'ADMIN' || userRole === 'IT_STAFF') ? '/tickets' : '/portal';
         return NextResponse.redirect(url);
     }
 

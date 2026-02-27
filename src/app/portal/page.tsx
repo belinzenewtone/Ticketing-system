@@ -387,7 +387,7 @@ export default function PortalPage() {
                                     </div>
                                     <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="text-[10px] text-slate-400 font-medium bg-white/80 dark:bg-slate-900/80 px-2 py-1 rounded backdrop-blur border">
-                                            {new Date(ticket.ticket_date).toLocaleDateString()}
+                                            {ticket.ticket_date}
                                         </div>
                                     </div>
                                 </div>
@@ -574,7 +574,7 @@ export default function PortalPage() {
                                         <div className="flex items-end gap-2 max-w-[85%]">
                                             {!isMe && (
                                                 <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                                    {comment.author_name.charAt(0).toUpperCase()}
+                                                    {(comment.author_name || 'U').charAt(0).toUpperCase()}
                                                 </div>
                                             )}
 
@@ -588,13 +588,13 @@ export default function PortalPage() {
                                                 <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
 
                                                 <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
-                                                    {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
+                                                    {comment.created_at ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }) : 'just now'}
                                                 </div>
                                             </div>
 
                                             {isMe && (
                                                 <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                    {comment.author_name.charAt(0).toUpperCase()}
+                                                    {(comment.author_name || 'U').charAt(0).toUpperCase()}
                                                 </div>
                                             )}
                                         </div>
