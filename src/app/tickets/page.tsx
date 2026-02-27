@@ -3,7 +3,7 @@
 import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats, getCannedResponses, addCannedResponse, deleteCannedResponse, mergeTickets } from '@/services/tickets';
-import { getITStaff } from '@/services/auth';
+import { getITStaff } from '@/services/auth-actions';
 import { getTicketActivity } from '@/services/activity';
 import { getComments, addComment, deleteComment } from '@/services/comments';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment, CreateCommentInput } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment, CreateCommentInput, Profile } from '@/types/database';
 import { generateTicketSummary } from '@/services/ai';
 import { formatDistanceToNow } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -380,9 +380,20 @@ export default function TicketsPage() {
     const resolutionRate = stats && stats.total > 0 ? Math.round(((stats.resolved + stats.closed) / stats.total) * 100) : 0;
 
     const categoryBreakdown = tickets ? Object.entries(
-        tickets.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + 1; return acc; }, {} as Record<string, number>)
+        tickets.reduce((acc: Record<string, number>, t: TicketType) => {
+            acc[t.category] = (acc[t.category] || 0) + 1;
+            return acc;
+        }, {})
     ).sort((a, b) => b[1] - a[1]) : [];
 
+    const generateDailyStats = (dateList: string[], dataList: TicketType[]) => {
+        const countsByDate = dataList.reduce((acc: Record<string, number>, t: TicketType) => {
+            const dateStr = t.created_at.split('T')[0];
+            acc[dateStr] = (acc[dateStr] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+        return dateList.map(date => countsByDate[date] || 0);
+    };
     const displayedTickets = useMemo(() => {
         if (!tickets) return [];
         if (showOverdueOnly) return tickets.filter(t => getSlaStatus(t) === 'overdue');

@@ -4,7 +4,7 @@ import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getTickets, addTicket, updateTicket, deleteTicket } from '@/services/tickets';
 import { uploadTicketAttachment } from '@/services/storage';
-import { getITStaff } from '@/services/auth';
+import { getITStaff } from '@/services/auth-actions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,7 +29,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle, Profile } from '@/types/database';
 import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
 import { Bot, Sparkles } from 'lucide-react';
 import { getKbArticles } from '@/services/knowledgeBase';
@@ -259,7 +259,7 @@ export default function PortalPage() {
 
         const fullData: CreateTicketInput = {
             ticket_date: new Date().toISOString().split('T')[0],
-            employee_name: profile.name,
+            employee_name: profile.name || '',
             department: 'Employee Portal', // Simplified
             created_by: profile.id,
             attachment_url,
@@ -644,7 +644,7 @@ export default function PortalPage() {
                                         try {
                                             await addComment(
                                                 { ticket_id: viewCommentsTicket.id, content: newComment.trim(), is_internal: false },
-                                                profile.name
+                                                profile.name || "User"
                                             );
                                             setNewComment('');
                                             refetchComments();

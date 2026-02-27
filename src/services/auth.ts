@@ -1,68 +1,20 @@
-import { createClient } from '@/lib/supabase/client';
-import type { Profile } from '@/types/database';
+import { signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 
-const supabase = createClient();
-
+// Client-side sign in
 export async function signIn(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+    const result = await nextAuthSignIn('credentials', {
+        email,
+        password,
+        redirect: false,
+    });
+
+    if (result?.error) {
+        throw new Error('Invalid email or password');
+    }
+    return result;
 }
 
+// Client-side sign out
 export async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-}
-
-export async function getSession() {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-    return session;
-}
-
-export async function getCurrentUser() {
-    const { data: { user }, error } = await supabase.auth.getUser();
-    if (error) throw error;
-    return user;
-}
-
-export async function getCurrentProfile(): Promise<Profile | null> {
-    const user = await getCurrentUser();
-    if (!user) return null;
-
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-    if (error) throw error;
-    return data;
-}
-
-export async function getITStaff(): Promise<Profile[]> {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('role', ['ADMIN', 'IT_STAFF']);
-
-    if (error) throw error;
-    return data || [];
-}
-
-export async function updateUserName(name: string): Promise<void> {
-    const user = await getCurrentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { error } = await supabase
-        .from('profiles')
-        .update({ name })
-        .eq('id', user.id);
-
-    if (error) throw error;
-}
-
-export async function updateUserPassword(password: string): Promise<void> {
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) throw error;
+    await nextAuthSignOut({ redirect: true, callbackUrl: '/login' });
 }

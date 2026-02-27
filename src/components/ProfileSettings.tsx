@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAppStore } from '@/store/useAppStore';
-import { updateUserName, updateUserPassword } from '@/services/auth';
+import { updateUserName, updateUserPassword } from '@/services/auth-actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -89,7 +89,9 @@ export default function ProfileSettings() {
                 <Card className="border-slate-200 dark:border-slate-800 shadow-sm">
                     <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                            <User className="w-5 h-5 text-emerald-500" />
+                            <div className="flex h-full w-full items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-medium">
+                                {profile.name ? profile.name.substring(0, 2).toUpperCase() : 'U'}
+                            </div>
                             Personal Information
                         </CardTitle>
                         <CardDescription>Update your display name.</CardDescription>

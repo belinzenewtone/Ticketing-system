@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { useAppStore } from '@/store/useAppStore';
-import { getCurrentProfile } from '@/services/auth';
+import { getCurrentProfile } from '@/services/auth-actions';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';

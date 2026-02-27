@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { FileBarChart, LogOut, Menu, X, Ticket, User } from 'lucide-react';
+import ProfileSettings from '../ProfileSettings';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
 import { signOut } from '@/services/auth';

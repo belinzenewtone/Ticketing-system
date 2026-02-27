@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { signIn, getCurrentProfile, signOut } from '@/services/auth';
+import { signIn, signOut } from '@/services/auth';
+import { getCurrentProfile } from '@/services/auth-actions';
 import { Loader2, Lock } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
