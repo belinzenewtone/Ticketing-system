@@ -164,10 +164,10 @@ export default function TicketsPage() {
     // Scroll to bottom when comments tab is loaded or updated
     const messagesEndRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (dialogTab === 'comments' && ticketComments && messagesEndRef.current) {
+        if (dialogTab === 'comments' && ticketComments) {
             setTimeout(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 50);
+            }, 250);
         }
     }, [dialogTab, ticketComments?.length]);
 

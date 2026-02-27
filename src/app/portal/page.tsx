@@ -169,11 +169,11 @@ export default function PortalPage() {
 
     // Scroll to bottom when comments loaded or updated
     useEffect(() => {
-        if (viewComments && viewCommentsTicket && messagesEndRef.current) {
+        if (viewComments && viewCommentsTicket) {
             // Use timeout to allow DOM to paint the new items first
             setTimeout(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 50);
+            }, 250);
         }
     }, [viewComments?.length, viewCommentsTicket]);
 
