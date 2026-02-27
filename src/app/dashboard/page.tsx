@@ -304,7 +304,7 @@ export default function DashboardPage() {
                                             <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No entries found</TableCell>
                                         </TableRow>
                                     ) : entries?.map((entry) => (
-                                        <TableRow key={entry.id} className={entry.completed ? 'opacity-60 bg-emerald-50/10 dark:bg-emerald-950/5' : ''}>
+                                        <TableRow key={entry.id} className={`group ${entry.completed ? 'opacity-60 bg-emerald-50/10 dark:bg-emerald-950/5' : ''}`}>
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
                                                 <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
                                                     #{entry.number}
@@ -334,7 +334,7 @@ export default function DashboardPage() {
                                                 </button>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleEdit(entry)} title="Edit">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>

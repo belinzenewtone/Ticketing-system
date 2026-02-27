@@ -593,7 +593,7 @@ export default function TicketsPage() {
                                     ) : displayedTickets.map((ticket) => {
                                         const slaStatus = getSlaStatus(ticket);
                                         return (
-                                            <TableRow key={ticket.id} className={`${ticket.status === 'closed' || ticket.merged_into ? 'opacity-60' : ''} ${slaStatus === 'overdue' ? 'bg-red-50/20 dark:bg-red-950/10' : ''}`}>
+                                            <TableRow key={ticket.id} className={`group ${ticket.status === 'closed' || ticket.merged_into ? 'opacity-60' : ''} ${slaStatus === 'overdue' ? 'bg-red-50/20 dark:bg-red-950/10' : ''}`}>
                                                 <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
                                                     <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
                                                         {ticket.merged_into ? <span className="line-through text-slate-400">#{ticket.number}</span> : `#${ticket.number}`}
@@ -664,7 +664,7 @@ export default function TicketsPage() {
                                                 </TableCell>
 
                                                 <TableCell className="text-right w-[160px]">
-                                                    <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    <div className="flex items-center justify-end gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                                                         {profile?.id && ticket.assigned_to !== profile.id && ticket.status !== 'closed' && !ticket.merged_into && (
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => assignMut.mutate({ id: ticket.id, assigned_to: profile.id })} title="Assign to me">
                                                                 <UserPlus className="h-4 w-4" />
