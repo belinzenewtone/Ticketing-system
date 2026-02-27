@@ -286,58 +286,66 @@ export default function DashboardPage() {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead>#</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Employee</TableHead>
-                                        <TableHead>Work Email</TableHead>
-                                        <TableHead>Phone</TableHead>
-                                        <TableHead>Resolution</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                    <TableRow className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                                        <TableHead className="w-[120px] border-r border-slate-200/60 dark:border-slate-800/60">Entry</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Employee & Contact</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Resolution</TableHead>
+                                        <TableHead className="text-center w-[100px] border-r border-slate-200/60 dark:border-slate-800/60">Complete</TableHead>
+                                        <TableHead className="text-right w-[160px]">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                                         <TableRow key={i}>
-                                            {Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                                            {Array.from({ length: 5 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
                                         </TableRow>
                                     )) : entries?.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">No entries found</TableCell>
+                                            <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">No entries found</TableCell>
                                         </TableRow>
                                     ) : entries?.map((entry) => (
-                                        <TableRow key={entry.id}>
-                                            <TableCell className="font-mono font-medium">{entry.number}</TableCell>
-                                            <TableCell className="text-muted-foreground">{entry.entry_date}</TableCell>
-                                            <TableCell className="font-medium">{entry.employee_name}</TableCell>
-                                            <TableCell className="text-muted-foreground">{entry.work_email}</TableCell>
-                                            <TableCell className="text-muted-foreground">{entry.employee_phone}</TableCell>
-                                            <TableCell>
-                                                <Badge className={resolutionConfig[entry.resolution]?.color}>
-                                                    {resolutionConfig[entry.resolution]?.label}
+                                        <TableRow key={entry.id} className={entry.completed ? 'opacity-60 bg-emerald-50/10 dark:bg-emerald-950/5' : ''}>
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                                <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
+                                                    #{entry.number}
+                                                </div>
+                                                <div className="text-[10px] text-slate-500 mt-1">
+                                                    {entry.entry_date}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                                <div className="font-medium text-sm text-foreground">{entry.employee_name}</div>
+                                                <div className="text-xs text-muted-foreground mt-0.5 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                                                    <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" /> {entry.work_email}</span>
+                                                    <span className="flex items-center gap-1 font-mono"><span className="text-[10px]">📱</span> {entry.employee_phone}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                                <Badge variant="outline" className={`h-6 px-2 text-[11px] font-medium border-0 ${resolutionConfig[entry.resolution]?.color.replace('bg-', 'text-').replace('text-white', 'bg-opacity-10 dark:bg-opacity-20 ')} bg-current`}>
+                                                    {resolutionConfig[entry.resolution]?.label.replace('✅', '').trim()}
+                                                    {entry.resolution === 'sorted' && <CheckCircle className="h-3 w-3 ml-1" />}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell>
-                                                <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors">
+                                            <TableCell className="text-center border-r border-slate-200/60 dark:border-slate-800/60">
+                                                <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer mx-auto p-1.5 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                                                     {entry.completed
                                                         ? <CheckCircle className="h-5 w-5 text-emerald-500" />
-                                                        : <Circle className="h-5 w-5 text-muted-foreground" />}
+                                                        : <Circle className="h-5 w-5 text-slate-300 dark:text-slate-600" />}
                                                 </button>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-1">
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => handleEdit(entry)} title="Edit">
+                                                <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => handleEdit(entry)} title="Edit">
                                                         <Pencil className="h-4 w-4" />
                                                     </Button>
                                                     {!entry.completed && (
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400" onClick={() => toggleMut.mutate({ id: entry.id, completed: true })} title="Mark Complete">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" onClick={() => toggleMut.mutate({ id: entry.id, completed: true })} title="Mark Complete">
                                                             <CheckCircle className="h-4 w-4" />
                                                         </Button>
                                                     )}
                                                     <AlertDialog>
                                                         <AlertDialogTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"><Trash2 className="h-4 w-4" /></Button>
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
@@ -346,7 +354,7 @@ export default function DashboardPage() {
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
                                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteMut.mutate(entry.id)}>Delete</AlertDialogAction>
+                                                                <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteMut.mutate(entry.id)}>Delete</AlertDialogAction>
                                                             </AlertDialogFooter>
                                                         </AlertDialogContent>
                                                     </AlertDialog>

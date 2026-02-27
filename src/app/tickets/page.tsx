@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Send, Lock, Activity, TrendingUp, Timer } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Send, Lock, Activity, TrendingUp, Timer, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -572,107 +572,125 @@ export default function TicketsPage() {
                         <div className="overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead>#</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>User / Dept</TableHead>
-                                        <TableHead>Category</TableHead>
-                                        <TableHead>Status / Priority / SLA</TableHead>
-                                        <TableHead>Assigned To</TableHead>
+                                    <TableRow className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                                        <TableHead className="w-[120px] border-r border-slate-200/60 dark:border-slate-800/60">Ticket & Priority</TableHead>
+                                        <TableHead className="min-w-[250px] border-r border-slate-200/60 dark:border-slate-800/60">Subject & Category</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Requester</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Status & Due</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Assignee</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                                         <TableRow key={i}>
-                                            {Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                                            {Array.from({ length: 6 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
                                         </TableRow>
                                     )) : displayedTickets.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">No tickets found</TableCell>
+                                            <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">No tickets found</TableCell>
                                         </TableRow>
                                     ) : displayedTickets.map((ticket) => {
                                         const slaStatus = getSlaStatus(ticket);
                                         return (
-                                            <TableRow key={ticket.id} className={`${ticket.status === 'closed' || ticket.merged_into ? 'opacity-60' : ''} ${slaStatus === 'overdue' ? 'bg-red-50/40 dark:bg-red-950/10' : ''}`}>
-                                                <TableCell className="font-mono font-medium">
-                                                    {ticket.merged_into ? <span className="line-through text-slate-400">{ticket.number}</span> : ticket.number}
+                                            <TableRow key={ticket.id} className={`${ticket.status === 'closed' || ticket.merged_into ? 'opacity-60' : ''} ${slaStatus === 'overdue' ? 'bg-red-50/20 dark:bg-red-950/10' : ''}`}>
+                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                                    <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
+                                                        {ticket.merged_into ? <span className="line-through text-slate-400">#{ticket.number}</span> : `#${ticket.number}`}
+                                                    </div>
+                                                    <div className="flex flex-col gap-0.5 mt-1">
+                                                        <span className="flex items-center gap-1.5 text-[11px] font-medium text-foreground w-fit">
+                                                            <Circle className={`h-2.5 w-2.5 fill-current ${priorityConfig[ticket.priority]?.color.split(' ')[1]}`} />
+                                                            {priorityConfig[ticket.priority]?.label}
+                                                        </span>
+                                                        <div className="text-[10px] text-slate-500 mt-0.5">
+                                                            {ticket.ticket_date}
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
-                                                <TableCell className="text-muted-foreground whitespace-nowrap text-sm">{ticket.ticket_date}</TableCell>
-                                                <TableCell>
-                                                    <div className="font-medium" title={ticket.subject}>{ticket.employee_name}</div>
-                                                    <div className="text-xs text-muted-foreground">{ticket.department || 'N/A'}</div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <span className="text-sm whitespace-nowrap">{categoryConfig[ticket.category]?.icon} {categoryConfig[ticket.category]?.label}</span>
-                                                    <div className="text-xs text-muted-foreground max-w-[120px] truncate flex items-center gap-1" title={ticket.subject}>
+
+                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                                    <div className="font-medium text-foreground text-sm max-w-[300px] truncate flex items-center gap-2" title={ticket.subject}>
                                                         {ticket.sentiment && ticket.sentiment !== 'neutral' && ticket.sentiment !== 'positive' && (
                                                             <span title={`Sentiment: ${ticket.sentiment}`}>{sentimentConfig[ticket.sentiment]?.icon}</span>
                                                         )}
                                                         {ticket.subject}
                                                     </div>
-                                                    {ticket.merged_into && (
-                                                        <Badge variant="outline" className="text-[10px] mt-1 bg-slate-100 text-slate-500 dark:bg-slate-800">
-                                                            <GitMerge className="h-2.5 w-2.5 mr-1" /> Merged
-                                                        </Badge>
-                                                    )}
-                                                </TableCell>
-                                                <TableCell className="space-y-1">
-                                                    <div>
-                                                        <Badge variant="outline" className={statusConfig[ticket.status]?.color}>
-                                                            {statusConfig[ticket.status]?.label}
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="flex items-center gap-1.5 flex-wrap">
-                                                        <Badge variant="outline" className={priorityConfig[ticket.priority]?.color}>
-                                                            {priorityConfig[ticket.priority]?.label}
-                                                        </Badge>
-                                                        {ticket.due_date && slaStatus !== 'done' && (
-                                                            <span className={`text-[10px] font-medium flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border ${slaStatus === 'overdue'
-                                                                ? 'bg-red-100 text-red-600 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800'
-                                                                : slaStatus === 'due-soon'
-                                                                    ? 'bg-amber-100 text-amber-600 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800'
-                                                                    : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400'
-                                                                }`}>
-                                                                {slaStatus === 'overdue' ? <AlertTriangle className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}
-                                                                {slaStatus === 'overdue' ? 'OVERDUE' : slaStatus === 'due-soon' ? 'DUE SOON' : `Due ${new Date(ticket.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                            <span>{categoryConfig[ticket.category]?.icon}</span>
+                                                            {categoryConfig[ticket.category]?.label}
+                                                        </span>
+                                                        {ticket.merged_into && (
+                                                            <span className="text-[10px] font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                                <GitMerge className="h-3 w-3" /> Merged
                                                             </span>
                                                         )}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>
-                                                    <span className="text-sm font-medium">
-                                                        {ticket.assigned_to && staffMap[ticket.assigned_to] ? staffMap[ticket.assigned_to] : <span className="text-slate-400 italic">Unassigned</span>}
+
+                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                                    <div className="font-medium text-sm text-foreground">{ticket.employee_name}</div>
+                                                    <div className="text-xs text-muted-foreground">{ticket.department || 'N/A'}</div>
+                                                </TableCell>
+
+                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                                    <div className="flex flex-col gap-1.5 justify-center">
+                                                        <Badge variant="outline" className={`h-5 w-[88px] justify-center px-1 text-[11px] font-medium border-0 shrink-0 ${statusConfig[ticket.status]?.color.replace('border-', 'border-0 ')}`}>
+                                                            {statusConfig[ticket.status]?.label}
+                                                        </Badge>
+                                                        {ticket.due_date && slaStatus !== 'done' && (
+                                                            <div className={`text-[11px] flex items-center gap-1 ${slaStatus === 'overdue' ? 'text-red-500 font-medium' : slaStatus === 'due-soon' ? 'text-amber-500' : 'text-slate-400'}`}>
+                                                                {slaStatus === 'overdue' ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                                                {slaStatus === 'overdue' ? 'Overdue' : `Due ${new Date(ticket.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </TableCell>
+
+                                                <TableCell className="w-[150px] border-r border-slate-200/60 dark:border-slate-800/60">
+                                                    <span className="text-sm font-medium text-foreground flex items-center gap-2">
+                                                        {ticket.assigned_to && staffMap[ticket.assigned_to] ? (
+                                                            <>
+                                                                <div className="h-5 w-5 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[10px] text-slate-600 dark:text-slate-400 shrink-0">
+                                                                    {staffMap[ticket.assigned_to].charAt(0)}
+                                                                </div>
+                                                                <span className="truncate">{staffMap[ticket.assigned_to]}</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-slate-400 italic text-xs">Unassigned</span>
+                                                        )}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <div className="flex items-center justify-end gap-1">
+
+                                                <TableCell className="text-right w-[160px]">
+                                                    <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity md:opacity-100">
                                                         {profile?.id && ticket.assigned_to !== profile.id && ticket.status !== 'closed' && !ticket.merged_into && (
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400" onClick={() => assignMut.mutate({ id: ticket.id, assigned_to: profile.id })} title="Assign to me">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => assignMut.mutate({ id: ticket.id, assigned_to: profile.id })} title="Assign to me">
                                                                 <UserPlus className="h-4 w-4" />
                                                             </Button>
                                                         )}
                                                         {ticket.status === 'open' && !ticket.merged_into && (
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500 hover:text-amber-400" onClick={() => statusMut.mutate({ id: ticket.id, status: 'in-progress' })} title="Start Working">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-amber-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/30" onClick={() => statusMut.mutate({ id: ticket.id, status: 'in-progress' })} title="Start Working">
                                                                 <Loader2 className="h-4 w-4" />
                                                             </Button>
                                                         )}
                                                         {ticket.status === 'in-progress' && !ticket.merged_into && (
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-400" onClick={() => statusMut.mutate({ id: ticket.id, status: 'resolved' })} title="Mark Resolved">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" onClick={() => statusMut.mutate({ id: ticket.id, status: 'resolved' })} title="Mark Resolved">
                                                                 <CheckCircle2 className="h-4 w-4" />
                                                             </Button>
                                                         )}
                                                         {ticket.status !== 'closed' && ticket.status !== 'resolved' && !ticket.merged_into && (
-                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500 hover:text-purple-400" onClick={() => { setMergingTicket(ticket); setMergeTargetId(''); }} title="Merge into another ticket">
+                                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-purple-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-950/30" onClick={() => { setMergingTicket(ticket); setMergeTargetId(''); }} title="Merge into another ticket">
                                                                 <GitMerge className="h-4 w-4" />
                                                             </Button>
                                                         )}
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300" onClick={() => handleEdit(ticket)} title="Edit">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 dark:hover:text-slate-300" onClick={() => handleEdit(ticket)} title="Edit">
                                                             <Pencil className="h-4 w-4" />
                                                         </Button>
                                                         <AlertDialog>
                                                             <AlertDialogTrigger asChild>
-                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400"><Trash2 className="h-4 w-4" /></Button>
+                                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"><Trash2 className="h-4 w-4" /></Button>
                                                             </AlertDialogTrigger>
                                                             <AlertDialogContent>
                                                                 <AlertDialogHeader>
@@ -681,7 +699,7 @@ export default function TicketsPage() {
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
                                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                                    <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => deleteMut.mutate(ticket.id)}>Delete</AlertDialogAction>
+                                                                    <AlertDialogAction className="bg-red-600 hover:bg-red-700 text-white" onClick={() => deleteMut.mutate(ticket.id)}>Delete</AlertDialogAction>
                                                                 </AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>

@@ -55,18 +55,18 @@ export function Sidebar() {
 
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-40 h-dvh w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300',
+                    'fixed top-0 left-0 z-40 h-dvh w-56 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300',
                     'lg:translate-x-0',
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
                 {/* Header with close button inside */}
-                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
                     <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
-                        <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent">
+                        <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent leading-tight">
                             Ticketing System
                         </h1>
-                        <p className="text-xs text-slate-500 mt-1">JTL Internal System</p>
+                        <p className="text-[11px] text-slate-500 mt-1">JTL Internal System</p>
                     </Link>
                     <Button
                         variant="ghost"
@@ -89,13 +89,13 @@ export function Sidebar() {
                                 href={item.href}
                                 onClick={() => { if (window.innerWidth < 1024) toggleSidebar(); }}
                                 className={cn(
-                                    'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200',
+                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
                                     isActive
                                         ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
                                         : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                 )}
                             >
-                                <item.icon className="h-5 w-5" />
+                                <item.icon className="h-4 w-4" />
                                 {item.label}
                             </Link>
                         );
