@@ -102,7 +102,7 @@ export default function TicketsPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [cannedResponsesOpen, setCannedResponsesOpen] = useState(false);
     const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
-    const { readCounts, markTicketAsRead } = useUnreadComments();
+    const { readCounts, isInitialized, markTicketAsRead } = useUnreadComments();
 
     const [view, setView] = useState<'dashboard' | 'list'>('list');
     const [showOverdueOnly, setShowOverdueOnly] = useState(false);
@@ -644,7 +644,7 @@ export default function TicketsPage() {
                                                                 <GitMerge className="h-3 w-3" /> Merged
                                                             </span>
                                                         )}
-                                                        {(ticket as any).comment_count > (readCounts[ticket.id] || 0) && (
+                                                        {isInitialized && (ticket as any).comment_count > (readCounts[ticket.id] || 0) && (
                                                             <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
                                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -786,7 +786,7 @@ export default function TicketsPage() {
                                     {tab === 'comments' && <MessageSquare className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab === 'activity' && <Activity className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                    {tab === 'comments' && ticketComments && ticketComments.length > (readCounts[editingTicket.id] || 0) && (
+                                    {isInitialized && tab === 'comments' && ticketComments && ticketComments.length > (readCounts[editingTicket.id] || 0) && (
                                         <span className="ml-1.5 text-[10px] bg-red-500 text-white dark:bg-red-500 rounded-full px-1.5 py-0.5 font-bold shadow-sm">
                                             {ticketComments.length - (readCounts[editingTicket.id] || 0)}
                                         </span>

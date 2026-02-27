@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react';
 export function useUnreadComments() {
     // Store in format: { "ticketId": lastSeenCommentCount }
     const [readCounts, setReadCounts] = useState<Record<string, number>>({});
+    const [isInitialized, setIsInitialized] = useState(false);
 
     useEffect(() => {
         // Load on mount
@@ -19,6 +20,8 @@ export function useUnreadComments() {
             }
         } catch (e) {
             console.error('Failed to load read counts from storage', e);
+        } finally {
+            setIsInitialized(true);
         }
     }, []);
 
@@ -44,6 +47,7 @@ export function useUnreadComments() {
 
     return {
         readCounts,
+        isInitialized,
         markTicketAsRead,
         hasUnread
     };
