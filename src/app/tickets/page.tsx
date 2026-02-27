@@ -20,7 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useAppStore } from '@/store/useAppStore';
 import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Send, Lock, Activity, TrendingUp, Timer, Circle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -160,6 +160,14 @@ export default function TicketsPage() {
             markTicketAsRead(editingTicket.id, ticketComments.length);
         }
     }, [formOpen, dialogTab, editingTicket, ticketComments, markTicketAsRead]);
+
+    // Scroll to bottom when comments tab is loaded
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (dialogTab === 'comments' && ticketComments && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [dialogTab, ticketComments]);
 
     // ── Mutations ────────────────────────────────────────────
     const invalidate = () => {
@@ -1003,6 +1011,7 @@ export default function TicketsPage() {
                                         </div>
                                     );
                                 })}
+                                <div ref={messagesEndRef} />
                             </div>
 
                             {/* New comment form */}

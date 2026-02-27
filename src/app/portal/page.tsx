@@ -76,6 +76,7 @@ export default function PortalPage() {
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     // AI State
     const [deflections, setDeflections] = useState<DeflectionSuggestion[]>([]);
@@ -165,6 +166,13 @@ export default function PortalPage() {
             markTicketAsRead(viewCommentsTicket.id, viewComments.length);
         }
     }, [viewCommentsTicket, viewComments, markTicketAsRead]);
+
+    // Scroll to bottom when comments loaded
+    useEffect(() => {
+        if (viewComments && viewCommentsTicket && messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [viewComments, viewCommentsTicket]);
 
     const handleOpenChange = (open: boolean) => {
         setFormOpen(open);
@@ -610,6 +618,7 @@ export default function PortalPage() {
                                     </div>
                                 );
                             })}
+                            <div ref={messagesEndRef} />
                         </div>
 
                         {/* Employee reply */}
