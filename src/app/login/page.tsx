@@ -76,7 +76,7 @@ export default function LoginPage() {
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         {error && (
-                            <div className="bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 rounded-lg p-3 text-sm animate-in fade-in">
+                            <div className="bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 rounded-lg p-3 text-sm text-center animate-in fade-in">
                                 {error}
                             </div>
                         )}
