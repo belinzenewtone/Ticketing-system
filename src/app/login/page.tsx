@@ -52,7 +52,7 @@ export default function LoginPage() {
             if (profile?.role === 'USER') {
                 router.push('/portal');
             } else {
-                router.push('/dashboard');
+                router.push('/tickets');
             }
             router.refresh();
         } catch (err: unknown) {

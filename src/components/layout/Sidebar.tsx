@@ -62,7 +62,7 @@ export function Sidebar() {
             >
                 {/* Header with close button inside */}
                 <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
-                    <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
+                    <Link href="/tickets" className="hover:opacity-80 transition-opacity">
                         <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent leading-tight">
                             Ticketing System
                         </h1>
