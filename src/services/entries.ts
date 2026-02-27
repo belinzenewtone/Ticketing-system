@@ -27,7 +27,7 @@ export async function getEntries(filters?: {
     }
     if (filters?.dateRange) {
         const now = new Date();
-        let start: string;
+        let start: string | undefined;
         switch (filters.dateRange) {
             case 'today':
                 start = now.toISOString().split('T')[0];
@@ -45,7 +45,9 @@ export async function getEntries(filters?: {
                 start = now.toISOString().split('T')[0];
                 break;
         }
-        query = query.gte('entry_date', start);
+        if (start) {
+            query = query.gte('entry_date', start);
+        }
     }
 
     const { data, error } = await query;

@@ -22,9 +22,9 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, Lock } from 'lucide-react';
+import { Plus, Search, Ticket, Clock, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, Lock, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -78,6 +78,7 @@ export default function PortalPage() {
     const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // AI State
     const [deflections, setDeflections] = useState<DeflectionSuggestion[]>([]);
@@ -465,12 +466,42 @@ export default function PortalPage() {
                         <div className="space-y-2">
                             <Label>Attachment (Optional)</Label>
                             <div className="flex items-center gap-2">
-                                <Input
+                                <input
                                     type="file"
+                                    ref={fileInputRef}
                                     onChange={(e) => setAttachment(e.target.files?.[0] || null)}
-                                    className="cursor-pointer file:text-emerald-600 file:bg-emerald-50 dark:file:bg-emerald-950/30 file:border-0 file:rounded-md file:px-4 file:py-1 file:mr-4 file:font-medium text-sm"
+                                    className="hidden"
                                     accept="image/*,.pdf,.doc,.docx"
                                 />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="text-slate-600 dark:text-slate-300"
+                                >
+                                    <Paperclip className="h-4 w-4 mr-2" />
+                                    Choose File
+                                </Button>
+                                {attachment && (
+                                    <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-md border border-slate-200 dark:border-slate-700">
+                                        <span className="text-sm text-slate-700 dark:text-slate-300 truncate max-w-[200px]">
+                                            {attachment.name}
+                                        </span>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-5 w-5 text-slate-400 hover:text-red-500 rounded-full"
+                                            onClick={() => {
+                                                setAttachment(null);
+                                                if (fileInputRef.current) fileInputRef.current.value = '';
+                                            }}
+                                        >
+                                            <X className="h-3 w-3" />
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                             <p className="text-xs text-slate-500">Attach screenshots or error logs if available.</p>
                         </div>

@@ -41,7 +41,7 @@ export default function ReportsPage() {
 
             if (reportType === 'entries') {
                 const entries = await getEntries({ dateRange });
-                (autoTableModule as { default: (doc: jsPDF, opts: Record<string, unknown>) => void }).default(doc, {
+                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
                     startY: 44,
                     head: [['#', 'Date', 'Employee', 'Work Email', 'Resolution', 'Completed']],
                     body: entries.map(e => [e.number, e.entry_date, e.employee_name, e.work_email, e.resolution, e.completed ? 'Yes' : 'No']),
@@ -50,7 +50,7 @@ export default function ReportsPage() {
                 });
             } else if (reportType === 'tasks') {
                 const tasks = await getTasks();
-                (autoTableModule as { default: (doc: jsPDF, opts: Record<string, unknown>) => void }).default(doc, {
+                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
                     startY: 44,
                     head: [['Date', 'Task', 'Priority', 'Completed']],
                     body: tasks.map(t => [t.date, t.text, t.importance, t.completed ? 'Yes' : 'No']),
@@ -59,7 +59,7 @@ export default function ReportsPage() {
                 });
             } else {
                 const machines = await getMachines();
-                (autoTableModule as { default: (doc: jsPDF, opts: Record<string, unknown>) => void }).default(doc, {
+                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
                     startY: 44,
                     head: [['#', 'Date', 'Requester', 'User', 'Reason', 'Status']],
                     body: machines.map(m => [m.number, m.date, m.requester_name, m.user_name, m.reason, m.status]),

@@ -28,7 +28,7 @@ const passwordSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileSchema>;
 type PasswordFormValues = z.infer<typeof passwordSchema>;
 
-export default function ProfilePage() {
+export default function ProfileSettings() {
     const { profile, setProfile } = useAppStore();
     const [nameLoading, setNameLoading] = useState(false);
     const [passwordLoading, setPasswordLoading] = useState(false);

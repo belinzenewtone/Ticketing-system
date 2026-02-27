@@ -55,7 +55,7 @@ export async function getTickets(filters?: {
     }
     if (filters?.dateRange) {
         const now = new Date();
-        let start: string;
+        let start: string | undefined;
         switch (filters.dateRange) {
             case 'today':
                 start = now.toISOString().split('T')[0];
@@ -73,7 +73,7 @@ export async function getTickets(filters?: {
                 start = now.toISOString().split('T')[0];
                 break;
         }
-        if (start!) {
+        if (start) {
             query = query.gte('ticket_date', start);
         }
     }
