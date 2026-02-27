@@ -30,7 +30,7 @@ export async function logActivity(
                 ticketId: ticket_id,
                 userId: session?.user?.id ?? null,
                 action,
-                metadata: metadata ?? null,
+                metadata: metadata ?? undefined,
             },
         });
     } catch (error) {
