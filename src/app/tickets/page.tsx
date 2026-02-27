@@ -125,7 +125,7 @@ export default function TicketsPage() {
 
     // ── Queries ──────────────────────────────────────────────
     const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
-    const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name; return acc; }, {} as Record<string, string>) || {};
+    const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name ?? ''; return acc; }, {} as Record<string, string>) || {};
 
     const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['ticket-stats'], queryFn: () => getTicketStats() });
     const { data: tickets, isLoading } = useQuery({

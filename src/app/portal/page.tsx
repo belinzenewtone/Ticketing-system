@@ -97,7 +97,7 @@ export default function PortalPage() {
 
     // Fetch IT Staff mapping
     const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
-    const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name; return acc; }, {} as Record<string, string>) || {};
+    const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name ?? ''; return acc; }, {} as Record<string, string>) || {};
 
     // Only fetch tickets created by this user
     const { data: tickets, isLoading } = useQuery({
