@@ -120,6 +120,8 @@ export interface Ticket {
     merged_into: string | null;
     created_at: string;
     updated_at: string;
+    comment_count: number;
+    public_comment_count: number;
 }
 
 export interface CreateTicketInput {
