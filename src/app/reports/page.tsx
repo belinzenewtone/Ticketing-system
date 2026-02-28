@@ -20,9 +20,9 @@ export default function ReportsPage() {
     const [dateRange, setDateRange] = useState<DateRange>('month');
     const [generating, setGenerating] = useState(false);
 
-    const { data: entryStats } = useQuery({ queryKey: ['entry-stats'], queryFn: getEntryStats });
-    const { data: taskStats } = useQuery({ queryKey: ['task-stats'], queryFn: getTaskStats });
-    const { data: machineStats } = useQuery({ queryKey: ['machine-stats'], queryFn: getMachineStats });
+    const { data: entryStats } = useQuery({ queryKey: ['entry-stats'], queryFn: () => getEntryStats() });
+    const { data: taskStats } = useQuery({ queryKey: ['task-stats'], queryFn: () => getTaskStats() });
+    const { data: machineStats } = useQuery({ queryKey: ['machine-stats'], queryFn: () => getMachineStats() });
 
     const handleGenerate = async () => {
         setGenerating(true);
