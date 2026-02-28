@@ -1,50 +1,27 @@
-import { getRequestContext } from '@cloudflare/next-on-pages';
+import { Pool } from 'pg';
 
-// Define minimal D1 types if not available globally
-export interface D1Result<T = unknown> {
-    results: T[];
-    success: boolean;
-    meta: any;
-    error?: string;
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+    max: 10,
+});
+
+// Convert SQLite-style ? placeholders to PostgreSQL $1, $2, ... style
+function toPostgresParams(sql: string): string {
+    let i = 0;
+    return sql.replace(/\?/g, () => `$${++i}`);
 }
 
-export interface D1Response {
-    success: boolean;
-    meta: any;
-    error?: string;
+export async function query<T>(sql: string, ...params: unknown[]): Promise<T[]> {
+    const { rows } = await pool.query(toPostgresParams(sql), params);
+    return rows as T[];
 }
 
-/**
- * Access the Cloudflare D1 database binding.
- */
-export const getDb = (): D1Database => {
-    try {
-        const ctx = getRequestContext();
-        if (ctx?.env?.DB) {
-            return ctx.env.DB as D1Database;
-        }
-    } catch (e) {
-        // Fallback or warning
-    }
-    throw new Error('Cloudflare D1 Database binding "DB" not found.');
-};
-
-/**
- * SQL Helper to run queries with binds
- */
-export async function query<T>(sql: string, ...params: any[]): Promise<T[]> {
-    const db = getDb();
-    const result = await db.prepare(sql).bind(...params).all<T>();
-    return result.results || [];
+export async function queryOne<T>(sql: string, ...params: unknown[]): Promise<T | null> {
+    const { rows } = await pool.query(toPostgresParams(sql), params);
+    return (rows[0] as T) ?? null;
 }
 
-export async function queryOne<T>(sql: string, ...params: any[]): Promise<T | null> {
-    const db = getDb();
-    const result = await db.prepare(sql).bind(...params).first<T>();
-    return result;
-}
-
-export async function execute(sql: string, ...params: any[]): Promise<D1Response> {
-    const db = getDb();
-    return await db.prepare(sql).bind(...params).run();
+export async function execute(sql: string, ...params: unknown[]): Promise<void> {
+    await pool.query(toPostgresParams(sql), params);
 }

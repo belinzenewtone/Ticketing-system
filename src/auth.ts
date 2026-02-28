@@ -2,12 +2,12 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
-import { D1Adapter } from "@/lib/auth-adapter-d1";
+import { PgAdapter } from "@/lib/auth-adapter-pg";
 import { queryOne } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: D1Adapter(),
+    adapter: PgAdapter(),
     session: { strategy: "jwt" },
     providers: [
         CredentialsProvider({
@@ -21,9 +21,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     return null;
                 }
 
-                // Native D1 lookup
                 const user = await queryOne<any>(
-                    'SELECT * FROM User WHERE email = ?',
+                    'SELECT * FROM "User" WHERE email = ?',
                     credentials.email as string
                 );
 
