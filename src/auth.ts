@@ -2,12 +2,10 @@ import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
-import { PgAdapter } from "@/lib/auth-adapter-pg";
 import { queryOne } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: PgAdapter(),
     session: { strategy: "jwt" },
     providers: [
         CredentialsProvider({
