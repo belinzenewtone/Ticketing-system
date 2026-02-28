@@ -2,6 +2,12 @@
 
 import { query, queryOne } from '@/lib/db';
 
+export interface DeflectionSuggestion {
+    id: string;
+    title: string;
+    category: string;
+}
+
 export async function getAiResponse(ticketId: string, context?: string) {
     const ticket = await queryOne<any>('SELECT * FROM tickets WHERE id = ?', ticketId);
     if (!ticket) throw new Error('Ticket not found');
@@ -31,12 +37,12 @@ export async function generateTicketSummary(ticketId: string) {
     return summarizeTicket(ticketId);
 }
 
-export async function generateDeflectionSuggestions(subject: string, _description: string) {
-    const articles = await query<any>(
+export async function generateDeflectionSuggestions(subject: string, _description: string): Promise<DeflectionSuggestion[]> {
+    const articles = await query<DeflectionSuggestion>(
         'SELECT id, title, category FROM kb_articles WHERE title LIKE ? OR content LIKE ? LIMIT 3',
         `%${subject}%`, `%${subject}%`
     );
-    return { suggestions: articles };
+    return articles;
 }
 
 export async function categorizeAndPrioritizeTicket(subject: string, description: string) {
