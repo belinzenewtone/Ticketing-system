@@ -1,6 +1,7 @@
 'use server';
 
 import { query, queryOne } from '@/lib/db';
+import type { TicketCategory, TicketPriority, TicketSentiment } from '@/types/database';
 
 export interface DeflectionSuggestion {
     id: string;
@@ -45,11 +46,11 @@ export async function generateDeflectionSuggestions(subject: string, _descriptio
     return articles;
 }
 
-export async function categorizeAndPrioritizeTicket(subject: string, description: string) {
+export async function categorizeAndPrioritizeTicket(subject: string, description: string): Promise<{ category: TicketCategory; priority: TicketPriority; sentiment: TicketSentiment }> {
     const s = subject.toLowerCase();
     const d = description.toLowerCase();
 
-    let category = 'other';
+    let category: TicketCategory = 'other';
     if (s.includes('email') || d.includes('email')) category = 'email';
     else if (s.includes('password') || d.includes('password')) category = 'password-reset';
     else if (s.includes('login') || d.includes('login')) category = 'account-login';
@@ -57,6 +58,7 @@ export async function categorizeAndPrioritizeTicket(subject: string, description
     else if (s.includes('software') || d.includes('software')) category = 'software';
     else if (s.includes('network') || d.includes('vpn')) category = 'network-vpn';
 
-    const priority = (s.includes('urgent') || d.includes('urgent')) ? 'high' : 'medium';
-    return { category, priority };
+    const priority: TicketPriority = (s.includes('urgent') || d.includes('urgent')) ? 'high' : 'medium';
+    const sentiment: TicketSentiment = (s.includes('urgent') || d.includes('frustrated') || d.includes('angry')) ? 'frustrated' : 'neutral';
+    return { category, priority, sentiment };
 }
