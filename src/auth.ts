@@ -6,6 +6,7 @@ import { queryOne } from "@/lib/db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
+    secret: process.env.AUTH_SECRET,
     session: { strategy: "jwt" },
     providers: [
         CredentialsProvider({
