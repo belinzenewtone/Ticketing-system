@@ -1,11 +1,8 @@
 'use server';
 
-import { query, queryOne, execute } from '@/lib/db';
-import { auth } from '@/auth';
+import { query, queryOne } from '@/lib/db';
 
 export async function getAiResponse(ticketId: string, context?: string) {
-    // This previously might have used Prisma to fetch ticket details
-    // Now we fetch via SQL
     const ticket = await queryOne<any>('SELECT * FROM tickets WHERE id = ?', ticketId);
     if (!ticket) throw new Error('Ticket not found');
 

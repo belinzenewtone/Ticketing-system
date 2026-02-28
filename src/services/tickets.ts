@@ -5,8 +5,7 @@ import { auth } from '@/auth';
 import type { Ticket, CreateTicketInput, TicketCategory, TicketPriority, TicketStatus, CannedResponse } from '@/types/database';
 import { logActivity } from './activity';
 
-// Prisma enum values used underscores; SQLite just uses strings.
-// We keep hyphen-to-underscore for safety if existing data used them.
+// PostgreSQL CHECK constraints use underscores; app layer uses hyphens.
 function fromEnum(val: string): string { return val?.replace(/_/g, '-') ?? ''; }
 function toEnum(val: string): string { return val?.replace(/-/g, '_') ?? ''; }
 

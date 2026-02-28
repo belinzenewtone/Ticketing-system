@@ -8,7 +8,7 @@ export type ImportanceLevel = 'urgent' | 'important' | 'neutral';
 export type MachineReason = 'old-hardware' | 'faulty' | 'new-user';
 export type MachineStatus = 'pending' | 'approved' | 'fulfilled' | 'rejected';
 
-// User Profile (Maps to Prisma User)
+// User Profile
 export interface Profile {
     id: string;
     name: string | null;
