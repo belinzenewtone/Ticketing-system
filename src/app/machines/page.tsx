@@ -55,7 +55,7 @@ export default function MachinesPage() {
     const { machineReason, machineStatus, machineSearch, setMachineReason, setMachineStatus, setMachineSearch } = useAppStore();
     const queryClient = useQueryClient();
 
-    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['machine-stats'], queryFn: getMachineStats });
+    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['machine-stats'], queryFn: () => getMachineStats() });
     const { data: machines, isLoading } = useQuery({
         queryKey: ['machines', machineReason, machineStatus, machineSearch],
         queryFn: () => getMachines({

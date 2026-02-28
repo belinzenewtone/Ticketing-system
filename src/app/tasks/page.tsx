@@ -50,7 +50,7 @@ export default function TasksPage() {
     const { taskFilter, taskImportance, taskSearch, setTaskFilter, setTaskImportance, setTaskSearch } = useAppStore();
     const queryClient = useQueryClient();
 
-    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['task-stats'], queryFn: getTaskStats });
+    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['task-stats'], queryFn: () => getTaskStats() });
     const { data: tasks, isLoading } = useQuery({
         queryKey: ['tasks', taskFilter, taskImportance, taskSearch],
         queryFn: () => getTasks({
