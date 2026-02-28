@@ -167,7 +167,7 @@ VALUES (
     gen_random_uuid()::text,
     'Admin',
     'admin@jtl.co.ke',
-    '$2b$12$IvhUKvjx3bBflSLFhLuS1e9pLO3PuWuSVWGRzpkTR3lqjGwmGJE1K',
+    '$2b$12$y4X1S.w34plcZeYxDY5DN.JeeAvHKNfxiCcL6cfXPSj2d46VhBnQK',
     'ADMIN',
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
