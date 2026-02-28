@@ -25,13 +25,18 @@ function serializeMachine(m: any): MachineRequest {
     };
 }
 
-export async function getMachineRequests(filters?: { status?: MachineStatus; search?: string }): Promise<MachineRequest[]> {
+export async function getMachineRequests(filters?: { status?: MachineStatus; reason?: MachineReason; search?: string }): Promise<MachineRequest[]> {
     let sql = 'SELECT * FROM machine_requests WHERE 1=1';
     const params: any[] = [];
 
     if (filters?.status) {
         sql += ' AND status = ?';
         params.push(toEnum(filters.status));
+    }
+
+    if (filters?.reason) {
+        sql += ' AND reason = ?';
+        params.push(toEnum(filters.reason));
     }
 
     if (filters?.search) {
