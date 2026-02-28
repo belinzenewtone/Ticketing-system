@@ -10,17 +10,9 @@ export interface DeflectionSuggestion {
     description: string;
 }
 
-export async function getAiResponse(ticketId: string, context?: string) {
+export async function getAiResponse(ticketId: string, _context?: string) {
     const ticket = await queryOne<any>('SELECT * FROM tickets WHERE id = ?', ticketId);
     if (!ticket) throw new Error('Ticket not found');
-
-    const prompt = `
-        You are an IT support assistant for JTL.
-        Ticket Subject: ${ticket.subject}
-        Ticket Description: ${ticket.description}
-        ${context ? `Question/Context: ${context}` : ''}
-        Provide a helpful, professional response to the employee.
-    `;
 
     // Simulate AI response logic (or call an API if configured)
     const response = "Based on the ticket description, this appears to be a common issue. Please try restarting the application and clearing your cache. If the issue persists, let us know.";
@@ -35,8 +27,8 @@ export async function summarizeTicket(ticketId: string) {
     return { summary: `Summary of ticket ${ticket.number}: ${ticket.subject}. Assigned to ${ticket.assigned_to || 'unassigned'}.` };
 }
 
-export async function generateTicketSummary(ticketId: string) {
-    return summarizeTicket(ticketId);
+export async function generateTicketSummary(description: string, resolution: string): Promise<string> {
+    return `Summary: ${description.slice(0, 200)}${description.length > 200 ? '...' : ''} — Resolution: ${resolution || 'pending'}.`;
 }
 
 export async function generateDeflectionSuggestions(subject: string, _description: string): Promise<DeflectionSuggestion[]> {
