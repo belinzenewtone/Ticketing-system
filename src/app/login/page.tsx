@@ -45,10 +45,8 @@ export default function LoginPage() {
                 router.push('/tickets');
             }
             router.refresh();
-        } catch {
-            // Secure error reporting (hide specifics from user)
-            setError('Invalid email or password.');
-            // Sign out if login fails to parse profile or route properly
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Login failed');
             await signOut().catch(() => { });
         } finally {
             setLoading(false);
