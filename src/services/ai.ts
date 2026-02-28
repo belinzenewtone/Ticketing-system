@@ -7,6 +7,7 @@ export interface DeflectionSuggestion {
     id: string;
     title: string;
     category: string;
+    description: string;
 }
 
 export async function getAiResponse(ticketId: string, context?: string) {
@@ -40,7 +41,7 @@ export async function generateTicketSummary(ticketId: string) {
 
 export async function generateDeflectionSuggestions(subject: string, _description: string): Promise<DeflectionSuggestion[]> {
     const articles = await query<DeflectionSuggestion>(
-        'SELECT id, title, category FROM kb_articles WHERE title LIKE ? OR content LIKE ? LIMIT 3',
+        'SELECT id, title, category, description FROM kb_articles WHERE title LIKE ? OR content LIKE ? LIMIT 3',
         `%${subject}%`, `%${subject}%`
     );
     return articles;
