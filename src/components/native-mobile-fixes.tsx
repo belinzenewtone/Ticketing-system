@@ -7,14 +7,18 @@ import { Capacitor } from '@capacitor/core';
 export function NativeMobileFixes() {
     useEffect(() => {
         if (Capacitor.isNativePlatform()) {
-            // Hide the native splash screen once the React app is mounted
-            SplashScreen.hide({
-                fadeOutDuration: 500
-            }).catch(err => {
-                console.warn('SplashScreen.hide failed', err);
-            });
+            // Wait a moment for the React Splash Screen to definitely be rendered
+            const timer = setTimeout(() => {
+                SplashScreen.hide({
+                    fadeOutDuration: 800
+                }).catch(err => {
+                    console.warn('SplashScreen.hide failed', err);
+                });
+            }, 500);
+            return () => clearTimeout(timer);
         }
     }, []);
+
 
     return null;
 }
