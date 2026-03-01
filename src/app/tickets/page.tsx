@@ -24,7 +24,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment, CreateCommentInput, Profile } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment, CreateCommentInput } from '@/types/database';
 import { generateTicketSummary } from '@/services/ai';
 import { formatDistanceToNow } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -137,6 +137,7 @@ export default function TicketsPage() {
             search: ticketSearch || undefined,
             dateRange: ticketDateRange,
         }),
+        refetchOnWindowFocus: true,
     });
 
     const { data: cannedResponses } = useQuery({ queryKey: ['canned-responses'], queryFn: getCannedResponses });
@@ -152,6 +153,7 @@ export default function TicketsPage() {
         queryKey: ['ticket-comments', editingTicket?.id],
         queryFn: () => getComments(editingTicket!.id, true),
         enabled: !!editingTicket?.id && formOpen,
+        staleTime: 0,
     });
 
     // Clear unread indicator ONLY when the user explicitly views the comments tab
@@ -170,6 +172,13 @@ export default function TicketsPage() {
             }, 250);
         }
     }, [dialogTab, ticketComments?.length]);
+
+    // Live comment count for the ticket currently open in the edit dialog.
+    // We look it up from the tickets array so it stays current after query invalidation,
+    // instead of using the stale snapshot stored in editingTicket state.
+    const editingCommentCount = editingTicket
+        ? (tickets?.find(t => t.id === editingTicket.id)?.comment_count ?? editingTicket.comment_count)
+        : 0;
 
     // ── Mutations ────────────────────────────────────────────
     const invalidate = () => {
@@ -388,14 +397,6 @@ export default function TicketsPage() {
         }, {})
     ).sort((a, b) => b[1] - a[1]) : [];
 
-    const generateDailyStats = (dateList: string[], dataList: TicketType[]) => {
-        const countsByDate = dataList.reduce((acc: Record<string, number>, t: TicketType) => {
-            const dateStr = t.created_at.split('T')[0];
-            acc[dateStr] = (acc[dateStr] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-        return dateList.map(date => countsByDate[date] || 0);
-    };
     const displayedTickets = useMemo(() => {
         if (!tickets) return [];
         if (showOverdueOnly) return tickets.filter(t => getSlaStatus(t) === 'overdue');
@@ -659,7 +660,7 @@ export default function TicketsPage() {
                                                                 <GitMerge className="h-3 w-3" /> Merged
                                                             </span>
                                                         )}
-                                                        {isInitialized && (ticket as any).comment_count > (readCounts[ticket.id] || 0) && (
+                                                        {isInitialized && ticket.comment_count > (readCounts[ticket.id] || 0) && (
                                                             <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
                                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -801,9 +802,9 @@ export default function TicketsPage() {
                                     {tab === 'comments' && <MessageSquare className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab === 'activity' && <Activity className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                    {isInitialized && tab === 'comments' && Number(editingTicket.comment_count) > (readCounts[editingTicket.id] || 0) && (
+                                    {isInitialized && tab === 'comments' && editingCommentCount > (readCounts[editingTicket.id] || 0) && (
                                         <span className="ml-1.5 text-[10px] bg-red-500 text-white dark:bg-red-500 rounded-full px-1.5 py-0.5 font-bold shadow-sm">
-                                            {(ticketComments ? ticketComments.length : Number(editingTicket.comment_count)) - (readCounts[editingTicket.id] || 0)}
+                                            {(ticketComments ? ticketComments.length : editingCommentCount) - (readCounts[editingTicket.id] || 0)}
                                         </span>
                                     )}
                                 </Button>

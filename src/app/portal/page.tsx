@@ -29,7 +29,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle, Profile } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle } from '@/types/database';
 import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
 import { getKbArticles } from '@/services/knowledgeBase';
 import { getComments, addComment } from '@/services/comments';
@@ -103,6 +103,7 @@ export default function PortalPage() {
         queryKey: ['portal-tickets', profile?.id, search],
         queryFn: () => getTickets({ created_by: profile?.id, search: search || undefined }),
         enabled: !!profile?.id,
+        refetchOnWindowFocus: true,
     });
 
     const createMut = useMutation({
@@ -157,6 +158,7 @@ export default function PortalPage() {
         queryKey: ['portal-comments', viewCommentsTicket?.id],
         queryFn: () => getComments(viewCommentsTicket!.id, false),
         enabled: !!viewCommentsTicket?.id,
+        staleTime: 0,
     });
 
     // Clear unread indicator ONLY when the user explicitly views the comments dialog
@@ -352,7 +354,7 @@ export default function PortalPage() {
                                             <span>{categoryConfig[ticket.category]?.icon}</span>
                                             {categoryConfig[ticket.category]?.label}
                                         </span>
-                                        {isInitialized && (ticket as any).public_comment_count > (readCounts[ticket.id] || 0) && (
+                                        {isInitialized && ticket.public_comment_count > (readCounts[ticket.id] || 0) && (
                                             <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
