@@ -3,9 +3,9 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers';
 import { PWARegistration } from '@/components/pwa-registration';
+import { SplashScreen } from '@/components/splash-screen';
 
 const inter = Inter({ subsets: ['latin'] });
-
 
 export const metadata: Metadata = {
   title: 'Ticketing System | JTL',
@@ -26,7 +26,6 @@ export const viewport: Viewport = {
   userScalable: false,
 };
 
-
 export default function RootLayout({
   children,
 }: {
@@ -36,7 +35,9 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
         <PWARegistration />
-        <Providers>{children}</Providers>
+        <SplashScreen>
+          <Providers>{children}</Providers>
+        </SplashScreen>
       </body>
     </html>
   );

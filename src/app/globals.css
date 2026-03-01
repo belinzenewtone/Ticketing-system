@@ -120,7 +120,18 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/70 backdrop-blur-md border-white/20 shadow-xl;
+  }
+
+  .glass-dark {
+    @apply bg-black/50 backdrop-blur-md border-white/10 shadow-2xl;
   }
 }
