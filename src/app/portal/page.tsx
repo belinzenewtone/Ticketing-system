@@ -168,12 +168,16 @@ export default function PortalPage() {
         }
     }, [viewCommentsTicket, viewComments, markTicketAsRead]);
 
-    // Scroll to bottom when comments loaded or updated
+    // Scroll to first unread comment (or bottom if all read) when comments dialog opens or updates
+    const unreadStartRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (viewComments && viewCommentsTicket) {
-            // Use timeout to allow DOM to paint the new items first
             setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (unreadStartRef.current) {
+                    unreadStartRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }
             }, 250);
         }
     }, [viewComments?.length, viewCommentsTicket]);
@@ -302,7 +306,7 @@ export default function PortalPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {isLoading ? (
+                    {isLoading || !profile ? (
                         Array.from({ length: 6 }).map((_, i) => (
                             <Card key={i} className="p-5 border shadow-sm">
                                 <div className="space-y-3">
@@ -355,7 +359,10 @@ export default function PortalPage() {
                                             {categoryConfig[ticket.category]?.label}
                                         </span>
                                         {isInitialized && ticket.public_comment_count > (readCounts[ticket.id] || 0) && (
-                                            <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                            <span
+                                                onClick={() => setViewCommentsTicket(ticket)}
+                                                className="cursor-pointer text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
+                                            >
                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -587,11 +594,13 @@ export default function PortalPage() {
                                     <MessageSquare className="h-8 w-8 mb-2 opacity-30" />
                                     <p className="text-sm">No updates from IT yet.</p>
                                 </div>
-                            ) : viewComments.map(comment => {
+                            ) : viewComments.map((comment, index) => {
                                 const isMe = comment.user_id === profile?.id;
+                                const readCount = readCounts[viewCommentsTicket!.id] || 0;
+                                const isFirstUnread = index === readCount && viewComments.length > readCount;
 
                                 return (
-                                    <div key={comment.id} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
+                                    <div key={comment.id} ref={isFirstUnread ? unreadStartRef : undefined} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
                                         <div className="flex items-end gap-2 max-w-[85%]">
                                             {!isMe && (
                                                 <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">

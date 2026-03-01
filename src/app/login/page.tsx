@@ -7,9 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { signIn } from '@/services/auth';
-import { getSession } from 'next-auth/react';
 import { Loader2, Lock } from 'lucide-react';
-import { useAppStore } from '@/store/useAppStore';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -17,7 +15,6 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const router = useRouter();
-    const { setProfile } = useAppStore();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -32,28 +29,9 @@ export default function LoginPage() {
 
         try {
             await signIn(email, password);
-
-            // Use getSession (GET /api/auth/session) instead of a server action —
-            // server actions on the login page get intercepted by the middleware redirect.
-            const session = await getSession();
-            const role = session?.user?.role;
-
-            if (session?.user) {
-                setProfile({
-                    id: session.user.id,
-                    name: session.user.name ?? null,
-                    email: session.user.email ?? null,
-                    role: role as any,
-                    createdAt: new Date(),
-                    updatedAt: new Date(),
-                });
-            }
-
-            if (role === 'USER') {
-                router.push('/portal');
-            } else {
-                router.push('/tickets');
-            }
+            // Navigate to root — the server page reads the JWT and redirects
+            // to /portal (USER) or /tickets (ADMIN/IT_STAFF) without an extra round-trip.
+            router.push('/');
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Login failed');
         } finally {

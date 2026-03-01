@@ -163,12 +163,17 @@ export default function TicketsPage() {
         }
     }, [formOpen, dialogTab, editingTicket, ticketComments, markTicketAsRead]);
 
-    // Scroll to bottom when comments tab is loaded or updated
+    // Scroll to first unread comment (or bottom if all read) when comments tab opens or updates
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const unreadStartRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
         if (dialogTab === 'comments' && ticketComments) {
             setTimeout(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                if (unreadStartRef.current) {
+                    unreadStartRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                } else {
+                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+                }
             }, 250);
         }
     }, [dialogTab, ticketComments?.length]);
@@ -661,7 +666,10 @@ export default function TicketsPage() {
                                                             </span>
                                                         )}
                                                         {isInitialized && ticket.comment_count > (readCounts[ticket.id] || 0) && (
-                                                            <span className="text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1">
+                                                            <span
+                                                                onClick={() => { handleEdit(ticket); setDialogTab('comments'); }}
+                                                                className="cursor-pointer text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors"
+                                                            >
                                                                 <span className="relative flex h-2 w-2 mr-0.5">
                                                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                                                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
@@ -963,12 +971,14 @@ export default function TicketsPage() {
                                         <MessageSquare className="h-10 w-10 mb-2 opacity-30" />
                                         <p className="text-sm">No comments yet. Be the first to comment.</p>
                                     </div>
-                                ) : ticketComments.map(comment => {
+                                ) : ticketComments.map((comment, index) => {
                                     const isMe = comment.user_id === profile?.id;
                                     const isInternal = comment.is_internal;
+                                    const readCount = readCounts[editingTicket!.id] || 0;
+                                    const isFirstUnread = index === readCount && editingCommentCount > readCount;
 
                                     return (
-                                        <div key={comment.id} className={`flex flex-col w-full ${isMe || isInternal ? 'items-end' : 'items-start'}`}>
+                                        <div key={comment.id} ref={isFirstUnread ? unreadStartRef : undefined} className={`flex flex-col w-full ${isMe || isInternal ? 'items-end' : 'items-start'}`}>
                                             <div className="flex items-end gap-2 max-w-[85%]">
                                                 {!isMe && !isInternal && (
                                                     <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
