@@ -25,9 +25,9 @@ export async function GET(request: Request) {
             (SELECT COUNT(*) FROM ticket_comments c WHERE c.ticket_id = t.id AND c.is_internal = false) as public_comment_count,
             (SELECT COUNT(*) FROM ticket_comments c WHERE c.ticket_id = t.id) as comment_count
          FROM tickets t
-         WHERE t.created_by = $1
+         WHERE t.created_by = $1 OR t.employee_name ILIKE $2
          ORDER BY t.number DESC`,
-        session.id
+        session.id, session.name
     );
 
     return NextResponse.json(rows.map(serialize));
