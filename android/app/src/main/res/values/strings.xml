@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">JTL Ticketing</string>
+    <string name="title_activity_main">JTL Ticketing</string>
+    <string name="package_name">com.jtl.ticketing</string>
+    <string name="custom_url_scheme">com.jtl.ticketing</string>
+</resources>
