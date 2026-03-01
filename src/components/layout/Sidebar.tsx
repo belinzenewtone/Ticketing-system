@@ -61,7 +61,7 @@ export function Sidebar() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="fixed top-4 left-4 z-50 lg:hidden text-foreground"
+                    className="fixed top-4 left-4 z-50 lg:hidden text-foreground mt-safe"
                     onClick={toggleSidebar}
                 >
                     <Menu className="h-5 w-5" />
@@ -80,7 +80,7 @@ export function Sidebar() {
                 )}
             >
                 {/* Header with close button inside */}
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0">
+                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0 pt-safe">
                     <Link href="/tickets" className="hover:opacity-80 transition-opacity">
                         <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent leading-tight">
                             Ticketing System
@@ -121,7 +121,7 @@ export function Sidebar() {
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0 pb-safe">
                     <div className="flex items-center justify-between mb-3 px-2">
                         {profile && (
                             <div className="min-w-0 flex-1">

@@ -161,4 +161,8 @@
   .pt-safe {
     padding-top: var(--safe-area-top);
   }
+
+  .mt-safe {
+    margin-top: var(--safe-area-top);
+  }
 }

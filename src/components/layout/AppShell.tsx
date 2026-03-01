@@ -39,7 +39,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Sidebar />
             <main className="lg:ml-56 min-h-screen flex flex-col">
                 {showTabs && (
-                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-6 py-3 flex gap-2 overflow-x-auto no-scrollbar pt-16 lg:pt-3">
+                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-6 py-3 flex gap-2 overflow-x-auto no-scrollbar pt-safe lg:pt-3">
                         {currentNav.map((item) => {
                             const isActive = pathname === item.href;
                             return (
