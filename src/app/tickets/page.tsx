@@ -233,6 +233,7 @@ export default function TicketsPage() {
         mutationFn: (input: CreateCommentInput) => addComment(input, profile?.name ?? 'IT Staff'),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ticket-comments', editingTicket?.id] });
+            invalidate(); // refresh ticket list so comment_count badge updates
             setNewComment('');
             setIsInternal(false);
             toast.success('Comment posted');
@@ -244,6 +245,7 @@ export default function TicketsPage() {
         mutationFn: deleteComment,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['ticket-comments', editingTicket?.id] });
+            invalidate(); // refresh ticket list so comment_count badge updates
             toast.success('Comment deleted');
         },
     });
@@ -799,9 +801,9 @@ export default function TicketsPage() {
                                     {tab === 'comments' && <MessageSquare className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab === 'activity' && <Activity className="h-3.5 w-3.5 mr-1.5" />}
                                     {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                                    {isInitialized && tab === 'comments' && ticketComments && ticketComments.length > (readCounts[editingTicket.id] || 0) && (
+                                    {isInitialized && tab === 'comments' && Number(editingTicket.comment_count) > (readCounts[editingTicket.id] || 0) && (
                                         <span className="ml-1.5 text-[10px] bg-red-500 text-white dark:bg-red-500 rounded-full px-1.5 py-0.5 font-bold shadow-sm">
-                                            {ticketComments.length - (readCounts[editingTicket.id] || 0)}
+                                            {(ticketComments ? ticketComments.length : Number(editingTicket.comment_count)) - (readCounts[editingTicket.id] || 0)}
                                         </span>
                                     )}
                                 </Button>

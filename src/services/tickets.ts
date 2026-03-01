@@ -45,8 +45,8 @@ function serializeTicket(t: any): Ticket {
         merged_into: t.merged_into ?? null,
         created_at: t.created_at,
         updated_at: t.updated_at,
-        comment_count: t.comment_count ?? 0,
-        public_comment_count: t.public_comment_count ?? 0,
+        comment_count: Number(t.comment_count ?? 0),
+        public_comment_count: Number(t.public_comment_count ?? 0),
     };
 }
 

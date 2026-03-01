@@ -648,6 +648,7 @@ export default function PortalPage() {
                                             );
                                             setNewComment('');
                                             refetchComments();
+                                            queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
                                             toast.success('Reply sent');
                                         } catch (e: unknown) {
                                             const msg = e instanceof Error ? e.message : "Failed to send";
