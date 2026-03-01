@@ -68,7 +68,7 @@ function getSlaStatus(ticket: TicketType): 'overdue' | 'due-soon' | 'ok' | 'done
     const now = new Date();
     const due = new Date(ticket.due_date);
     if (due < now) return 'overdue';
-    if (due.getTime() - now.getTime() < 60 * 60 * 1000) return 'due-soon';
+    if (due.getTime() - now.getTime() < 5 * 60 * 1000) return 'due-soon';
     return 'ok';
 }
 
