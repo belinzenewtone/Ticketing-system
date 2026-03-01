@@ -9,11 +9,16 @@ import { logActivity } from './activity';
 function fromEnum(val: string): string { return val?.replace(/_/g, '-') ?? ''; }
 function toEnum(val: string): string { return val?.replace(/-/g, '_') ?? ''; }
 
-const SLA_MINUTES = 20;
+const SLA_MINUTES: Record<TicketPriority, number> = {
+    low: 20,
+    medium: 15,
+    high: 10,
+    critical: 5,
+};
 
-function calculateDueDate(_priority: TicketPriority): string {
+function calculateDueDate(priority: TicketPriority): string {
     const due = new Date();
-    due.setMinutes(due.getMinutes() + SLA_MINUTES);
+    due.setMinutes(due.getMinutes() + SLA_MINUTES[priority]);
     return due.toISOString();
 }
 
