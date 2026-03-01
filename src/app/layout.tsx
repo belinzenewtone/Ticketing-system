@@ -4,6 +4,8 @@ import './globals.css';
 import { Providers } from '@/components/providers';
 import { PWARegistration } from '@/components/pwa-registration';
 import { SplashScreen } from '@/components/splash-screen';
+import { NativeMobileFixes } from '@/components/native-mobile-fixes';
+
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -34,7 +36,9 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className} antialiased`} suppressHydrationWarning>
+        <NativeMobileFixes />
         <PWARegistration />
+
         <SplashScreen>
           <Providers>{children}</Providers>
         </SplashScreen>
