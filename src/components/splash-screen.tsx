@@ -4,31 +4,48 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
+function detectApp(): boolean {
+    if (typeof window === 'undefined') return false;
+
+    // Check for Capacitor native platform (Android/iOS app)
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { Capacitor } = require('@capacitor/core');
+        if (Capacitor.isNativePlatform()) return true;
+    } catch {}
+
+    // Check for PWA installed/standalone mode
+    return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as unknown as { standalone: boolean }).standalone === true
+    );
+}
+
 export function SplashScreen({ children }: { children: React.ReactNode }) {
-    const [loading, setLoading] = useState(true);
+    const [showSplash, setShowSplash] = useState(false);
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1500); // Reduced from 2s
+        if (!detectApp()) return; // Web browser — skip splash entirely
+
+        setShowSplash(true);
+        const timer = setTimeout(() => setShowSplash(false), 1500);
         return () => clearTimeout(timer);
     }, []);
 
-
     return (
         <>
-            <AnimatePresence mode="wait">
-                {loading && (
+            <AnimatePresence>
+                {showSplash && (
                     <motion.div
                         key="splash"
                         initial={{ opacity: 1 }}
-                        exit={{ opacity: 0, transition: { duration: 0.8, ease: "easeInOut" } }}
+                        exit={{ opacity: 0, transition: { duration: 0.8, ease: 'easeInOut' } }}
                         className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white"
                     >
                         <motion.div
                             initial={{ scale: 0.8, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.5, ease: "easeOut" }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }}
                             className="relative w-24 h-24 mb-4"
                         >
                             <Image
@@ -47,9 +64,7 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
                         >
                             JTL Ticketing
                         </motion.h1>
-                        <motion.div
-                            className="mt-8 flex gap-1"
-                        >
+                        <motion.div className="mt-8 flex gap-1">
                             {[0, 1, 2].map((i) => (
                                 <motion.div
                                     key={i}
@@ -69,13 +84,7 @@ export function SplashScreen({ children }: { children: React.ReactNode }) {
                     </motion.div>
                 )}
             </AnimatePresence>
-            <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 2 }}
-            >
-                {children}
-            </motion.div>
+            {children}
         </>
     );
 }
