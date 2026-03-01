@@ -7,13 +7,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { signIn } from '@/services/auth';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,15 +82,26 @@ export default function LoginPage() {
 
                         <div className="space-y-2">
                             <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">Password</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                placeholder="Enter your password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                className="bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-foreground placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-foreground placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20 pr-12"
+                                />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    onClick={() => setShowPassword(v => !v)}
+                                    className="absolute right-0 top-0 h-full px-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
                         </div>
 
                         <Button

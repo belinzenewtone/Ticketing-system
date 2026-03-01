@@ -61,7 +61,7 @@ const sentimentConfig: Record<TicketSentiment, { label: string; color: string; i
     angry: { label: 'Angry', color: 'text-red-600 bg-red-600/10 border-red-600/20', icon: '😡' },
 };
 
-// ── SLA Helper ────────────────────────────────────────────────
+// ── SLA Helpers ───────────────────────────────────────────────
 function getSlaStatus(ticket: TicketType): 'overdue' | 'due-soon' | 'ok' | 'done' {
     if (ticket.status === 'resolved' || ticket.status === 'closed') return 'done';
     if (!ticket.due_date) return 'ok';
@@ -70,6 +70,18 @@ function getSlaStatus(ticket: TicketType): 'overdue' | 'due-soon' | 'ok' | 'done
     if (due < now) return 'overdue';
     if (due.getTime() - now.getTime() < 60 * 60 * 1000) return 'due-soon';
     return 'ok';
+}
+
+/** Human-readable SLA countdown / overdue label, e.g. "2h 15m left" or "45m overdue" */
+function getSlaLabel(ticket: TicketType): string {
+    if (!ticket.due_date) return '';
+    const diffMs = new Date(ticket.due_date).getTime() - Date.now();
+    const abs = Math.abs(diffMs);
+    const h = Math.floor(abs / (1000 * 60 * 60));
+    const m = Math.floor((abs % (1000 * 60 * 60)) / (1000 * 60));
+    if (diffMs < 0) return h > 0 ? `${h}h ${m}m overdue` : `${m}m overdue`;
+    if (h > 0) return `${h}h${m > 0 ? ` ${m}m` : ''} left`;
+    return `${m || 1}m left`;
 }
 
 // ── Activity helpers ──────────────────────────────────────────
@@ -123,11 +135,18 @@ export default function TicketsPage() {
     const [isSummarizing, setIsSummarizing] = useState(false);
     const [aiSummary, setAiSummary] = useState<string | null>(null);
 
+    // Tick every minute so SLA countdowns update in the UI between server refetches
+    const [slaTick, setSlaTick] = useState(0);
+    useEffect(() => {
+        const id = setInterval(() => setSlaTick(n => n + 1), 60 * 1000);
+        return () => clearInterval(id);
+    }, []);
+
     // ── Queries ──────────────────────────────────────────────
     const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
     const staffMap = staffList?.reduce((acc, s) => { acc[s.id] = s.name ?? ''; return acc; }, {} as Record<string, string>) || {};
 
-    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['ticket-stats'], queryFn: () => getTicketStats() });
+    const { data: stats, isLoading: statsLoading } = useQuery({ queryKey: ['ticket-stats'], queryFn: () => getTicketStats(), refetchInterval: 5 * 60 * 1000 });
     const { data: tickets, isLoading } = useQuery({
         queryKey: ['tickets', ticketCategory, ticketPriority, ticketStatus, ticketSearch, ticketDateRange],
         queryFn: () => getTickets({
@@ -138,6 +157,7 @@ export default function TicketsPage() {
             dateRange: ticketDateRange,
         }),
         refetchOnWindowFocus: true,
+        refetchInterval: 60 * 1000,
     });
 
     const { data: cannedResponses } = useQuery({ queryKey: ['canned-responses'], queryFn: getCannedResponses });
@@ -369,7 +389,8 @@ export default function TicketsPage() {
         return days;
     }, [tickets]);
 
-    const overdueCount = useMemo(() => tickets?.filter(t => getSlaStatus(t) === 'overdue').length ?? 0, [tickets]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const overdueCount = useMemo(() => tickets?.filter(t => getSlaStatus(t) === 'overdue').length ?? 0, [tickets, slaTick]);
 
     const slaCompliance = useMemo(() => {
         const resolved = tickets?.filter(t => t.status === 'resolved' || t.status === 'closed') ?? [];
@@ -406,7 +427,8 @@ export default function TicketsPage() {
         if (!tickets) return [];
         if (showOverdueOnly) return tickets.filter(t => getSlaStatus(t) === 'overdue');
         return tickets;
-    }, [tickets, showOverdueOnly]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tickets, showOverdueOnly, slaTick]);
 
     // ── Render ───────────────────────────────────────────────
     return (
@@ -693,7 +715,7 @@ export default function TicketsPage() {
                                                         {ticket.due_date && slaStatus !== 'done' && (
                                                             <div className={`text-[11px] flex items-center gap-1 ${slaStatus === 'overdue' ? 'text-red-500 font-medium' : slaStatus === 'due-soon' ? 'text-amber-500' : 'text-slate-400'}`}>
                                                                 {slaStatus === 'overdue' ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                                                                {slaStatus === 'overdue' ? 'Overdue' : `Due ${new Date(ticket.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                                                {getSlaLabel(ticket)}
                                                             </div>
                                                         )}
                                                     </div>
