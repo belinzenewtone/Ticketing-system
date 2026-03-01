@@ -16,34 +16,39 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 password: { label: "Password", type: "password" },
             },
             async authorize(credentials) {
-                if (!credentials?.email || !credentials?.password) {
+                try {
+                    if (!credentials?.email || !credentials?.password) {
+                        return null;
+                    }
+
+                    const user = await queryOne<any>(
+                        'SELECT * FROM "User" WHERE email = $1',
+                        credentials.email as string
+                    );
+
+                    if (!user || !user.password) {
+                        return null;
+                    }
+
+                    const isPasswordValid = await bcrypt.compare(
+                        credentials.password as string,
+                        user.password
+                    );
+
+                    if (!isPasswordValid) {
+                        return null;
+                    }
+
+                    return {
+                        id: user.id,
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                    };
+                } catch (e) {
+                    console.error('CRITICAL AUTH ERROR:', e);
                     return null;
                 }
-
-                const user = await queryOne<any>(
-                    'SELECT * FROM "User" WHERE email = ?',
-                    credentials.email as string
-                );
-
-                if (!user || !user.password) {
-                    return null;
-                }
-
-                const isPasswordValid = await bcrypt.compare(
-                    credentials.password as string,
-                    user.password
-                );
-
-                if (!isPasswordValid) {
-                    return null;
-                }
-
-                return {
-                    id: user.id,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                };
             },
         }),
     ],
