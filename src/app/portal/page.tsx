@@ -23,7 +23,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Ticket, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, X } from 'lucide-react';
+import { Plus, Search, Ticket, CheckCircle2, Loader2, Archive, MessageSquare, Paperclip, Pencil, Trash2, BookOpen, Send, X, Bot, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -31,7 +31,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle, Profile } from '@/types/database';
 import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
-import { Bot, Sparkles } from 'lucide-react';
 import { getKbArticles } from '@/services/knowledgeBase';
 import { getComments, addComment } from '@/services/comments';
 import { formatDistanceToNow } from 'date-fns';
