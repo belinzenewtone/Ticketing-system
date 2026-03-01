@@ -22,7 +22,11 @@ export const authConfig = {
             }
             return session;
         },
-        authorized({ auth, request: { nextUrl } }) {
+        authorized({ auth, request: { nextUrl, headers } }) {
+            // Server actions handle their own auth internally — never redirect them,
+            // as redirecting breaks the RSC response format Next.js expects.
+            if (headers.get('next-action') !== null) return true;
+
             const isLoggedIn = !!auth?.user;
             const isLoginPage = nextUrl.pathname.startsWith('/login');
 

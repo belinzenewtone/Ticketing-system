@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { signIn, signOut } from '@/services/auth';
-import { getCurrentProfile } from '@/services/auth-actions';
+import { signIn } from '@/services/auth';
+import { getSession } from 'next-auth/react';
 import { Loader2, Lock } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -32,22 +32,30 @@ export default function LoginPage() {
 
         try {
             await signIn(email, password);
-            const profile = await getCurrentProfile();
 
-            if (profile) {
-                setProfile(profile);
+            // Use getSession (GET /api/auth/session) instead of a server action —
+            // server actions on the login page get intercepted by the middleware redirect.
+            const session = await getSession();
+            const role = session?.user?.role;
+
+            if (session?.user) {
+                setProfile({
+                    id: session.user.id,
+                    name: session.user.name ?? null,
+                    email: session.user.email ?? null,
+                    role: role as any,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
             }
 
-            // Route based on role
-            if (profile?.role === 'USER') {
+            if (role === 'USER') {
                 router.push('/portal');
             } else {
                 router.push('/tickets');
             }
-            router.refresh();
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Login failed');
-            await signOut().catch(() => { });
         } finally {
             setLoading(false);
         }

@@ -1,8 +1,23 @@
 import { Pool } from 'pg';
 
+// Strip sslmode from the connection string so the explicit ssl Pool option takes precedence.
+// New versions of pg-connection-string treat sslmode=require as verify-full (certificate verification),
+// which conflicts with Supabase's self-signed certificate chain.
+function stripSslMode(url: string): string {
+    try {
+        const u = new URL(url);
+        u.searchParams.delete('sslmode');
+        return u.toString();
+    } catch {
+        return url;
+    }
+}
+
+const rawUrl = process.env.DATABASE_URL ?? '';
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.DATABASE_URL?.includes('supabase') || process.env.NODE_ENV === 'production'
+    connectionString: stripSslMode(rawUrl),
+    ssl: rawUrl.includes('supabase') || process.env.NODE_ENV === 'production'
         ? { rejectUnauthorized: false }
         : false,
     max: 10,
