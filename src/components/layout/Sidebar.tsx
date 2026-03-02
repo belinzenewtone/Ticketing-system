@@ -14,7 +14,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 const navItems = [
     { href: '/tickets', label: 'Ticketing System', icon: Ticket },
     { href: '/dashboard', label: 'Reports Dashboard', icon: FileBarChart },
-    { href: '/supplies', label: 'Supplies Management', icon: Package },
+    { href: '/inventory', label: 'Inventory Management', icon: Package },
 ];
 
 export function Sidebar() {
@@ -101,7 +101,7 @@ export function Sidebar() {
                 <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1.5 focus:outline-none">
                     {navItems.map((item) => {
                         const isActive = item.href === '/dashboard'
-                            ? ['/dashboard', '/tasks', '/machines', '/reports'].includes(pathname)
+                            ? ['/dashboard', '/tasks', '/inventory', '/reports'].includes(pathname)
                             : ['/tickets', '/knowledge-base'].includes(pathname);
                         return (
                             <Link

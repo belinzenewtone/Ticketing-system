@@ -703,12 +703,12 @@ export default function PortalPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Requester Name</Label>
-                                <Input {...itemForm.register('requester_name')} />
+                                <Input {...itemForm.register('requester_name')} placeholder="Enter your full name" />
                                 {itemForm.formState.errors.requester_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.requester_name.message}</p>}
                             </div>
                             <div className="space-y-2">
                                 <Label>Work Email</Label>
-                                <Input {...itemForm.register('work_email')} placeholder="name@jtl.co.ke" />
+                                <Input {...itemForm.register('work_email')} placeholder="yourname@jtl.co.ke" />
                                 {itemForm.formState.errors.work_email?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.work_email.message}</p>}
                             </div>
                         </div>
@@ -717,12 +717,12 @@ export default function PortalPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Type of Supplies</Label>
-                                    <Input {...itemForm.register('supply_name')} placeholder="e.g. Toners, Stationaries" />
+                                    <Input {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners, A4 Papers" />
                                     {itemForm.formState.errors.supply_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.supply_name.message}</p>}
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Number of Supplies</Label>
-                                    <Input {...itemForm.register('item_count')} placeholder="0-999" />
+                                    <Input {...itemForm.register('item_count')} placeholder="Qty (e.g. 5)" />
                                     {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
                                 </div>
                             </div>
@@ -744,7 +744,7 @@ export default function PortalPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Number of Computers</Label>
-                                    <Input {...itemForm.register('item_count')} placeholder="0-999" />
+                                    <Input {...itemForm.register('item_count')} placeholder="Qty (e.g. 1)" />
                                     {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
                                 </div>
                             </div>

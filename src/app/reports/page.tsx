@@ -12,7 +12,7 @@ import {
 import { FileDown, Mail, CheckSquare, Monitor, Package } from 'lucide-react';
 import { useState } from 'react';
 
-type ReportType = 'entries' | 'tasks' | 'machines' | 'supplies';
+type ReportType = 'entries' | 'tasks';
 type DateRange = 'today' | 'week' | 'month' | 'year';
 
 export default function ReportsPage() {
@@ -22,8 +22,6 @@ export default function ReportsPage() {
 
     const { data: entryStats } = useQuery({ queryKey: ['entry-stats'], queryFn: () => getEntryStats() });
     const { data: taskStats } = useQuery({ queryKey: ['task-stats'], queryFn: () => getTaskStats() });
-    const { data: machineStats } = useQuery({ queryKey: ['hardware-stats-reports'], queryFn: () => getMachineStats('hardware') });
-    const { data: supplyStats } = useQuery({ queryKey: ['supply-stats-reports'], queryFn: () => getMachineStats('supplies') });
 
     const handleGenerate = async () => {
         setGenerating(true);
@@ -49,30 +47,12 @@ export default function ReportsPage() {
                     theme: 'grid',
                     headStyles: { fillColor: [16, 185, 129] },
                 });
-            } else if (reportType === 'tasks') {
+            } else {
                 const tasks = await getTasks();
                 (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
                     startY: 44,
                     head: [['Date', 'Task', 'Priority', 'Completed']],
                     body: tasks.map(t => [t.date, t.text, t.importance, t.completed ? 'Yes' : 'No']),
-                    theme: 'grid',
-                    headStyles: { fillColor: [16, 185, 129] },
-                });
-            } else if (reportType === 'machines') {
-                const machinesList = await getMachines({ item_type: 'hardware' });
-                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
-                    startY: 44,
-                    head: [['#', 'Date', 'Requester', 'Type', 'Reason', 'Status']],
-                    body: machinesList.map(m => [m.number, m.date, m.requester_name, m.item_type, m.reason || '-', m.status]),
-                    theme: 'grid',
-                    headStyles: { fillColor: [16, 185, 129] },
-                });
-            } else {
-                const suppliesList = await getMachines({ item_type: 'supplies' });
-                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
-                    startY: 44,
-                    head: [['#', 'Date', 'Requester', 'Supply Name', 'Qty', 'Status']],
-                    body: suppliesList.map(m => [m.number, m.date, m.requester_name, m.supply_name || '-', m.item_count, m.status]),
                     theme: 'grid',
                     headStyles: { fillColor: [16, 185, 129] },
                 });
@@ -85,18 +65,10 @@ export default function ReportsPage() {
                 const entries = await getEntries({ dateRange });
                 csv = 'Number,Date,Employee,Email,Resolution,Completed\n';
                 csv += entries.map(e => `${e.number},${e.entry_date},${e.employee_name},${e.work_email},${e.resolution},${e.completed}`).join('\n');
-            } else if (reportType === 'tasks') {
+            } else {
                 const tasks = await getTasks();
                 csv = 'Date,Task,Priority,Completed\n';
                 csv += tasks.map(t => `${t.date},"${t.text}",${t.importance},${t.completed}`).join('\n');
-            } else if (reportType === 'machines') {
-                const machinesList = await getMachines({ item_type: 'hardware' });
-                csv = 'Number,Date,Requester,Type,Reason,Status\n';
-                csv += machinesList.map(m => `${m.number},${m.date},${m.requester_name},${m.item_type},${m.reason || ''},${m.status}`).join('\n');
-            } else {
-                const suppliesList = await getMachines({ item_type: 'supplies' });
-                csv = 'Number,Date,Requester,Supply Name,Qty,Status\n';
-                csv += suppliesList.map(m => `${m.number},${m.date},${m.requester_name},"${m.supply_name || ''}",${m.item_count},${m.status}`).join('\n');
             }
 
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -111,8 +83,7 @@ export default function ReportsPage() {
 
     const summaryCards = [
         { label: 'Email Entries', value: entryStats?.total ?? 0, sub: `${entryStats?.sorted ?? 0} sorted`, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Hardware Requests', value: machineStats?.total ?? 0, sub: `${machineStats?.fulfilled ?? 0} fulfilled`, icon: Monitor, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-        { label: 'Supplies Requests', value: supplyStats?.total ?? 0, sub: `${supplyStats?.fulfilled ?? 0} fulfilled`, icon: Package, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+        { label: 'Active Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: CheckSquare, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
     ];
 
     return (
@@ -122,7 +93,7 @@ export default function ReportsPage() {
                 <p className="text-muted-foreground mt-1">Generate and export data reports</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {summaryCards.map((c) => (
                     <Card key={c.label} className="border shadow-sm">
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -149,8 +120,6 @@ export default function ReportsPage() {
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="entries">📧 Email Entries</SelectItem>
-                                    <SelectItem value="machines">💻 Hardware Requests</SelectItem>
-                                    <SelectItem value="supplies">📦 Supplies Requests</SelectItem>
                                     <SelectItem value="tasks">📝 Tasks</SelectItem>
                                 </SelectContent>
                             </Select>
