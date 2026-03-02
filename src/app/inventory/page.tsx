@@ -362,7 +362,7 @@ export default function InventoryPage() {
                                 <Select onValueChange={(v) => form.setValue('item_type', v as any)} value={form.watch('item_type')}>
                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="supplies">Supplies / Stationery</SelectItem>
+                                        <SelectItem value="supplies">Supplies</SelectItem>
                                         <SelectItem value="desktop">Desktop PC</SelectItem>
                                         <SelectItem value="laptop">Laptop Computer</SelectItem>
                                     </SelectContent>

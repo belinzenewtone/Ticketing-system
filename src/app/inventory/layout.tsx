@@ -2,6 +2,6 @@ import { AppShell } from '@/components/layout/AppShell';
 
 export const dynamic = 'force-dynamic';
 
-export default function MachinesLayout({ children }: { children: React.ReactNode }) {
+export default function InventoryLayout({ children }: { children: React.ReactNode }) {
     return <AppShell>{children}</AppShell>;
 }
