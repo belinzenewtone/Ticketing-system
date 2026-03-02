@@ -12,7 +12,6 @@ import { Mail, CheckSquare, Monitor, FileBarChart, Ticket, BookOpen } from 'luci
 const reportsNav = [
     { href: '/dashboard', label: 'Email', icon: Mail },
     { href: '/tasks', label: 'Tasks', icon: CheckSquare },
-    { href: '/machines', label: 'Machines', icon: Monitor },
     { href: '/reports', label: 'Reports', icon: FileBarChart },
 ];
 
@@ -29,7 +28,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         getCurrentProfile().then(setProfile).catch(console.error);
     }, [setProfile]);
 
-    const isReportsPage = ['/dashboard', '/tasks', '/machines', '/reports'].includes(pathname);
+    const isReportsPage = ['/dashboard', '/tasks', '/reports'].includes(pathname);
     const isTicketingPage = ['/tickets', '/knowledge-base'].includes(pathname);
     const showTabs = isReportsPage || isTicketingPage;
     const currentNav = isReportsPage ? reportsNav : ticketingNav;

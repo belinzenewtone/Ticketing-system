@@ -100,9 +100,10 @@ export function Sidebar() {
 
                 <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1.5 focus:outline-none">
                     {navItems.map((item) => {
-                        const isActive = item.href === '/dashboard'
-                            ? ['/dashboard', '/tasks', '/inventory', '/reports'].includes(pathname)
-                            : ['/tickets', '/knowledge-base'].includes(pathname);
+                        const isActive =
+                            item.href === '/dashboard' ? ['/dashboard', '/tasks', '/reports'].includes(pathname) :
+                                item.href === '/inventory' ? pathname.startsWith('/inventory') :
+                                    ['/tickets', '/knowledge-base'].some(path => pathname.startsWith(path));
                         return (
                             <Link
                                 key={item.href}
