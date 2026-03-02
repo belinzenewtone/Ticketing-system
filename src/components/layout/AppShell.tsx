@@ -37,9 +37,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
             <Sidebar />
-            <main className="lg:ml-56 min-h-screen flex flex-col relative">
+            <main className="lg:ml-64 min-h-screen flex flex-col relative">
                 {showTabs && (
-                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-4 lg:px-6 py-2.5 flex gap-2 overflow-x-auto no-scrollbar shadow-sm">
+                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-4 lg:px-6 py-2.5 flex gap-2 overflow-x-auto no-scrollbar shadow-sm pl-14 lg:pl-6">
                         <div className="flex gap-2 min-w-max mx-auto lg:mx-0">
                             {currentNav.map((item) => {
                                 const isActive = pathname === item.href;
