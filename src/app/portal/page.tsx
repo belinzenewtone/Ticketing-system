@@ -2,6 +2,7 @@
 
 import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 import { getTickets, addTicket, updateTicket, deleteTicket } from '@/services/tickets';
 import { uploadTicketAttachment } from '@/services/storage';
 import { getITStaff } from '@/services/auth-actions';
