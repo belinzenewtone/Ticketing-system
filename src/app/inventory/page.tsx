@@ -44,7 +44,7 @@ const inventorySchema = z.object({
     reason: z.enum(['old-hardware', 'faulty', 'new-user']).optional(),
     importance: z.enum(['urgent', 'important', 'neutral']),
     item_type: z.enum(['desktop', 'laptop', 'supplies']),
-    item_count: z.number().min(1).max(999),
+    item_count: z.coerce.number().int().min(1, 'Quantity must be at least 1').max(999, 'Quantity cannot exceed 999'),
     notes: z.string().optional(),
     user_name: z.string().optional(),
     supply_name: z.string().optional(),
@@ -91,7 +91,7 @@ export default function InventoryPage() {
     });
 
     const form = useForm<CreateMachineInput>({
-        resolver: zodResolver(inventorySchema),
+        resolver: zodResolver(inventorySchema) as any,
         defaultValues: {
             date: new Date().toISOString().split('T')[0],
             requester_name: '',

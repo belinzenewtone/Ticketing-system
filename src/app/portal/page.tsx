@@ -70,7 +70,7 @@ const requestItemSchema = z.object({
     requester_name: z.string().min(2, 'Name required'),
     work_email: z.string().email().refine(e => e.endsWith('@jtl.co.ke'), 'Must be @jtl.co.ke'),
     importance: z.enum(['urgent', 'important', 'neutral']),
-    item_count: z.string().regex(/^\d{1,3}$/, 'Enter a number (max 3 digits)'),
+    item_count: z.coerce.number().min(1, 'Quantity must be at least 1').max(999, 'Quantity cannot exceed 999'),
     supply_name: z.string().optional(), // only for supplies
     reason: z.enum(['old-hardware', 'faulty', 'new-user']).optional(), // only for machines
     notes: z.string().optional(),
@@ -158,14 +158,14 @@ export default function PortalPage() {
     });
 
     const itemForm = useForm<RequestItemValues>({
-        resolver: zodResolver(requestItemSchema),
+        resolver: zodResolver(requestItemSchema) as any,
         defaultValues: {
             item_type: 'supplies',
             date: new Date().toISOString().split('T')[0],
             requester_name: profile?.name || '',
             work_email: profile?.email || '',
             importance: 'neutral',
-            item_count: '1',
+            item_count: 1,
             notes: '',
         },
     });
@@ -327,7 +327,7 @@ export default function PortalPage() {
 
         const mutationData = {
             ...data,
-            item_count: parseInt(data.item_count),
+            item_count: data.item_count,
             reason: data.item_type === 'supplies' ? undefined : (data.reason as any),
         };
 
