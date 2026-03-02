@@ -57,6 +57,12 @@ const statusConfig: Record<TicketStatus, { label: string; color: string; icon: R
     closed: { label: 'Closed', color: 'bg-slate-600/20 text-slate-400 border-slate-600/30', icon: Archive },
 };
 
+const reasonLabels: Record<string, string> = {
+    'old-hardware': 'Old Hardware',
+    faulty: 'Faulty',
+    'new-user': 'New User Onboarding',
+};
+
 // ── Validation ───────────────────────────────────────────────
 const ticketSchema = z.object({
     category: z.enum(['email', 'account-login', 'password-reset', 'hardware', 'software', 'network-vpn', 'other']),
@@ -486,6 +492,94 @@ export default function PortalPage() {
                                     <div className="absolute bottom-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="text-[10px] text-slate-400 font-medium bg-white/80 dark:bg-slate-900/80 px-2 py-1 rounded backdrop-blur border">
                                             {ticket.ticket_date}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Card>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* Item Requests View */}
+            <div className="mt-12 mb-20">
+                <div className="flex items-center gap-2 mb-6">
+                    <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                        <Package className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Your Item Requests</h3>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {requestsLoading || !profile ? (
+                        Array.from({ length: 3 }).map((_, i) => (
+                            <Card key={i} className="p-5 border shadow-sm">
+                                <Skeleton className="h-4 w-full mb-2" />
+                                <Skeleton className="h-4 w-1/2" />
+                            </Card>
+                        ))
+                    ) : !userRequests || userRequests.filter(r => r.created_by === profile?.id).length === 0 ? (
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20 bg-white/30 dark:bg-slate-900/10 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                            <div className="max-w-xs mx-auto space-y-3">
+                                <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto opacity-50">
+                                    <Package className="h-6 w-6" />
+                                </div>
+                                <p className="text-muted-foreground text-sm font-medium">No item requests found.</p>
+                                <Button variant="outline" size="sm" onClick={() => setRequestItemOpen(true)}>Request an item</Button>
+                            </div>
+                        </div>
+                    ) : (
+                        userRequests.filter(r => r.created_by === profile?.id).map((req) => (
+                            <Card key={req.id} className="group relative overflow-hidden border shadow-sm hover:shadow-md transition-all hover:border-emerald-200 dark:hover:border-emerald-800/50 bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm flex flex-col h-full">
+                                {/* Top Color Bar based on Importance */}
+                                <div className={`absolute top-0 left-0 right-0 h-1 ${req.importance === 'urgent' ? 'bg-red-500' : req.importance === 'important' ? 'bg-orange-500' : 'bg-slate-400'}`} />
+
+                                <div className="p-5 flex-1 flex flex-col">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="font-mono text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                #{req.number || 'REQ'}
+                                            </span>
+                                            <Badge variant="outline" className={cn(
+                                                "text-[9px] px-1.5 py-0 h-4 w-fit font-bold uppercase",
+                                                req.importance === 'urgent' ? 'text-red-600 border-red-100 bg-red-50' : req.importance === 'important' ? 'text-orange-600 border-orange-100 bg-orange-50' : 'text-slate-500 border-slate-100 bg-slate-50'
+                                            )}>
+                                                {req.importance}
+                                            </Badge>
+                                        </div>
+                                        <Badge variant="outline" className={cn(
+                                            "text-[10px] py-0.5 px-2 font-bold uppercase border",
+                                            req.status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/20' : req.status === 'fulfilled' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'
+                                        )}>
+                                            {req.status === 'pending' ? '⏳ Pending' : req.status === 'fulfilled' ? '✅ Fulfilled' : '❌ Rejected'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 mb-3">
+                                        <div className={cn("p-1.5 rounded-lg", req.item_type === 'supplies' ? 'bg-amber-100 dark:bg-amber-900/30' : 'bg-blue-100 dark:bg-blue-900/30')}>
+                                            {req.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-600" /> : <MonitorIcon className="h-3.5 w-3.5 text-blue-600" />}
+                                        </div>
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base capitalize">
+                                            {req.supply_name || req.item_type}
+                                        </h4>
+                                    </div>
+
+                                    <div className="space-y-4 mb-4">
+                                        <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
+                                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-1">Reason / Details</span>
+                                            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
+                                                {req.item_type === 'supplies' ? (req.supply_name || 'Standard supplies request') : (req.reason ? reasonLabels[req.reason] || req.reason : 'Request for hardware setup')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Quantity</span>
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">x{req.item_count}</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Requested</span>
+                                            <span className="text-xs font-medium text-slate-500">{req.date}</span>
                                         </div>
                                     </div>
                                 </div>
