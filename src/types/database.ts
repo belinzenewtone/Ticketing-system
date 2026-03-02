@@ -74,8 +74,11 @@ export interface MachineRequest {
     requester_name: string;
     user_name: string;
     work_email: string;
-    reason: MachineReason;
+    reason: MachineReason | null;
     importance: ImportanceLevel;
+    item_type: 'supplies' | 'desktop' | 'laptop';
+    supply_name?: string | null;
+    item_count: number;
     status: MachineStatus;
     notes: string;
     created_by: string | null;
@@ -86,10 +89,13 @@ export interface MachineRequest {
 export interface CreateMachineInput {
     date: string;
     requester_name: string;
-    user_name: string;
+    user_name?: string;
     work_email: string;
-    reason: MachineReason;
+    reason?: MachineReason;
     importance: ImportanceLevel;
+    item_type: 'supplies' | 'desktop' | 'laptop';
+    supply_name?: string;
+    item_count: number;
     notes?: string;
 }
 

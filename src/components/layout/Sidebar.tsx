@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { FileBarChart, LogOut, Menu, X, Ticket, User } from 'lucide-react';
+import { FileBarChart, LogOut, Menu, X, Ticket, User, Package } from 'lucide-react';
 import ProfileSettings from '../ProfileSettings';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/useAppStore';
@@ -14,6 +14,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 const navItems = [
     { href: '/tickets', label: 'Ticketing System', icon: Ticket },
     { href: '/dashboard', label: 'Reports Dashboard', icon: FileBarChart },
+    { href: '/supplies', label: 'Supplies Management', icon: Package },
 ];
 
 export function Sidebar() {

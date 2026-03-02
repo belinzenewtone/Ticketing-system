@@ -34,6 +34,8 @@ import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type Defl
 import { getKbArticles } from '@/services/knowledgeBase';
 import { getComments, addComment } from '@/services/comments';
 import { formatDistanceToNow } from 'date-fns';
+import { Package, Monitor as MonitorIcon, Laptop as LaptopIcon } from 'lucide-react';
+import { addMachine } from '@/services/machines';
 
 // ── Config maps ──────────────────────────────────────────────
 const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = {
@@ -62,13 +64,27 @@ const ticketSchema = z.object({
     description: z.string().optional(),
 });
 
+const requestItemSchema = z.object({
+    item_type: z.enum(['supplies', 'desktop', 'laptop']),
+    date: z.string().min(1),
+    requester_name: z.string().min(2, 'Name required'),
+    work_email: z.string().email().refine(e => e.endsWith('@jtl.co.ke'), 'Must be @jtl.co.ke'),
+    importance: z.enum(['urgent', 'important', 'neutral']),
+    item_count: z.string().regex(/^\d{1,3}$/, 'Enter a number (max 3 digits)'),
+    supply_name: z.string().optional(), // only for supplies
+    reason: z.enum(['old-hardware', 'faulty', 'new-user']).optional(), // only for machines
+    notes: z.string().optional(),
+});
+
 type FormValues = z.infer<typeof ticketSchema>;
+type RequestItemValues = z.infer<typeof requestItemSchema>;
 
 // ── Page ─────────────────────────────────────────────────────
 export default function PortalPage() {
     const { profile } = useAppStore();
     const { readCounts, isInitialized, markTicketAsRead } = useUnreadComments();
     const [formOpen, setFormOpen] = useState(false);
+    const [requestItemOpen, setRequestItemOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
     const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
@@ -140,6 +156,30 @@ export default function PortalPage() {
         resolver: zodResolver(ticketSchema),
         defaultValues: { category: 'email', subject: '', description: '' },
     });
+
+    const itemForm = useForm<RequestItemValues>({
+        resolver: zodResolver(requestItemSchema),
+        defaultValues: {
+            item_type: 'supplies',
+            date: new Date().toISOString().split('T')[0],
+            requester_name: profile?.name || '',
+            work_email: profile?.email || '',
+            importance: 'neutral',
+            item_count: '1',
+            notes: '',
+        },
+    });
+
+    // Update form defaults when profile loads
+    useEffect(() => {
+        if (profile) {
+            itemForm.reset({
+                ...itemForm.getValues(),
+                requester_name: profile.name || '',
+                work_email: profile.email || '',
+            });
+        }
+    }, [profile, itemForm]);
 
     // KB article search (triggered on subject blur)
     const handleSubjectBlur = useCallback(async () => {
@@ -282,17 +322,41 @@ export default function PortalPage() {
         }
     };
 
+    const handleItemSubmit = async (data: RequestItemValues) => {
+        if (!profile) return toast.error('Profile not loaded');
+
+        const mutationData = {
+            ...data,
+            item_count: parseInt(data.item_count),
+            reason: data.item_type === 'supplies' ? undefined : (data.reason as any),
+        };
+
+        try {
+            await addMachine(mutationData as any);
+            toast.success('Request submitted successfully');
+            setRequestItemOpen(false);
+            itemForm.reset();
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to submit request');
+        }
+    };
+
     return (
         <div className="space-y-6 max-w-6xl mx-auto">
             {/* Header Area */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-900 p-6 shadow-sm border border-slate-200 dark:border-slate-800 rounded-2xl">
                 <div>
                     <h2 className="text-2xl font-bold text-foreground">Welcome, {profile?.name}</h2>
-                    <p className="text-muted-foreground mt-1 text-sm">Need help? Report an issue to the IT department.</p>
+                    <p className="text-muted-foreground mt-1 text-sm">Need help? Request an item or create a ticket.</p>
                 </div>
-                <Button onClick={() => setFormOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-6 shadow-md shadow-emerald-500/20">
-                    <Plus className="h-4 w-4 mr-2" /> Report Issue
-                </Button>
+                <div className="flex gap-3">
+                    <Button onClick={() => setRequestItemOpen(true)} variant="outline" className="border-emerald-600 text-emerald-600 hover:bg-emerald-50 h-11 px-6">
+                        <Plus className="h-4 w-4 mr-2" /> Request Item
+                    </Button>
+                    <Button onClick={() => setFormOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white h-11 px-6 shadow-md shadow-emerald-500/20">
+                        <Plus className="h-4 w-4 mr-2" /> Create Ticket
+                    </Button>
+                </div>
             </div>
 
             {/* List View */}
@@ -575,6 +639,132 @@ export default function PortalPage() {
                 </DialogContent>
             </Dialog>
 
+            {/* ===== REQUEST ITEM DIALOG ===== */}
+            <Dialog open={requestItemOpen} onOpenChange={(open) => { setRequestItemOpen(open); if (!open) itemForm.reset(); }}>
+                <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Request Item</DialogTitle>
+                        <DialogDescription>Submit a request for supplies or hardware.</DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={itemForm.handleSubmit(handleItemSubmit)} className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label>Select Item</Label>
+                            <Select
+                                onValueChange={(v) => itemForm.setValue('item_type', v as any)}
+                                value={itemForm.watch('item_type')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select item type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="supplies">
+                                        <div className="flex items-center gap-2">
+                                            <Package className="h-4 w-4 text-emerald-500" />
+                                            <span>Supplies</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="desktop">
+                                        <div className="flex items-center gap-2">
+                                            <MonitorIcon className="h-4 w-4 text-blue-500" />
+                                            <span>Desktop</span>
+                                        </div>
+                                    </SelectItem>
+                                    <SelectItem value="laptop">
+                                        <div className="flex items-center gap-2">
+                                            <LaptopIcon className="h-4 w-4 text-indigo-500" />
+                                            <span>Laptop</span>
+                                        </div>
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Date</Label>
+                                <Input type="date" {...itemForm.register('date')} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Importance</Label>
+                                <Select
+                                    onValueChange={(v) => itemForm.setValue('importance', v as any)}
+                                    value={itemForm.watch('importance')}
+                                >
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                                        <SelectItem value="important">🟠 Important</SelectItem>
+                                        <SelectItem value="neutral">🔵 Neutral</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Requester Name</Label>
+                                <Input {...itemForm.register('requester_name')} />
+                                {itemForm.formState.errors.requester_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.requester_name.message}</p>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Work Email</Label>
+                                <Input {...itemForm.register('work_email')} placeholder="name@jtl.co.ke" />
+                                {itemForm.formState.errors.work_email?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.work_email.message}</p>}
+                            </div>
+                        </div>
+
+                        {itemForm.watch('item_type') === 'supplies' ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Type of Supplies</Label>
+                                    <Input {...itemForm.register('supply_name')} placeholder="e.g. Toners, Stationaries" />
+                                    {itemForm.formState.errors.supply_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.supply_name.message}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Number of Supplies</Label>
+                                    <Input {...itemForm.register('item_count')} placeholder="0-999" />
+                                    {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Reason</Label>
+                                    <Select
+                                        onValueChange={(v) => itemForm.setValue('reason', v as any)}
+                                        value={itemForm.watch('reason') || 'new-user'}
+                                    >
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="old-hardware">Old Hardware</SelectItem>
+                                            <SelectItem value="faulty">Faulty</SelectItem>
+                                            <SelectItem value="new-user">New User</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Number of Computers</Label>
+                                    <Input {...itemForm.register('item_count')} placeholder="0-999" />
+                                    {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label>Notes (Optional)</Label>
+                            <Textarea placeholder="Any additional details..." {...itemForm.register('notes')} />
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-4 border-t">
+                            <Button type="button" variant="ghost" onClick={() => setRequestItemOpen(false)}>Cancel</Button>
+                            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20">
+                                Submit Request
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             {/* ===== VIEW UPDATES / COMMENTS DIALOG ===== */}
             <Dialog open={!!viewCommentsTicket} onOpenChange={(open) => { if (!open) { setViewCommentsTicket(null); setNewComment(''); } }}>
                 <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
@@ -596,7 +786,7 @@ export default function PortalPage() {
                                 </div>
                             ) : viewComments.map((comment, index) => {
                                 const isMe = comment.user_id === profile?.id;
-                                const readCount = readCounts[viewCommentsTicket!.id] || 0;
+                                const readCount = viewCommentsTicket ? (readCounts[viewCommentsTicket.id] || 0) : 0;
                                 const isFirstUnread = index === readCount && viewComments.length > readCount;
 
                                 return (
@@ -689,7 +879,7 @@ export default function PortalPage() {
                             {viewNotesTicket?.resolution_notes}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Badge variant="outline" className={viewNotesTicket ? statusConfig[viewNotesTicket.status]?.color : ''}>
+                            <Badge variant="outline" className={viewNotesTicket ? (statusConfig[viewNotesTicket.status]?.color || '') : ''}>
                                 {viewNotesTicket ? statusConfig[viewNotesTicket.status]?.label : ''}
                             </Badge>
                             <span>— Resolved by {viewNotesTicket?.assigned_to && staffMap[viewNotesTicket.assigned_to] ? staffMap[viewNotesTicket.assigned_to] : 'IT Support'}</span>
@@ -697,6 +887,6 @@ export default function PortalPage() {
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }

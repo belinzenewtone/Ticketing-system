@@ -9,10 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { FileDown, Mail, CheckSquare, Monitor } from 'lucide-react';
+import { FileDown, Mail, CheckSquare, Monitor, Package } from 'lucide-react';
 import { useState } from 'react';
 
-type ReportType = 'entries' | 'tasks' | 'machines';
+type ReportType = 'entries' | 'tasks' | 'machines' | 'supplies';
 type DateRange = 'today' | 'week' | 'month' | 'year';
 
 export default function ReportsPage() {
@@ -22,7 +22,8 @@ export default function ReportsPage() {
 
     const { data: entryStats } = useQuery({ queryKey: ['entry-stats'], queryFn: () => getEntryStats() });
     const { data: taskStats } = useQuery({ queryKey: ['task-stats'], queryFn: () => getTaskStats() });
-    const { data: machineStats } = useQuery({ queryKey: ['machine-stats'], queryFn: () => getMachineStats() });
+    const { data: machineStats } = useQuery({ queryKey: ['hardware-stats-reports'], queryFn: () => getMachineStats('hardware') });
+    const { data: supplyStats } = useQuery({ queryKey: ['supply-stats-reports'], queryFn: () => getMachineStats('supplies') });
 
     const handleGenerate = async () => {
         setGenerating(true);
@@ -57,12 +58,21 @@ export default function ReportsPage() {
                     theme: 'grid',
                     headStyles: { fillColor: [16, 185, 129] },
                 });
-            } else {
-                const machines = await getMachines();
+            } else if (reportType === 'machines') {
+                const machinesList = await getMachines({ item_type: 'hardware' });
                 (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
                     startY: 44,
-                    head: [['#', 'Date', 'Requester', 'User', 'Reason', 'Status']],
-                    body: machines.map(m => [m.number, m.date, m.requester_name, m.user_name, m.reason, m.status]),
+                    head: [['#', 'Date', 'Requester', 'Type', 'Reason', 'Status']],
+                    body: machinesList.map(m => [m.number, m.date, m.requester_name, m.item_type, m.reason || '-', m.status]),
+                    theme: 'grid',
+                    headStyles: { fillColor: [16, 185, 129] },
+                });
+            } else {
+                const suppliesList = await getMachines({ item_type: 'supplies' });
+                (autoTableModule as { default: (doc: InstanceType<typeof jsPDF>, opts: Record<string, unknown>) => void }).default(doc, {
+                    startY: 44,
+                    head: [['#', 'Date', 'Requester', 'Supply Name', 'Qty', 'Status']],
+                    body: suppliesList.map(m => [m.number, m.date, m.requester_name, m.supply_name || '-', m.item_count, m.status]),
                     theme: 'grid',
                     headStyles: { fillColor: [16, 185, 129] },
                 });
@@ -79,10 +89,14 @@ export default function ReportsPage() {
                 const tasks = await getTasks();
                 csv = 'Date,Task,Priority,Completed\n';
                 csv += tasks.map(t => `${t.date},"${t.text}",${t.importance},${t.completed}`).join('\n');
+            } else if (reportType === 'machines') {
+                const machinesList = await getMachines({ item_type: 'hardware' });
+                csv = 'Number,Date,Requester,Type,Reason,Status\n';
+                csv += machinesList.map(m => `${m.number},${m.date},${m.requester_name},${m.item_type},${m.reason || ''},${m.status}`).join('\n');
             } else {
-                const machines = await getMachines();
-                csv = 'Number,Date,Requester,User,Reason,Status\n';
-                csv += machines.map(m => `${m.number},${m.date},${m.requester_name},${m.user_name},${m.reason},${m.status}`).join('\n');
+                const suppliesList = await getMachines({ item_type: 'supplies' });
+                csv = 'Number,Date,Requester,Supply Name,Qty,Status\n';
+                csv += suppliesList.map(m => `${m.number},${m.date},${m.requester_name},"${m.supply_name || ''}",${m.item_count},${m.status}`).join('\n');
             }
 
             const blob = new Blob([csv], { type: 'text/csv' });
@@ -97,8 +111,8 @@ export default function ReportsPage() {
 
     const summaryCards = [
         { label: 'Email Entries', value: entryStats?.total ?? 0, sub: `${entryStats?.sorted ?? 0} sorted`, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: CheckSquare, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-        { label: 'Machine Requests', value: machineStats?.total ?? 0, sub: `${machineStats?.fulfilled ?? 0} fulfilled`, icon: Monitor, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+        { label: 'Hardware Requests', value: machineStats?.total ?? 0, sub: `${machineStats?.fulfilled ?? 0} fulfilled`, icon: Monitor, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+        { label: 'Supplies Requests', value: supplyStats?.total ?? 0, sub: `${supplyStats?.fulfilled ?? 0} fulfilled`, icon: Package, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
     return (
@@ -135,8 +149,9 @@ export default function ReportsPage() {
                                 <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="entries">📧 Email Entries</SelectItem>
+                                    <SelectItem value="machines">💻 Hardware Requests</SelectItem>
+                                    <SelectItem value="supplies">📦 Supplies Requests</SelectItem>
                                     <SelectItem value="tasks">📝 Tasks</SelectItem>
-                                    <SelectItem value="machines">💻 Machine Requests</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
