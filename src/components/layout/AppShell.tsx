@@ -37,30 +37,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
             <Sidebar />
-            <main className="lg:ml-56 min-h-screen flex flex-col">
+            <main className="lg:ml-56 min-h-screen flex flex-col relative">
                 {showTabs && (
-                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-6 py-3 flex gap-2 overflow-x-auto no-scrollbar pt-safe lg:pt-3">
-                        {currentNav.map((item) => {
-                            const isActive = pathname === item.href;
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap',
-                                        isActive
-                                            ? 'bg-emerald-600 text-white shadow-sm'
-                                            : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                                    )}
-                                >
-                                    <item.icon className="h-4 w-4" />
-                                    {item.label}
-                                </Link>
-                            );
-                        })}
+                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-4 lg:px-6 py-2.5 flex gap-2 overflow-x-auto no-scrollbar shadow-sm">
+                        <div className="flex gap-2 min-w-max mx-auto lg:mx-0">
+                            {currentNav.map((item) => {
+                                const isActive = pathname === item.href;
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        className={cn(
+                                            'flex items-center gap-2 px-3.5 py-1.5 text-sm font-medium rounded-full transition-all whitespace-nowrap',
+                                            isActive
+                                                ? 'bg-emerald-600 text-white shadow-sm'
+                                                : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
+                                        )}
+                                    >
+                                        <item.icon className="h-4 w-4" />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                        </div>
                     </div>
                 )}
-                <div className={cn("flex-1 p-4 lg:p-6", showTabs ? "pt-4 lg:pt-6" : "pt-16 lg:pt-6")}>
+                <div className={cn(
+                    "flex-1 p-4 lg:p-8 w-full max-w-7xl mx-auto",
+                    showTabs ? "pt-4" : "pt-16 lg:pt-8"
+                )}>
                     {children}
                 </div>
             </main>

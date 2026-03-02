@@ -61,7 +61,7 @@ export function Sidebar() {
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="fixed top-4 left-4 z-50 lg:hidden text-foreground mt-safe"
+                    className="fixed top-3 left-4 z-50 lg:hidden text-foreground bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm border border-slate-200 dark:border-slate-800 shadow-sm"
                     onClick={toggleSidebar}
                 >
                     <Menu className="h-5 w-5" />
@@ -69,35 +69,35 @@ export function Sidebar() {
             )}
 
             {sidebarOpen && (
-                <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={toggleSidebar} />
+                <div className="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm" onClick={toggleSidebar} />
             )}
 
             <aside
                 className={cn(
-                    'fixed top-0 left-0 z-40 h-dvh w-56 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300',
+                    'fixed top-0 left-0 z-40 h-full w-64 bg-white dark:bg-slate-950 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-transform duration-300 ease-in-out shadow-xl lg:shadow-none',
                     'lg:translate-x-0',
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
                 {/* Header with close button inside */}
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between shrink-0 pt-safe">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
                     <Link href="/tickets" className="hover:opacity-80 transition-opacity">
-                        <h1 className="text-lg font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent leading-tight">
+                        <h1 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-400 bg-clip-text text-transparent leading-tight">
                             Ticketing System
                         </h1>
-                        <p className="text-[11px] text-slate-500 mt-1">JTL Internal System</p>
+                        <p className="text-xs text-slate-500 mt-0.5">JTL Internal System</p>
                     </Link>
                     <Button
                         variant="ghost"
                         size="icon"
-                        className="lg:hidden text-foreground -mt-1 -mr-2 shrink-0"
+                        className="lg:hidden text-foreground shrink-0"
                         onClick={toggleSidebar}
                     >
                         <X className="h-5 w-5" />
                     </Button>
                 </div>
 
-                <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1">
+                <nav className="flex-1 min-h-0 overflow-y-auto p-4 space-y-1.5 focus:outline-none">
                     {navItems.map((item) => {
                         const isActive = item.href === '/dashboard'
                             ? ['/dashboard', '/tasks', '/machines', '/reports'].includes(pathname)
@@ -108,25 +108,25 @@ export function Sidebar() {
                                 href={item.href}
                                 onClick={() => { if (window.innerWidth < 1024) toggleSidebar(); }}
                                 className={cn(
-                                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+                                    'flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200',
                                     isActive
-                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20'
+                                        ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/25'
                                         : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                 )}
                             >
-                                <item.icon className="h-4 w-4" />
+                                <item.icon className="h-5 w-5" />
                                 {item.label}
                             </Link>
                         );
                     })}
                 </nav>
 
-                <div className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0 pb-safe">
-                    <div className="flex items-center justify-between mb-3 px-2">
+                <div className="p-4 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-900/20">
+                    <div className="flex items-center justify-between mb-4 px-2">
                         {profile && (
                             <div className="min-w-0 flex-1">
-                                <p className="text-sm font-medium text-foreground truncate">{profile.name}</p>
-                                <p className="text-xs text-slate-500">{profile.role === 'ADMIN' ? 'Administrator' : 'IT Staff'}</p>
+                                <p className="text-sm font-semibold text-foreground truncate">{profile.name}</p>
+                                <p className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">{profile.role === 'ADMIN' ? 'Administrator' : 'IT Staff'}</p>
                             </div>
                         )}
                         <ThemeToggle />
@@ -134,7 +134,8 @@ export function Sidebar() {
                     <div className="flex gap-2">
                         <Button
                             variant="outline"
-                            className="flex-1 justify-center gap-2"
+                            size="sm"
+                            className="flex-1 justify-center gap-2 rounded-lg"
                             onClick={() => router.push('/dashboard/profile')}
                         >
                             <User className="h-4 w-4" />
@@ -142,7 +143,8 @@ export function Sidebar() {
                         </Button>
                         <Button
                             variant="ghost"
-                            className="flex-1 justify-center gap-2 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            size="sm"
+                            className="flex-1 justify-center gap-2 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg"
                             onClick={handleLogout}
                         >
                             <LogOut className="h-4 w-4" />
