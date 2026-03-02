@@ -21,6 +21,7 @@ function serializeMachine(m: any): MachineRequest {
         item_type: m.item_type || 'desktop',
         supply_name: m.supply_name ?? null,
         item_count: m.item_count || 1,
+        requested_from: m.requested_from || 'portal',
         notes: m.notes ?? null,
         created_by: m.created_by ?? null,
         created_at: m.created_at,
@@ -70,8 +71,8 @@ export async function addMachineRequest(input: CreateMachineInput): Promise<Mach
 
     await execute(
         `INSERT INTO machine_requests (
-            id, date, requester_name, user_name, work_email, reason, importance, status, notes, created_by, created_at, updated_at, item_type, supply_name, item_count
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            id, date, requester_name, user_name, work_email, reason, importance, status, notes, created_by, created_at, updated_at, item_type, supply_name, item_count, requested_from
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         input.date ?? null,
         input.requester_name,
@@ -86,7 +87,8 @@ export async function addMachineRequest(input: CreateMachineInput): Promise<Mach
         now,
         input.item_type,
         input.supply_name ?? null,
-        input.item_count
+        input.item_count,
+        input.requested_from
     );
 
     const row = await queryOne<any>('SELECT * FROM machine_requests WHERE id = ?', id);

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -142,8 +143,11 @@ export default function InventoryPage() {
     };
 
     const handleSubmit = (data: CreateMachineInput) => {
-        if (editingId) { updateMut.mutate({ id: editingId, data }); }
-        else { createMut.mutate(data); }
+        if (editingId) {
+            updateMut.mutate({ id: editingId, data });
+        } else {
+            createMut.mutate({ ...data, requested_from: 'admin' });
+        }
     };
 
     const statCards = [
@@ -270,6 +274,7 @@ export default function InventoryPage() {
                                 <TableRow>
                                     <TableHead className="w-16">No.</TableHead>
                                     <TableHead>Requester</TableHead>
+                                    <TableHead>Source</TableHead>
                                     <TableHead>Item / Category</TableHead>
                                     <TableHead>Email</TableHead>
                                     <TableHead>Reason / Details</TableHead>
@@ -295,6 +300,11 @@ export default function InventoryPage() {
                                         <TableCell>
                                             <div className="font-medium text-foreground">{m.requester_name}</div>
                                             <div className="text-[10px] text-slate-400">{m.date}</div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 h-auto uppercase font-bold", m.requested_from === 'admin' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20' : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20')}>
+                                                {m.requested_from || 'portal'}
+                                            </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
@@ -401,7 +411,7 @@ export default function InventoryPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2"><Label>Quantity *</Label><Input type="number" {...form.register('item_count')} /></div>
+                            <div className="space-y-2"><Label>Quantity *</Label><Input type="number" min="1" max="999" required {...form.register('item_count')} /></div>
                         </div>
 
                         <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Additional context (optional)..." {...form.register('notes')} /></div>

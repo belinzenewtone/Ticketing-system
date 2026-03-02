@@ -35,7 +35,7 @@ import { getKbArticles } from '@/services/knowledgeBase';
 import { getComments, addComment } from '@/services/comments';
 import { formatDistanceToNow } from 'date-fns';
 import { Package, Monitor as MonitorIcon, Laptop as LaptopIcon } from 'lucide-react';
-import { addMachine } from '@/services/machines';
+import { addMachine, getMachines } from '@/services/machines';
 
 // ── Config maps ──────────────────────────────────────────────
 const categoryConfig: Record<TicketCategory, { label: string; icon: string }> = {
@@ -66,13 +66,13 @@ const ticketSchema = z.object({
 
 const requestItemSchema = z.object({
     item_type: z.enum(['supplies', 'desktop', 'laptop']),
-    date: z.string().min(1),
+    date: z.string().min(1, 'Date required'),
     requester_name: z.string().min(2, 'Name required'),
     work_email: z.string().email().refine(e => e.endsWith('@jtl.co.ke'), 'Must be @jtl.co.ke'),
     importance: z.enum(['urgent', 'important', 'neutral']),
-    item_count: z.coerce.number().min(1, 'Quantity must be at least 1').max(999, 'Quantity cannot exceed 999'),
-    supply_name: z.string().optional(), // only for supplies
-    reason: z.enum(['old-hardware', 'faulty', 'new-user']).optional(), // only for machines
+    item_count: z.coerce.number().int().min(1, 'Quantity must be at least 1').max(999, 'Quantity cannot exceed 999'),
+    supply_name: z.string().optional(), // validated conditionally in submit
+    reason: z.enum(['old-hardware', 'faulty', 'new-user']).optional(), // validated conditionally in submit
     notes: z.string().optional(),
 });
 
@@ -122,6 +122,13 @@ export default function PortalPage() {
         refetchOnWindowFocus: true,
     });
 
+    // Requests for this user
+    const { data: userRequests, isLoading: requestsLoading } = useQuery({
+        queryKey: ['portal-requests', profile?.id],
+        queryFn: () => getMachines({ search: profile?.email || undefined }), // We'll refine this if needed
+        enabled: !!profile?.id,
+    });
+
     const createMut = useMutation({
         mutationFn: addTicket,
         onSuccess: () => {
@@ -162,24 +169,14 @@ export default function PortalPage() {
         defaultValues: {
             item_type: 'supplies',
             date: new Date().toISOString().split('T')[0],
-            requester_name: profile?.name || '',
-            work_email: profile?.email || '',
+            requester_name: '',
+            work_email: '',
             importance: 'neutral',
             item_count: 1,
             notes: '',
         },
     });
 
-    // Update form defaults when profile loads
-    useEffect(() => {
-        if (profile) {
-            itemForm.reset({
-                ...itemForm.getValues(),
-                requester_name: profile.name || '',
-                work_email: profile.email || '',
-            });
-        }
-    }, [profile, itemForm]);
 
     // KB article search (triggered on subject blur)
     const handleSubjectBlur = useCallback(async () => {
@@ -325,9 +322,18 @@ export default function PortalPage() {
     const handleItemSubmit = async (data: RequestItemValues) => {
         if (!profile) return toast.error('Profile not loaded');
 
+        // Extra validation for mandatory conditional fields
+        if (data.item_type === 'supplies' && !data.supply_name) {
+            return toast.error('Please specify the supply name');
+        }
+        if (data.item_type !== 'supplies' && !data.reason) {
+            return toast.error('Please specify the reason for the machine request');
+        }
+
         const mutationData = {
             ...data,
             item_count: data.item_count,
+            requested_from: 'portal' as const,
             reason: data.item_type === 'supplies' ? undefined : (data.reason as any),
         };
 
@@ -700,41 +706,39 @@ export default function PortalPage() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Requester Name</Label>
-                                <Input {...itemForm.register('requester_name')} placeholder="Enter your full name" />
-                                {itemForm.formState.errors.requester_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.requester_name.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Work Email</Label>
-                                <Input {...itemForm.register('work_email')} placeholder="yourname@jtl.co.ke" />
-                                {itemForm.formState.errors.work_email?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.work_email.message}</p>}
-                            </div>
+                        <div className="space-y-2">
+                            <Label>Requester Name <span className="text-red-500">*</span></Label>
+                            <Input required {...itemForm.register('requester_name')} placeholder="Enter your full name" />
+                            {itemForm.formState.errors.requester_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.requester_name.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Work Email <span className="text-red-500">*</span></Label>
+                            <Input required type="email" {...itemForm.register('work_email')} placeholder="yourname@jtl.co.ke" />
+                            {itemForm.formState.errors.work_email?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.work_email.message}</p>}
                         </div>
 
                         {itemForm.watch('item_type') === 'supplies' ? (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Type of Supplies</Label>
-                                    <Input {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners, A4 Papers" />
+                                    <Label>Type of Supplies <span className="text-red-500">*</span></Label>
+                                    <Input required {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners, A4 Papers" />
                                     {itemForm.formState.errors.supply_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.supply_name.message}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Number of Supplies</Label>
-                                    <Input {...itemForm.register('item_count')} placeholder="Qty (e.g. 5)" />
+                                    <Label>Number of Supplies <span className="text-red-500">*</span></Label>
+                                    <Input required type="number" min="1" max="999" {...itemForm.register('item_count')} placeholder="Qty (e.g. 5)" />
                                     {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
                                 </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Reason</Label>
+                                    <Label>Reason <span className="text-red-500">*</span></Label>
                                     <Select
                                         onValueChange={(v) => itemForm.setValue('reason', v as any)}
-                                        value={itemForm.watch('reason') || 'new-user'}
+                                        value={itemForm.watch('reason') || ''}
                                     >
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectTrigger><SelectValue placeholder="Select reason" /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="old-hardware">Old Hardware</SelectItem>
                                             <SelectItem value="faulty">Faulty</SelectItem>
@@ -743,8 +747,8 @@ export default function PortalPage() {
                                     </Select>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Number of Computers</Label>
-                                    <Input {...itemForm.register('item_count')} placeholder="Qty (e.g. 1)" />
+                                    <Label>Number of Computers <span className="text-red-500">*</span></Label>
+                                    <Input required type="number" min="1" max="999" {...itemForm.register('item_count')} placeholder="Qty (e.g. 1)" />
                                     {itemForm.formState.errors.item_count?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.item_count.message}</p>}
                                 </div>
                             </div>

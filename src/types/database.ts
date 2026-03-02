@@ -80,6 +80,7 @@ export interface MachineRequest {
     supply_name?: string | null;
     item_count: number;
     status: MachineStatus;
+    requested_from: 'portal' | 'admin';
     notes: string;
     created_by: string | null;
     created_at: string;
@@ -96,6 +97,7 @@ export interface CreateMachineInput {
     item_type: 'supplies' | 'desktop' | 'laptop';
     supply_name?: string;
     item_count: number;
+    requested_from: 'portal' | 'admin';
     notes?: string;
 }
 
