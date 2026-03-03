@@ -169,7 +169,7 @@ export default function TicketsPage() {
 
     const { data: ticketComments } = useQuery({
         queryKey: ['ticket-comments', editingTicket?.id],
-        queryFn: () => getComments(editingTicket!.id, true),
+        queryFn: () => getComments(editingTicket!.id, false, true),
         enabled: !!editingTicket?.id && formOpen,
         staleTime: 0,
     });

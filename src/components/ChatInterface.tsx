@@ -39,10 +39,10 @@ export function ChatInterface({ id, isMachine = false, isAdmin = false, profile,
     });
 
     useEffect(() => {
-        if (id && comments && !isAdmin) {
+        if (id && comments) {
             markTicketAsRead(id, comments.length);
         }
-    }, [id, comments, isAdmin]);
+    }, [id, comments]);
 
     useEffect(() => {
         if (comments) {
