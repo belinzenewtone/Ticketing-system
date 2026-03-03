@@ -22,7 +22,8 @@ function serializeMachine(m: any): MachineRequest {
         supply_name: m.supply_name ?? null,
         item_count: m.item_count || 1,
         requested_from: m.requested_from || 'portal',
-        notes: m.notes ?? null,
+        notes: m.notes ?? '',
+        internal_notes: m.internal_notes ?? null,
         created_by: m.created_by ?? null,
         created_at: m.created_at,
         updated_at: m.updated_at,
@@ -79,8 +80,8 @@ export async function addMachineRequest(input: CreateMachineInput): Promise<Mach
 
     await execute(
         `INSERT INTO machine_requests (
-            id, date, requester_name, user_name, work_email, reason, importance, status, notes, created_by, created_at, updated_at, item_type, supply_name, item_count, requested_from
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            id, date, requester_name, user_name, work_email, reason, importance, status, notes, internal_notes, created_by, created_at, updated_at, item_type, supply_name, item_count, requested_from
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
         input.date ?? null,
         input.requester_name,
@@ -90,6 +91,7 @@ export async function addMachineRequest(input: CreateMachineInput): Promise<Mach
         input.importance,
         toEnum('pending'),
         input.notes ?? null,
+        input.internal_notes ?? null,
         session?.user?.id ?? null,
         now,
         now,
@@ -153,6 +155,7 @@ export async function updateMachine(id: string, data: Partial<CreateMachineInput
     if (data.item_count !== undefined) { fields.push('item_count = ?'); params.push(data.item_count); }
     if (data.status !== undefined) { fields.push('status = ?'); params.push(toEnum(data.status)); }
     if (data.notes !== undefined) { fields.push('notes = ?'); params.push(data.notes); }
+    if (data.internal_notes !== undefined) { fields.push('internal_notes = ?'); params.push(data.internal_notes); }
     if (data.user_name !== undefined) { fields.push('user_name = ?'); params.push(data.user_name); }
 
     if (fields.length > 0) {

@@ -49,6 +49,7 @@ const inventorySchema = z.object({
     item_type: z.enum(['desktop', 'laptop', 'supplies']),
     item_count: z.coerce.number().int().min(1, 'Quantity must be at least 1').max(999, 'Quantity cannot exceed 999'),
     notes: z.string().optional(),
+    internal_notes: z.string().optional(),
     user_name: z.string().optional(),
     supply_name: z.string().optional(),
 });
@@ -142,6 +143,7 @@ export default function InventoryPage() {
             reason: m.reason || 'old-hardware',
             importance: m.importance as 'urgent' | 'important' | 'neutral',
             notes: m.notes || '',
+            internal_notes: m.internal_notes || '',
             item_count: m.item_count || 1,
             item_type: m.item_type as any,
             user_name: m.user_name || undefined,
@@ -436,6 +438,12 @@ export default function InventoryPage() {
                         </div>
 
                         <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Additional context (optional)..." {...form.register('notes')} /></div>
+                        <div className="space-y-2">
+                            <Label className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2">
+                                <Monitor className="h-4 w-4" /> Internal IT Notes
+                            </Label>
+                            <Textarea placeholder="IT only notes (not visible to users)..." className="border-emerald-100 dark:border-emerald-900/30" {...form.register('internal_notes')} />
+                        </div>
 
                         <div className="flex justify-end gap-3 pt-4 border-t mt-4">
                             <Button type="button" variant="ghost" onClick={() => { setFormOpen(false); form.reset(); setEditingId(null); }}>Cancel</Button>
@@ -455,7 +463,9 @@ export default function InventoryPage() {
                                 <MessageSquare className="h-5 w-5 text-emerald-500" />
                                 <span>Updates for Request #{viewCommentsMachine?.number}</span>
                             </div>
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold">{viewCommentsMachine?.status}</Badge>
+                            <div className="mr-6">
+                                <Badge variant="outline" className="text-[10px] uppercase font-bold">{viewCommentsMachine?.status}</Badge>
+                            </div>
                         </DialogTitle>
                     </DialogHeader>
 

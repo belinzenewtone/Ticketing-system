@@ -82,6 +82,7 @@ export interface MachineRequest {
     status: MachineStatus;
     requested_from: 'portal' | 'admin';
     notes: string;
+    internal_notes: string | null;
     created_by: string | null;
     created_at: string;
     updated_at: string;
@@ -101,6 +102,7 @@ export interface CreateMachineInput {
     item_count: number;
     requested_from: 'portal' | 'admin';
     notes?: string;
+    internal_notes?: string;
 }
 
 // Tickets
