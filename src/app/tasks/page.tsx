@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -233,12 +234,12 @@ export default function TasksPage() {
                     <Card className="border shadow-sm overflow-hidden">
                         <div className="overflow-x-auto">
                             <Table>
-                                <TableHeader>
+                                <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
                                     <TableRow>
-                                        <TableHead className="w-12">Mark Done</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Task</TableHead>
-                                        <TableHead>Priority</TableHead>
+                                        <TableHead className="w-12 border-r border-slate-200/60 dark:border-slate-800/60">Mark</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Date</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Task</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Priority</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -261,7 +262,7 @@ export default function TasksPage() {
                                             <TableCell className="text-muted-foreground">{task.date}</TableCell>
                                             <TableCell className={`font-medium ${task.completed ? 'line-through' : ''}`}>{task.text}</TableCell>
                                             <TableCell>
-                                                <Badge variant="outline" className={importanceConfig[task.importance]?.color}>
+                                                <Badge variant="outline" className={cn("h-6 px-2 text-[10px] uppercase font-bold border shadow-sm", importanceConfig[task.importance]?.color)}>
                                                     {importanceConfig[task.importance]?.icon} {importanceConfig[task.importance]?.label}
                                                 </Badge>
                                             </TableCell>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
@@ -287,11 +288,11 @@ export default function DashboardPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                                        <TableHead className="w-[120px] border-r border-slate-200/60 dark:border-slate-800/60">Entry</TableHead>
-                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Employee & Contact</TableHead>
-                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Resolution</TableHead>
-                                        <TableHead className="text-center w-[100px] border-r border-slate-200/60 dark:border-slate-800/60">Complete</TableHead>
-                                        <TableHead className="text-right w-[160px]">Actions</TableHead>
+                                        <TableHead className="w-[120px] border-r border-slate-200/60 dark:border-slate-800/60 font-bold uppercase text-[11px] tracking-wider">Entry Info</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60 font-bold uppercase text-[11px] tracking-wider">Employee & Contact</TableHead>
+                                        <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60 font-bold uppercase text-[11px] tracking-wider">Resolution</TableHead>
+                                        <TableHead className="text-center w-[100px] border-r border-slate-200/60 dark:border-slate-800/60 font-bold uppercase text-[11px] tracking-wider">Status</TableHead>
+                                        <TableHead className="text-right w-[160px] font-bold uppercase text-[11px] tracking-wider">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -321,7 +322,7 @@ export default function DashboardPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
-                                                <Badge variant="outline" className={`h-6 px-2 text-[11px] font-medium border-0 ${resolutionConfig[entry.resolution]?.color.replace('bg-', 'text-').replace('text-white', 'bg-opacity-10 dark:bg-opacity-20 ')} bg-current`}>
+                                                <Badge variant="outline" className={cn("h-6 px-2 text-[10px] uppercase font-bold border-0 shadow-sm", resolutionConfig[entry.resolution]?.color.replace('bg-', 'text-').replace('text-white', 'bg-opacity-10 dark:bg-opacity-20 '), "bg-current")}>
                                                     {resolutionConfig[entry.resolution]?.label.replace('✅', '').trim()}
                                                     {entry.resolution === 'sorted' && <CheckCircle className="h-3 w-3 ml-1" />}
                                                 </Badge>
