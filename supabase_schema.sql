@@ -88,6 +88,8 @@ CREATE TABLE IF NOT EXISTS machine_requests (
     importance TEXT CHECK (importance IN ('urgent', 'important', 'neutral')),
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'fulfilled', 'rejected')),
     notes TEXT,
+    resolution_notes TEXT,
+    internal_notes TEXT,
     created_by TEXT REFERENCES "User"(id),
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
