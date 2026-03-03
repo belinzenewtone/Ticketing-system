@@ -578,7 +578,7 @@ export default function PortalPage() {
                                             {req.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-600" /> : <MonitorIcon className="h-3.5 w-3.5 text-blue-600" />}
                                         </div>
                                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base capitalize">
-                                            {req.supply_name || (req.item_type === 'desktop' ? 'Desktop PC' : req.item_type === 'laptop' ? 'Laptop Computer' : req.item_type)}
+                                            {req.item_type === 'supplies' ? (req.supply_name || 'Supplies') : (req.item_type === 'desktop' ? 'Desktop PC' : 'Laptop Computer')}
                                         </h4>
                                     </div>
 
@@ -586,7 +586,7 @@ export default function PortalPage() {
                                         <div className="bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                                             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block mb-1">Reason / Details</span>
                                             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium leading-relaxed">
-                                                {req.item_type === 'supplies' ? (req.supply_name || 'Standard supplies request') : (req.reason ? reasonLabels[req.reason] || req.reason : 'Request for hardware setup')}
+                                                {req.item_type === 'supplies' ? (req.supply_name || 'Standard supplies request') : (req.reason ? reasonLabels[req.reason as keyof typeof reasonLabels] || req.reason : 'Hardware request')}
                                             </p>
                                         </div>
                                     </div>
@@ -958,7 +958,7 @@ export default function PortalPage() {
                                 }, profile.name || 'User');
                                 setNewComment('');
                                 refetchActiveComments();
-                                queryClient.invalidateQueries({ queryKey: [viewCommentsTicket ? 'portal-tickets' : 'portal-machines'] });
+                                queryClient.invalidateQueries({ queryKey: [viewCommentsTicket ? 'portal-tickets' : 'portal-requests'] });
                             } catch (error: any) {
                                 toast.error(error.message || 'Failed to post comment');
                             } finally {

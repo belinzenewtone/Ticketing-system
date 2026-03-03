@@ -364,13 +364,13 @@ export default function InventoryPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 {m.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-500" /> : m.item_type === 'laptop' ? <Laptop className="h-3.5 w-3.5 text-indigo-500" /> : <Monitor className="h-3.5 w-3.5 text-blue-500" />}
-                                                <span className="capitalize">{m.supply_name || (m.item_type === 'desktop' ? 'Desktop PC' : m.item_type === 'laptop' ? 'Laptop PC' : m.item_type)}</span>
+                                                <span className="capitalize">{m.supply_name || (m.item_type === 'desktop' ? 'Desktop PC' : m.item_type === 'laptop' ? 'Laptop Computer' : m.item_type)}</span>
                                                 <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">x{m.item_count}</span>
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-xs text-slate-500">{m.work_email}</TableCell>
                                         <TableCell className="text-xs text-slate-500">
-                                            {m.item_type === 'supplies' ? (m.importance || 'neutral') : (m.reason ? reasonLabels[m.reason as MachineReason] : '-')}
+                                            {m.item_type === 'supplies' ? (m.supply_name || 'Supplies') : (m.reason ? reasonLabels[m.reason as MachineReason] : (m.notes || m.importance))}
                                         </TableCell>
                                         <TableCell>
                                             <Select value={m.status} onValueChange={(v) => updateStatusMut.mutate({ id: m.id, status: v as MachineStatus })}>
