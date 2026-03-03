@@ -94,6 +94,7 @@ export default function PortalPage() {
     const [requestItemOpen, setRequestItemOpen] = useState(false);
     const [search, setSearch] = useState('');
     const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
+    const [viewNotesMachine, setViewNotesMachine] = useState<MachineRequest | null>(null);
     const [editingTicketId, setEditingTicketId] = useState<string | null>(null);
     const [attachment, setAttachment] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -567,6 +568,11 @@ export default function PortalPage() {
                                                     Unread Update
                                                 </Button>
                                             )}
+                                            {req.resolution_notes && (
+                                                <Button variant="ghost" size="sm" className="h-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 font-bold text-[11px] uppercase tracking-wider" onClick={() => setViewNotesMachine(req)}>
+                                                    <MessageSquare className="h-4 w-4 mr-1.5" /> Notes
+                                                </Button>
+                                            )}
                                             <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30 font-bold text-[11px] uppercase tracking-wider shadow-sm border border-transparent hover:border-blue-100/50" onClick={() => setViewCommentsMachine(req)}>
                                                 <MessageSquare className="h-4 w-4 mr-1.5" /> Updates
                                             </Button>
@@ -881,7 +887,7 @@ export default function PortalPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ===== VIEW NOTES DIALOG ===== */}
+            {/* ===== VIEW NOTES DIALOG (Ticket) ===== */}
             <Dialog open={!!viewNotesTicket} onOpenChange={(open) => !open && setViewNotesTicket(null)}>
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader>
@@ -897,6 +903,33 @@ export default function PortalPage() {
                                 {viewNotesTicket ? statusConfig[viewNotesTicket.status]?.label : ''}
                             </Badge>
                             <span>— Resolved by {viewNotesTicket?.assigned_to && staffMap[viewNotesTicket.assigned_to] ? staffMap[viewNotesTicket.assigned_to] : 'IT Support'}</span>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* ===== VIEW NOTES DIALOG (Machine) ===== */}
+            <Dialog open={!!viewNotesMachine} onOpenChange={(open) => !open && setViewNotesMachine(null)}>
+                <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                        <DialogTitle>IT Response</DialogTitle>
+                        <DialogDescription>
+                            Request #{viewNotesMachine?.number}: {viewNotesMachine?.item_type === 'supplies' ? viewNotesMachine?.supply_name : (viewNotesMachine?.item_type === 'desktop' ? 'Desktop PC' : 'Laptop')}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-4 text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed shadow-inner">
+                            {viewNotesMachine?.resolution_notes}
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Badge variant="outline" className={viewNotesMachine ? (
+                                viewNotesMachine.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-200/50' :
+                                    viewNotesMachine.status === 'fulfilled' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50' :
+                                        'bg-red-500/10 text-red-600 border-red-200/50'
+                            ) : ''}>
+                                {viewNotesMachine?.status}
+                            </Badge>
+                            <span>— IT Department</span>
                         </div>
                     </div>
                 </DialogContent>
