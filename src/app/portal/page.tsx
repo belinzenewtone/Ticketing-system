@@ -863,7 +863,9 @@ export default function PortalPage() {
                                 <MessageSquare className="h-5 w-5 text-emerald-500" />
                                 <span>Updates for {viewCommentsTicket ? 'Ticket' : 'Request'} #{activeItem?.number}</span>
                             </div>
-                            <Badge variant="outline" className="text-[10px] uppercase font-bold">{activeItem?.status}</Badge>
+                            <div className="mr-6">
+                                <Badge variant="outline" className="text-[10px] uppercase font-bold">{activeItem?.status}</Badge>
+                            </div>
                         </DialogTitle>
                     </DialogHeader>
 
