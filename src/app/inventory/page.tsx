@@ -26,9 +26,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Send, X, Loader2 } from 'lucide-react';
+import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -61,6 +61,7 @@ export default function InventoryPage() {
     const [view, setView] = useState<'dashboard' | 'list'>('list');
     const [viewCommentsMachine, setViewCommentsMachine] = useState<MachineRequest | null>(null);
     const { machineStatus, machineSearch, setMachineStatus, setMachineSearch, profile } = useAppStore();
+    const { readCounts, isInitialized } = useUnreadComments();
     const [typeFilter, setTypeFilter] = useState<'all' | 'hardware' | 'desktop' | 'laptop' | 'supplies'>('all');
 
     const queryClient = useQueryClient();
@@ -184,26 +185,25 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex justify-center">
-                <div className="flex items-center rounded-xl bg-slate-100 dark:bg-slate-900 p-1.5 gap-1.5 border border-slate-200 dark:border-slate-800">
-                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={cn("rounded-lg", view === 'dashboard' ? 'bg-white dark:bg-emerald-600 text-emerald-600 dark:text-white shadow-sm' : '')}>
-                        <LayoutDashboard className="h-4 w-4 mr-1.5" /> Dashboard
+                <div className="flex items-center rounded-lg border p-1 gap-1">
+                    <Button variant={view === 'dashboard' ? 'default' : 'ghost'} size="sm" onClick={() => setView('dashboard')} className={view === 'dashboard' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <LayoutDashboard className="h-4 w-4 mr-1" /> Dashboard
                     </Button>
-                    <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={cn("rounded-lg", view === 'list' ? 'bg-white dark:bg-emerald-600 text-emerald-600 dark:text-white shadow-sm' : '')}>
-                        <List className="h-4 w-4 mr-1.5" /> List View
+                    <Button variant={view === 'list' ? 'default' : 'ghost'} size="sm" onClick={() => setView('list')} className={view === 'list' ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : ''}>
+                        <List className="h-4 w-4 mr-1" /> List View
                     </Button>
                 </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {statCards.map((c) => (
-                    <Card key={c.label} className="border-none bg-white dark:bg-slate-900 shadow-sm overflow-hidden relative">
-                        <div className={`absolute top-0 left-0 w-1 h-full ${c.bg.replace('/10', '')}`} />
-                        <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between">
-                            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-slate-500">{c.label}</CardTitle>
-                            <c.icon className={`h-4 w-4 ${c.color}`} />
+                    <Card key={c.label} className="border shadow-sm">
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">{c.label}</CardTitle>
+                            <div className={`p-2 rounded-lg ${c.bg}`}><c.icon className={`h-5 w-5 ${c.color}`} /></div>
                         </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                            {statsLoading ? <Skeleton className="h-8 w-16" /> : <p className="text-2xl font-bold text-foreground">{c.value}</p>}
+                        <CardContent>
+                            {statsLoading ? <Skeleton className="h-9 w-16" /> : <p className="text-3xl font-bold text-foreground">{c.value}</p>}
                         </CardContent>
                     </Card>
                 ))}
@@ -355,6 +355,12 @@ export default function InventoryPage() {
                                             <div className="flex items-center justify-end gap-1">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 relative" onClick={() => setViewCommentsMachine(m)}>
                                                     <MessageSquare className="h-3.5 w-3.5" />
+                                                    {isInitialized && m.comment_count > (readCounts[m.id] || 0) && (
+                                                        <span className="absolute top-1 right-1 flex h-2 w-2">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+                                                        </span>
+                                                    )}
                                                 </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => handleEdit(m)}>
                                                     <Pencil className="h-3.5 w-3.5" />
