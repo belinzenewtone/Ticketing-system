@@ -85,6 +85,8 @@ export interface MachineRequest {
     created_by: string | null;
     created_at: string;
     updated_at: string;
+    comment_count: number;
+    public_comment_count: number;
 }
 
 export interface CreateMachineInput {
@@ -187,7 +189,8 @@ export interface CreateKbArticleInput {
 // Ticket Comments
 export interface TicketComment {
     id: string;
-    ticket_id: string;
+    ticket_id?: string | null;
+    machine_id?: string | null;
     user_id: string | null;
     author_name: string;
     content: string;
@@ -196,7 +199,8 @@ export interface TicketComment {
 }
 
 export interface CreateCommentInput {
-    ticket_id: string;
+    ticket_id?: string;
+    machine_id?: string;
     content: string;
     is_internal?: boolean;
 }

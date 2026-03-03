@@ -7,7 +7,8 @@ import type { TicketComment, CreateCommentInput } from '@/types/database';
 function serializeComment(c: any): TicketComment {
     return {
         id: c.id,
-        ticket_id: c.ticket_id,
+        ticket_id: c.ticket_id ?? null,
+        machine_id: c.machine_id ?? null,
         user_id: c.user_id,
         author_name: c.author_name,
         content: c.content,
@@ -16,12 +17,14 @@ function serializeComment(c: any): TicketComment {
     };
 }
 
-export async function getComments(ticket_id: string, includeInternal: boolean = false): Promise<TicketComment[]> {
-    const sql = includeInternal
-        ? 'SELECT * FROM ticket_comments WHERE ticket_id = ? ORDER BY created_at ASC'
-        : 'SELECT * FROM ticket_comments WHERE ticket_id = ? AND is_internal = 0 ORDER BY created_at ASC';
+export async function getComments(id: string, isMachine: boolean = false, includeInternal: boolean = false): Promise<TicketComment[]> {
+    let sql = 'SELECT * FROM ticket_comments WHERE ' + (isMachine ? 'machine_id = ?' : 'ticket_id = ?');
+    if (!includeInternal) {
+        sql += ' AND is_internal = 0';
+    }
+    sql += ' ORDER BY created_at ASC';
 
-    const comments = await query<any>(sql, ticket_id);
+    const comments = await query<any>(sql, id);
     return comments.map(serializeComment);
 }
 
@@ -31,10 +34,11 @@ export async function addComment(input: CreateCommentInput, authorName: string):
     const created_at = new Date().toISOString();
 
     await execute(
-        `INSERT INTO ticket_comments (id, ticket_id, user_id, author_name, content, is_internal, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO ticket_comments (id, ticket_id, machine_id, user_id, author_name, content, is_internal, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         id,
-        input.ticket_id,
+        input.ticket_id ?? null,
+        input.machine_id ?? null,
         session?.user?.id ?? null,
         authorName,
         input.content,
@@ -44,7 +48,8 @@ export async function addComment(input: CreateCommentInput, authorName: string):
 
     return {
         id,
-        ticket_id: input.ticket_id,
+        ticket_id: input.ticket_id ?? null,
+        machine_id: input.machine_id ?? null,
         user_id: session?.user?.id ?? null,
         author_name: authorName,
         content: input.content,

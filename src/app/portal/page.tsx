@@ -110,8 +110,9 @@ export default function PortalPage() {
     const [kbArticles, setKbArticles] = useState<KbArticle[]>([]);
     const [expandedKbId, setExpandedKbId] = useState<string | null>(null);
 
-    // Comments (for viewing public replies per ticket)
+    // Comments (for viewing public replies per ticket/machine)
     const [viewCommentsTicket, setViewCommentsTicket] = useState<TicketType | null>(null);
+    const [viewCommentsMachine, setViewCommentsMachine] = useState<any | null>(null);
     const [newComment, setNewComment] = useState('');
     const [isPostingComment, setIsPostingComment] = useState(false);
 
@@ -197,25 +198,39 @@ export default function PortalPage() {
         }
     }, [form]);
 
-    // Comments query for viewing public replies
+    // Comments query for viewing public replies (Tickets)
     const { data: viewComments, refetch: refetchComments } = useQuery({
         queryKey: ['portal-comments', viewCommentsTicket?.id],
-        queryFn: () => getComments(viewCommentsTicket!.id, false),
+        queryFn: () => getComments(viewCommentsTicket!.id, false, false),
         enabled: !!viewCommentsTicket?.id,
         staleTime: 0,
     });
+
+    // Comments query for viewing public replies (Machines)
+    const { data: viewCommentsM, refetch: refetchCommentsM } = useQuery({
+        queryKey: ['portal-machine-comments', viewCommentsMachine?.id],
+        queryFn: () => getComments(viewCommentsMachine!.id, true, false),
+        enabled: !!viewCommentsMachine?.id,
+        staleTime: 0,
+    });
+
+    const activeComments = viewCommentsTicket ? viewComments : viewCommentsM;
+    const refetchActiveComments = viewCommentsTicket ? refetchComments : refetchCommentsM;
+    const activeItem = viewCommentsTicket || viewCommentsMachine;
 
     // Clear unread indicator ONLY when the user explicitly views the comments dialog
     useEffect(() => {
         if (viewCommentsTicket && viewComments) {
             markTicketAsRead(viewCommentsTicket.id, viewComments.length);
+        } else if (viewCommentsMachine && viewCommentsM) {
+            markTicketAsRead(viewCommentsMachine.id, viewCommentsM.length);
         }
-    }, [viewCommentsTicket, viewComments, markTicketAsRead]);
+    }, [viewCommentsTicket, viewComments, viewCommentsMachine, viewCommentsM, markTicketAsRead]);
 
     // Scroll to first unread comment (or bottom if all read) when comments dialog opens or updates
     const unreadStartRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-        if (viewComments && viewCommentsTicket) {
+        if (activeComments && activeItem) {
             setTimeout(() => {
                 if (unreadStartRef.current) {
                     unreadStartRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -224,7 +239,7 @@ export default function PortalPage() {
                 }
             }, 250);
         }
-    }, [viewComments?.length, viewCommentsTicket]);
+    }, [activeComments?.length, activeItem]);
 
     const handleOpenChange = (open: boolean) => {
         setFormOpen(open);
@@ -335,6 +350,9 @@ export default function PortalPage() {
         }
         if (data.item_type !== 'supplies' && !data.reason) {
             return toast.error('Please specify the reason for the machine request');
+        }
+        if (data.supply_name && data.supply_name.length > 20) {
+            return toast.error('Supply name cannot exceed 20 characters');
         }
 
         const mutationData = {
@@ -560,7 +578,7 @@ export default function PortalPage() {
                                             {req.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-600" /> : <MonitorIcon className="h-3.5 w-3.5 text-blue-600" />}
                                         </div>
                                         <h4 className="font-bold text-slate-800 dark:text-slate-100 text-base capitalize">
-                                            {req.supply_name || req.item_type}
+                                            {req.supply_name || (req.item_type === 'desktop' ? 'Desktop PC' : req.item_type === 'laptop' ? 'Laptop Computer' : req.item_type)}
                                         </h4>
                                     </div>
 
@@ -578,9 +596,19 @@ export default function PortalPage() {
                                             <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Quantity</span>
                                             <span className="text-sm font-bold text-slate-700 dark:text-slate-200">x{req.item_count}</span>
                                         </div>
-                                        <div className="text-right">
-                                            <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold block">Requested</span>
-                                            <span className="text-xs font-medium text-slate-500">{req.date}</span>
+                                        <div className="flex items-center gap-2">
+                                            {isInitialized && req.public_comment_count > (readCounts[req.id] || 0) && (
+                                                <Button variant="ghost" size="sm" className="h-7 text-[10px] font-medium text-red-600 bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1 hover:bg-red-200 dark:hover:bg-red-800/50 transition-colors" onClick={() => setViewCommentsMachine(req)}>
+                                                    <span className="relative flex h-2 w-2 mr-0.5">
+                                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                    </span>
+                                                    Unread Update
+                                                </Button>
+                                            )}
+                                            <Button variant="ghost" size="sm" className="h-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/30" onClick={() => setViewCommentsMachine(req)}>
+                                                <MessageSquare className="h-4 w-4 mr-1.5" /> Updates
+                                            </Button>
                                         </div>
                                     </div>
                                 </div>
@@ -816,8 +844,9 @@ export default function PortalPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label>Type of Supplies <span className="text-red-500">*</span></Label>
-                                    <Input required {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners, A4 Papers" />
+                                    <Input required {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners" maxLength={20} />
                                     {itemForm.formState.errors.supply_name?.message && <p className="text-red-500 text-xs">{itemForm.formState.errors.supply_name.message}</p>}
+                                    <p className="text-[10px] text-slate-400 italic">Limit: 20 characters</p>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Number of Supplies <span className="text-red-500">*</span></Label>
@@ -864,105 +893,90 @@ export default function PortalPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* ===== VIEW UPDATES / COMMENTS DIALOG ===== */}
-            <Dialog open={!!viewCommentsTicket} onOpenChange={(open) => { if (!open) { setViewCommentsTicket(null); setNewComment(''); } }}>
-                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2">
-                            <MessageSquare className="h-5 w-5 text-blue-500" /> Ticket Updates
+            {/* ===== VIEW UPDATES / COMMENTS DIALOG (Unified) ===== */}
+            <Dialog open={!!activeItem} onOpenChange={(open) => { if (!open) { setViewCommentsTicket(null); setViewCommentsMachine(null); setNewComment(''); } }}>
+                <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden">
+                    <DialogHeader className="p-4 border-b">
+                        <DialogTitle className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5 text-emerald-500" />
+                                <span>Updates for {viewCommentsTicket ? 'Ticket' : 'Request'} #{activeItem?.number}</span>
+                            </div>
+                            <Badge variant="outline" className="text-[10px] uppercase font-bold">{activeItem?.status}</Badge>
                         </DialogTitle>
-                        <DialogDescription>#{viewCommentsTicket?.number}: {viewCommentsTicket?.subject}</DialogDescription>
                     </DialogHeader>
-                    <div className="py-4 space-y-4">
-                        {/* Public comments thread - WhatsApp Style */}
-                        <div className="space-y-4 max-h-[350px] overflow-y-auto pr-2 pb-2">
-                            {!viewComments ? (
-                                <div className="space-y-4">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-16 w-3/4 rounded-2xl" />)}</div>
-                            ) : viewComments.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                                    <MessageSquare className="h-8 w-8 mb-2 opacity-30" />
-                                    <p className="text-sm">No updates from IT yet.</p>
-                                </div>
-                            ) : viewComments.map((comment, index) => {
-                                const isMe = comment.user_id === profile?.id;
-                                const readCount = viewCommentsTicket ? (readCounts[viewCommentsTicket.id] || 0) : 0;
-                                const isFirstUnread = index === readCount && viewComments.length > readCount;
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/30 dark:bg-slate-900/10">
+                        {(!activeComments || activeComments.length === 0) ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
+                                <MessageSquare className="h-8 w-8 opacity-20" />
+                                <p className="text-xs font-medium">No updates yet from IT Support.</p>
+                            </div>
+                        ) : (
+                            activeComments.map((c: any, i: number) => {
+                                const isMe = c.user_id === profile?.id;
+                                const readCount = readCounts[activeItem!.id] || 0;
+                                const isFirstUnread = i === readCount && activeComments.length > readCount;
 
                                 return (
-                                    <div key={comment.id} ref={isFirstUnread ? unreadStartRef : undefined} className={`flex flex-col w-full ${isMe ? 'items-end' : 'items-start'}`}>
-                                        <div className="flex items-end gap-2 max-w-[85%]">
-                                            {!isMe && (
-                                                <div className="h-8 w-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex-shrink-0 flex items-center justify-center text-xs font-bold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                                                    {(comment.author_name || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
-
-                                            <div className={`relative px-4 py-2.5 rounded-2xl shadow-sm text-sm ${isMe
-                                                ? 'bg-emerald-600 text-white rounded-br-sm'
-                                                : 'bg-white dark:bg-slate-800 border border-emerald-100 dark:border-emerald-900 text-foreground rounded-bl-sm'}`}>
-
-                                                {/* Author Name for received messages */}
-                                                {!isMe && <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-0.5">{comment.author_name}</div>}
-
-                                                <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
-
-                                                <div className={`text-[10px] mt-1 text-right ${isMe ? 'text-emerald-100' : 'text-slate-400'}`}>
-                                                    {comment.created_at ? formatDistanceToNow(new Date(comment.created_at), { addSuffix: true }) : 'just now'}
-                                                </div>
+                                    <div key={c.id} className={cn("flex flex-col w-full", isMe ? "items-end" : "items-start")}>
+                                        {isFirstUnread && (
+                                            <div ref={unreadStartRef} className="w-full flex items-center gap-2 my-4">
+                                                <div className="h-[1px] flex-1 bg-red-100 dark:bg-red-900/30" />
+                                                <span className="text-[10px] font-bold text-red-500 uppercase tracking-widest px-2">New Updates</span>
+                                                <div className="h-[1px] flex-1 bg-red-100 dark:bg-red-900/30" />
                                             </div>
-
-                                            {isMe && (
-                                                <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                    {(comment.author_name || 'U').charAt(0).toUpperCase()}
-                                                </div>
-                                            )}
+                                        )}
+                                        <div className={cn("max-w-[85%] flex flex-col", isMe ? "items-end" : "items-start")}>
+                                            <div className={cn("px-4 py-2.5 rounded-2xl text-sm shadow-sm",
+                                                isMe ? "bg-emerald-600 text-white rounded-br-none" : "bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-none border border-slate-100 dark:border-slate-800")}>
+                                                {!isMe && <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1 uppercase tracking-wider">{c.author_name}</div>}
+                                                <p className="leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                                            </div>
+                                            <span className="text-[10px] text-slate-400 mt-1 px-1">
+                                                {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
+                                            </span>
                                         </div>
                                     </div>
                                 );
-                            })}
-                            <div ref={messagesEndRef} />
-                        </div>
-
-                        {/* Employee reply */}
-                        <div className="border-t pt-4 space-y-3">
-                            <Label className="text-sm">Reply to IT Support</Label>
-                            <Textarea
-                                placeholder="Add a follow-up message..."
-                                className="min-h-[80px]"
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                            />
-                            <div className="flex justify-end">
-                                <Button
-                                    size="sm"
-                                    disabled={!newComment.trim() || isPostingComment}
-                                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                                    onClick={async () => {
-                                        if (!newComment.trim() || !viewCommentsTicket || !profile) return;
-                                        setIsPostingComment(true);
-                                        try {
-                                            await addComment(
-                                                { ticket_id: viewCommentsTicket.id, content: newComment.trim(), is_internal: false },
-                                                profile.name || "User"
-                                            );
-                                            setNewComment('');
-                                            refetchComments();
-                                            queryClient.invalidateQueries({ queryKey: ['portal-tickets'] });
-                                            toast.success('Reply sent');
-                                        } catch (e: unknown) {
-                                            const msg = e instanceof Error ? e.message : "Failed to send";
-                                            toast.error(msg);
-                                        } finally {
-                                            setIsPostingComment(false);
-                                        }
-                                    }}
-                                >
-                                    <Send className="h-3.5 w-3.5 mr-1.5" />
-                                    {isPostingComment ? 'Sending...' : 'Send Reply'}
-                                </Button>
-                            </div>
-                        </div>
+                            })
+                        )}
+                        <div ref={messagesEndRef} />
                     </div>
+
+                    <form
+                        onSubmit={async (e) => {
+                            e.preventDefault();
+                            if (!newComment.trim() || !activeItem || !profile) return;
+                            setIsPostingComment(true);
+                            try {
+                                await addComment({
+                                    ticket_id: viewCommentsTicket?.id,
+                                    machine_id: viewCommentsMachine?.id,
+                                    content: newComment.trim(),
+                                    is_internal: false
+                                }, profile.name || 'User');
+                                setNewComment('');
+                                refetchActiveComments();
+                                queryClient.invalidateQueries({ queryKey: [viewCommentsTicket ? 'portal-tickets' : 'portal-machines'] });
+                            } catch (error: any) {
+                                toast.error(error.message || 'Failed to post comment');
+                            } finally {
+                                setIsPostingComment(false);
+                            }
+                        }}
+                        className="p-4 border-t bg-white dark:bg-slate-950 flex gap-2 shadow-[0_-4px_12px_rgba(0,0,0,0.03)]"
+                    >
+                        <Input
+                            placeholder="Type a message..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-900 border-none focus-visible:ring-emerald-500"
+                        />
+                        <Button type="submit" size="icon" disabled={isPostingComment || !newComment.trim()} className="bg-emerald-600 hover:bg-emerald-700 shrink-0 shadow-lg shadow-emerald-500/20">
+                            {isPostingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </Button>
+                    </form>
                 </DialogContent>
             </Dialog>
 

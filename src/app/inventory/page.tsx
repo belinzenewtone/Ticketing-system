@@ -2,6 +2,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getMachines, addMachine, updateMachine, deleteMachine, getMachineStats } from '@/services/machines';
+import { getComments, addComment } from '@/services/comments';
+import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,9 +26,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop } from 'lucide-react';
+import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Send, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -55,8 +57,13 @@ export default function InventoryPage() {
     const [formOpen, setFormOpen] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [view, setView] = useState<'dashboard' | 'list'>('list');
-    const { machineStatus, machineSearch, setMachineStatus, setMachineSearch } = useAppStore();
-    const [typeFilter, setTypeFilter] = useState<'all' | 'hardware' | 'supplies'>('all');
+    const { machineStatus, machineSearch, setMachineStatus, setMachineSearch, profile } = useAppStore();
+    const [typeFilter, setTypeFilter] = useState<'all' | 'hardware' | 'supplies' | 'desktop' | 'laptop'>('all');
+    const { readCounts, markTicketAsRead, isInitialized } = useUnreadComments();
+    const [viewCommentsMachine, setViewCommentsMachine] = useState<any | null>(null);
+    const [newComment, setNewComment] = useState('');
+    const [isPostingComment, setIsPostingComment] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
     const queryClient = useQueryClient();
 
     const { data: stats, isLoading: statsLoading } = useQuery({
@@ -69,9 +76,47 @@ export default function InventoryPage() {
         queryFn: () => getMachines({
             status: machineStatus === 'all' ? undefined : machineStatus,
             search: machineSearch || undefined,
-            item_type: typeFilter === 'all' ? undefined : typeFilter as any
+            item_type: typeFilter === 'all' ? undefined :
+                typeFilter === 'hardware' ? 'hardware' :
+                    typeFilter === 'supplies' ? 'supplies' :
+                        typeFilter === 'desktop' ? 'desktop' :
+                            typeFilter === 'laptop' ? 'laptop' : undefined
         }),
     });
+
+    const { data: viewComments, refetch: refetchComments } = useQuery({
+        queryKey: ['machine-comments', viewCommentsMachine?.id],
+        queryFn: () => getComments(viewCommentsMachine!.id, true, true),
+        enabled: !!viewCommentsMachine?.id,
+    });
+
+    useEffect(() => {
+        if (viewCommentsMachine && viewComments) {
+            markTicketAsRead(viewCommentsMachine.id, viewComments.length);
+        }
+    }, [viewCommentsMachine, viewComments, markTicketAsRead]);
+
+    useEffect(() => {
+        if (viewComments) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [viewComments]);
+
+    const handleSendComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newComment.trim() || !viewCommentsMachine || !profile) return;
+        setIsPostingComment(true);
+        try {
+            await addComment({ machine_id: viewCommentsMachine.id, content: newComment, is_internal: false }, profile.name || 'Admin');
+            setNewComment('');
+            refetchComments();
+            queryClient.invalidateQueries({ queryKey: ['inventory-list'] });
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to post comment');
+        } finally {
+            setIsPostingComment(false);
+        }
+    };
 
     const deleteMut = useMutation({
         mutationFn: deleteMachine,
@@ -231,9 +276,9 @@ export default function InventoryPage() {
                         <CardHeader><CardTitle className="text-base">Distribution by Type</CardTitle></CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                <DistributionRow label="Supplies" count={items?.filter(i => i.item_type === 'supplies').length || 0} total={items?.length || 0} color="bg-amber-500" />
-                                <DistributionRow label="Desktops" count={items?.filter(i => i.item_type === 'desktop').length || 0} total={items?.length || 0} color="bg-blue-500" />
-                                <DistributionRow label="Laptops" count={items?.filter(i => i.item_type === 'laptop').length || 0} total={items?.length || 0} color="bg-indigo-500" />
+                                <DistributionRow label="Supplies" count={stats?.supplies || 0} total={stats?.total || 0} color="bg-amber-500" />
+                                <DistributionRow label="Desktops" count={stats?.desktop || 0} total={stats?.total || 0} color="bg-blue-500" />
+                                <DistributionRow label="Laptops" count={stats?.laptop || 0} total={stats?.total || 0} color="bg-indigo-500" />
                             </div>
                         </CardContent>
                     </Card>
@@ -252,7 +297,9 @@ export default function InventoryPage() {
                                 <SelectTrigger className="w-[140px] h-10 border-slate-200 dark:border-slate-800"><SelectValue placeholder="Category" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">All Items</SelectItem>
-                                    <SelectItem value="hardware">Hardware Only</SelectItem>
+                                    <SelectItem value="hardware">All Hardware</SelectItem>
+                                    <SelectItem value="desktop">Desktop PC</SelectItem>
+                                    <SelectItem value="laptop">Laptop PC</SelectItem>
                                     <SelectItem value="supplies">Supplies Only</SelectItem>
                                 </SelectContent>
                             </Select>
@@ -296,7 +343,15 @@ export default function InventoryPage() {
                                     </TableRow>
                                 ) : items?.map((m) => (
                                     <TableRow key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                                        <TableCell className="font-mono text-[11px] font-bold text-slate-400">{m.number}</TableCell>
+                                        <TableCell>
+                                            <div className="font-mono text-[11px] font-bold text-slate-400 mb-1">{m.number}</div>
+                                            <Badge variant="outline" className={cn(
+                                                "text-[9px] px-1.5 py-0 h-4 w-fit font-bold uppercase",
+                                                m.importance === 'urgent' ? 'text-red-600 border-red-100 bg-red-50' : m.importance === 'important' ? 'text-orange-600 border-orange-100 bg-orange-50' : 'text-slate-500 border-slate-100 bg-slate-50'
+                                            )}>
+                                                {m.importance}
+                                            </Badge>
+                                        </TableCell>
                                         <TableCell>
                                             <div className="font-medium text-foreground">{m.requester_name}</div>
                                             <div className="text-[10px] text-slate-400">{m.date}</div>
@@ -309,7 +364,7 @@ export default function InventoryPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 {m.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-500" /> : m.item_type === 'laptop' ? <Laptop className="h-3.5 w-3.5 text-indigo-500" /> : <Monitor className="h-3.5 w-3.5 text-blue-500" />}
-                                                <span className="capitalize">{m.supply_name || m.item_type}</span>
+                                                <span className="capitalize">{m.supply_name || (m.item_type === 'desktop' ? 'Desktop PC' : m.item_type === 'laptop' ? 'Laptop PC' : m.item_type)}</span>
                                                 <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">x{m.item_count}</span>
                                             </div>
                                         </TableCell>
@@ -331,6 +386,15 @@ export default function InventoryPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 relative" onClick={() => setViewCommentsMachine(m)}>
+                                                    <MessageSquare className="h-3.5 w-3.5" />
+                                                    {isInitialized && m.public_comment_count > (readCounts[m.id] || 0) && (
+                                                        <span className="absolute top-1 right-1 flex h-2 w-2">
+                                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                                                        </span>
+                                                    )}
+                                                </Button>
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => handleEdit(m)}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
@@ -384,7 +448,7 @@ export default function InventoryPage() {
                         {form.watch('item_type') === 'supplies' ? (
                             <div className="space-y-2">
                                 <Label>Supply Name *</Label>
-                                <Input placeholder="e.g. Printer Toners, HP Laserjet M102" {...form.register('supply_name')} />
+                                <Input placeholder="e.g. Printer Toners, HP Laserjet M102" {...form.register('supply_name')} maxLength={20} />
                             </div>
                         ) : (
                             <div className="space-y-2">
@@ -417,11 +481,48 @@ export default function InventoryPage() {
                         <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Additional context (optional)..." {...form.register('notes')} /></div>
 
                         <div className="flex justify-end gap-3 pt-4 border-t mt-4">
-                            <Button type="button" variant="ghost" onClick={() => setFormOpen(false)}>Cancel</Button>
+                            <Button type="button" variant="ghost" onClick={() => { setFormOpen(false); form.reset(); setEditingId(null); }}>Cancel</Button>
                             <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20">
                                 {(createMut.isPending || updateMut.isPending) ? 'Processing...' : editingId ? 'Update Inventory' : 'Create Entry'}
                             </Button>
                         </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            {/* Comments Dialog */}
+            <Dialog open={!!viewCommentsMachine} onOpenChange={(open) => { if (!open) setViewCommentsMachine(null); }}>
+                <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0">
+                    <div className="p-4 border-b pb-4">
+                        <DialogTitle className="flex items-center justify-between">
+                            <span>Updates for REQ #{viewCommentsMachine?.number}</span>
+                            <Badge variant="outline" className="text-[10px] uppercase">{viewCommentsMachine?.status}</Badge>
+                        </DialogTitle>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        {viewComments?.length === 0 ? (
+                            <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2">
+                                <MessageSquare className="h-8 w-8 opacity-20" />
+                                <p className="text-xs">No updates yet. Send a message to the user.</p>
+                            </div>
+                        ) : (
+                            viewComments?.map((c: any) => (
+                                <div key={c.id} className={cn("flex flex-col max-w-[85%]", c.author_name === 'Admin' ? "ml-auto items-end" : "items-start")}>
+                                    <div className={cn("px-4 py-2 rounded-2xl text-sm", c.author_name === 'Admin' ? "bg-emerald-600 text-white rounded-br-none" : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-bl-none")}>
+                                        {c.content}
+                                    </div>
+                                    <span className="text-[10px] text-slate-400 mt-1">
+                                        {c.author_name} • {new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                        <div ref={messagesEndRef} />
+                    </div>
+                    <form onSubmit={handleSendComment} className="p-4 border-t flex gap-2">
+                        <Input placeholder="Type your update here..." value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+                        <Button type="submit" size="icon" disabled={isPostingComment || !newComment.trim()} className="bg-emerald-600 hover:bg-emerald-700">
+                            {isPostingComment ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                        </Button>
                     </form>
                 </DialogContent>
             </Dialog>

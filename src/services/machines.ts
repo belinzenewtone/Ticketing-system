@@ -26,11 +26,19 @@ function serializeMachine(m: any): MachineRequest {
         created_by: m.created_by ?? null,
         created_at: m.created_at,
         updated_at: m.updated_at,
+        comment_count: Number(m.comment_count ?? 0),
+        public_comment_count: Number(m.public_comment_count ?? 0),
     };
 }
 
 export async function getMachineRequests(filters?: { status?: MachineStatus; reason?: MachineReason; search?: string; item_type?: string }): Promise<MachineRequest[]> {
-    let sql = 'SELECT * FROM machine_requests WHERE 1=1';
+    let sql = `
+        SELECT m.*,
+        (SELECT COUNT(*) FROM ticket_comments c WHERE c.machine_id = m.id) as comment_count,
+        (SELECT COUNT(*) FROM ticket_comments c WHERE c.machine_id = m.id AND c.is_internal = 0) as public_comment_count
+        FROM machine_requests m
+        WHERE 1=1
+    `;
     const params: any[] = [];
 
     if (filters?.status) {
@@ -54,7 +62,7 @@ export async function getMachineRequests(filters?: { status?: MachineStatus; rea
     }
 
     if (filters?.search) {
-        sql += ' AND (requester_name LIKE ? OR user_name LIKE ? OR work_email LIKE ? OR supply_name LIKE ?)';
+        sql += ' AND (m.requester_name LIKE ? OR m.user_name LIKE ? OR m.work_email LIKE ? OR m.supply_name LIKE ?)';
         const s = `%${filters.search}%`;
         params.push(s, s, s, s);
     }
@@ -121,6 +129,9 @@ export async function getMachineStats(item_type?: string) {
         approved: rows.filter(r => r.status === 'approved').length,
         fulfilled: rows.filter(r => r.status === 'fulfilled').length,
         rejected: rows.filter(r => r.status === 'rejected').length,
+        supplies: rows.filter(r => r.item_type === 'supplies').length,
+        desktop: rows.filter(r => r.item_type === 'desktop').length,
+        laptop: rows.filter(r => r.item_type === 'laptop').length,
     };
 }
 
@@ -128,11 +139,22 @@ export const getMachines = getMachineRequests;
 export const addMachine = addMachineRequest;
 export const deleteMachine = deleteMachineRequest;
 
-export async function updateMachine(id: string, data: Partial<{ status: MachineStatus; notes: string }>): Promise<void> {
+export async function updateMachine(id: string, data: Partial<CreateMachineInput & { status: MachineStatus }>): Promise<void> {
     const fields: string[] = [];
     const params: any[] = [];
+
+    if (data.date !== undefined) { fields.push('date = ?'); params.push(data.date); }
+    if (data.requester_name !== undefined) { fields.push('requester_name = ?'); params.push(data.requester_name); }
+    if (data.work_email !== undefined) { fields.push('work_email = ?'); params.push(data.work_email); }
+    if (data.reason !== undefined) { fields.push('reason = ?'); params.push(data.reason ? toEnum(data.reason) : null); }
+    if (data.importance !== undefined) { fields.push('importance = ?'); params.push(data.importance); }
+    if (data.item_type !== undefined) { fields.push('item_type = ?'); params.push(data.item_type); }
+    if (data.supply_name !== undefined) { fields.push('supply_name = ?'); params.push(data.supply_name); }
+    if (data.item_count !== undefined) { fields.push('item_count = ?'); params.push(data.item_count); }
     if (data.status !== undefined) { fields.push('status = ?'); params.push(toEnum(data.status)); }
     if (data.notes !== undefined) { fields.push('notes = ?'); params.push(data.notes); }
+    if (data.user_name !== undefined) { fields.push('user_name = ?'); params.push(data.user_name); }
+
     if (fields.length > 0) {
         fields.push('updated_at = ?');
         params.push(new Date().toISOString());

@@ -150,7 +150,8 @@ CREATE TABLE IF NOT EXISTS kb_articles (
 -- Ticket Comments
 CREATE TABLE IF NOT EXISTS ticket_comments (
     id TEXT PRIMARY KEY,
-    ticket_id TEXT NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+    ticket_id TEXT REFERENCES tickets(id) ON DELETE CASCADE,
+    machine_id TEXT REFERENCES machine_requests(id) ON DELETE CASCADE,
     user_id TEXT REFERENCES "User"(id),
     author_name TEXT NOT NULL,
     content TEXT NOT NULL,
