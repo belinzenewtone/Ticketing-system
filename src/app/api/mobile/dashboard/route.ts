@@ -3,14 +3,16 @@ import { getSession } from '@/lib/mobile-auth';
 import { query } from '@/lib/db';
 
 export async function GET(request: Request) {
+    try {
     const session = await getSession(request);
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     if (session.role === 'USER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+    const safe = async (sql: string) => { try { return await query<any>(sql); } catch { return []; } };
     const [tickets, tasks, machines] = await Promise.all([
-        query<any>('SELECT status, priority, created_at FROM tickets'),
-        query<any>('SELECT completed, importance FROM tasks'),
-        query<any>('SELECT status FROM machine_requests'),
+        safe('SELECT status, priority, created_at FROM tickets'),
+        safe('SELECT completed, importance FROM tasks'),
+        safe('SELECT status FROM machine_requests'),
     ]);
 
     const today = new Date().toISOString().split('T')[0];
@@ -40,4 +42,8 @@ export async function GET(request: Request) {
             fulfilled: machines.filter(m => m.status === 'fulfilled').length,
         },
     });
+    } catch (e) {
+        console.error('[mobile/dashboard]', e);
+        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+    }
 }
