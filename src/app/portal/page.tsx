@@ -30,7 +30,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle } from '@/types/database';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, KbArticle, MachineRequest } from '@/types/database';
 import { generateDeflectionSuggestions, categorizeAndPrioritizeTicket, type DeflectionSuggestion } from '@/services/ai';
 import { getKbArticles } from '@/services/knowledgeBase';
 import { formatDistanceToNow } from 'date-fns';
@@ -113,7 +113,6 @@ export default function PortalPage() {
     // Comments (for viewing public replies per ticket/machine)
     const [viewCommentsTicket, setViewCommentsTicket] = useState<TicketType | null>(null);
     const [viewCommentsMachine, setViewCommentsMachine] = useState<MachineRequest | null>(null);
-    const [viewNotesTicket, setViewNotesTicket] = useState<TicketType | null>(null);
 
     const queryClient = useQueryClient();
 
