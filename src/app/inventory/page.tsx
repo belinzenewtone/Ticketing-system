@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare } from 'lucide-react';
+import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -253,107 +253,117 @@ export default function InventoryPage() {
             )}
 
             {view === 'list' && (
-                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-                    <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-3">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                            <Input placeholder="Search requester, item or email..." value={machineSearch} onChange={(e) => setMachineSearch(e.target.value)} className="pl-10 h-10 border-slate-200 dark:border-slate-800" />
+                <>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1 min-w-[160px]">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input placeholder="Search requester, item or email..." value={machineSearch} onChange={(e) => setMachineSearch(e.target.value)} className="pl-10" />
                         </div>
-                        <div className="flex gap-2">
-                            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-                                <SelectTrigger className="w-[140px] h-10 border-slate-200 dark:border-slate-800"><SelectValue placeholder="Category" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Items</SelectItem>
-                                    <SelectItem value="hardware">All Hardware</SelectItem>
-                                    <SelectItem value="desktop">Desktop PC</SelectItem>
-                                    <SelectItem value="laptop">Laptop PC</SelectItem>
-                                    <SelectItem value="supplies">Supplies Only</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select value={machineStatus} onValueChange={(v) => setMachineStatus(v as any)}>
-                                <SelectTrigger className="w-[140px] h-10 border-slate-200 dark:border-slate-800"><SelectValue placeholder="Status" /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Status</SelectItem>
-                                    <SelectItem value="pending">⏳ Pending</SelectItem>
-                                    <SelectItem value="fulfilled">📦 Fulfilled</SelectItem>
-                                    <SelectItem value="rejected">❌ Rejected</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
+                            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Items</SelectItem>
+                                <SelectItem value="hardware">All Hardware</SelectItem>
+                                <SelectItem value="desktop">Desktop PC</SelectItem>
+                                <SelectItem value="laptop">Laptop PC</SelectItem>
+                                <SelectItem value="supplies">Supplies Only</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={machineStatus} onValueChange={(v) => setMachineStatus(v as any)}>
+                            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Status</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="approved">Approved</SelectItem>
+                                <SelectItem value="fulfilled">Fulfilled</SelectItem>
+                                <SelectItem value="rejected">Rejected</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
 
-                    <div className="overflow-x-auto">
+                    <Card className="border shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
-                                <TableRow>
-                                    <TableHead className="w-16 border-r border-slate-200/60 dark:border-slate-800/60">No.</TableHead>
+                            <TableHeader>
+                                <TableRow className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                                    <TableHead className="w-[110px] border-r border-slate-200/60 dark:border-slate-800/60">No. & Priority</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Requester</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Source</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Item / Category</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Email</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Reason / Details</TableHead>
                                     <TableHead className="border-r border-slate-200/60 dark:border-slate-800/60">Status</TableHead>
-                                    <TableHead className="text-right">Action</TableHead>
+                                    <TableHead className="text-right">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {isLoading ? Array.from({ length: 5 }).map((_, i) => (
                                     <TableRow key={i}>
-                                        {Array.from({ length: 7 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
+                                        {Array.from({ length: 8 }).map((_, j) => <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>)}
                                     </TableRow>
                                 )) : items?.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-12 text-muted-foreground flex flex-col items-center gap-2">
-                                            <Package className="h-8 w-8 opacity-20" />
-                                            <span>No inventory requests found</span>
+                                        <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
+                                            <Package className="h-8 w-8 opacity-20 mx-auto mb-2" />
+                                            No inventory requests found
                                         </TableCell>
                                     </TableRow>
                                 ) : items?.map((m: MachineRequest) => (
-                                    <TableRow key={m.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                                        <TableCell>
-                                            <div className="font-mono text-[11px] font-bold text-slate-400 mb-1">{m.number}</div>
-                                            <Badge variant="outline" className={cn(
-                                                "text-[9px] px-2 py-0.5 h-auto font-bold uppercase border shadow-sm",
-                                                m.importance === 'urgent' ? 'bg-red-500/10 text-red-600 border-red-200/50' : m.importance === 'important' ? 'bg-orange-500/10 text-orange-600 border-orange-200/50' : 'bg-slate-500/10 text-slate-500 border-slate-200/50'
-                                            )}>
-                                                {m.importance}
-                                            </Badge>
+                                    <TableRow key={m.id} className="group">
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                            <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[40px]">
+                                                #{m.number}
+                                            </div>
+                                            <div className="flex flex-col gap-0.5 mt-1">
+                                                <span className="flex items-center gap-1.5 text-[11px] font-medium text-foreground w-fit">
+                                                    <Circle className={cn("h-2.5 w-2.5 fill-current", m.importance === 'urgent' ? 'text-red-500' : m.importance === 'important' ? 'text-orange-500' : 'text-blue-500')} />
+                                                    {m.importance.charAt(0).toUpperCase() + m.importance.slice(1)}
+                                                </span>
+                                                <div className="text-[10px] text-slate-500 mt-0.5">{m.date}</div>
+                                            </div>
                                         </TableCell>
-                                        <TableCell>
-                                            <div className="font-medium text-foreground">{m.requester_name}</div>
-                                            <div className="text-[10px] text-slate-400">{m.date}</div>
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
+                                            <div className="font-medium text-sm text-foreground">{m.requester_name}</div>
+                                            {m.user_name && <div className="text-[10px] text-slate-400">{m.user_name}</div>}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                             <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0.5 h-auto uppercase font-bold", m.requested_from === 'admin' ? 'bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20' : 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20')}>
                                                 {m.requested_from || 'portal'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                             <div className="flex items-center gap-2">
                                                 {m.item_type === 'supplies' ? <Package className="h-3.5 w-3.5 text-amber-500" /> : m.item_type === 'laptop' ? <Laptop className="h-3.5 w-3.5 text-indigo-500" /> : <Monitor className="h-3.5 w-3.5 text-blue-500" />}
-                                                <span className="capitalize">{m.supply_name || (m.item_type === 'desktop' ? 'Desktop PC' : m.item_type === 'laptop' ? 'Laptop Computer' : m.item_type)}</span>
+                                                <span className="font-medium text-sm text-foreground">{m.supply_name || (m.item_type === 'desktop' ? 'Desktop PC' : m.item_type === 'laptop' ? 'Laptop Computer' : m.item_type)}</span>
                                                 <span className="text-[10px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">x{m.item_count}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="text-xs text-slate-500">{m.work_email}</TableCell>
-                                        <TableCell className="text-xs text-slate-500">
+                                        <TableCell className="text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800/60">{m.work_email}</TableCell>
+                                        <TableCell className="text-xs text-slate-500 border-r border-slate-200/60 dark:border-slate-800/60">
                                             {m.item_type === 'supplies' ? (m.supply_name || 'Supplies') : (m.reason ? reasonLabels[m.reason as MachineReason] : (m.notes || m.importance))}
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                             <Select value={m.status} onValueChange={(v) => updateStatusMut.mutate({ id: m.id, status: v as MachineStatus })}>
-                                                <SelectTrigger className={cn("h-8 w-[110px] text-[10px] font-bold uppercase shadow-sm border-slate-200/60 dark:border-slate-800/60", m.status === 'pending' ? 'bg-amber-500/10 text-amber-600 border-amber-200/50' : m.status === 'fulfilled' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-200/50' : 'bg-red-500/10 text-red-600 border-red-200/50')}>
+                                                <SelectTrigger className={cn(
+                                                    "h-7 w-[110px] text-[10px] font-bold uppercase border-0 shadow-none focus:ring-0",
+                                                    m.status === 'pending' ? 'bg-amber-500/15 text-amber-600' :
+                                                    m.status === 'approved' ? 'bg-blue-500/15 text-blue-600' :
+                                                    m.status === 'fulfilled' ? 'bg-emerald-500/15 text-emerald-600' :
+                                                    'bg-red-500/15 text-red-600'
+                                                )}>
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="pending">Pending</SelectItem>
+                                                    <SelectItem value="approved">Approved</SelectItem>
                                                     <SelectItem value="fulfilled">Fulfilled</SelectItem>
                                                     <SelectItem value="rejected">Rejected</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
-                                        <TableCell className="text-right">
+                                        <TableCell className="text-right w-[120px]">
                                             <div className="flex items-center justify-end gap-1">
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 relative" onClick={() => setViewCommentsMachine(m)}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 relative" onClick={() => setViewCommentsMachine(m)}>
                                                     <MessageSquare className="h-3.5 w-3.5" />
                                                     {isInitialized && m.comment_count > (readCounts[m.id] || 0) && (
                                                         <span className="absolute top-1 right-1 flex h-2 w-2">
@@ -362,12 +372,12 @@ export default function InventoryPage() {
                                                         </span>
                                                     )}
                                                 </Button>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20" onClick={() => handleEdit(m)}>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" onClick={() => handleEdit(m)}>
                                                     <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
                                                 <AlertDialog>
                                                     <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"><Trash2 className="h-3.5 w-3.5" /></Button>
                                                     </AlertDialogTrigger>
                                                     <AlertDialogContent>
                                                         <AlertDialogHeader>
@@ -386,8 +396,9 @@ export default function InventoryPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                    </div>
-                </div>
+                        </div>
+                    </Card>
+                </>
             )}
 
             <Dialog open={formOpen} onOpenChange={(open) => { setFormOpen(open); if (!open) setEditingId(null); }}>
