@@ -166,6 +166,17 @@ export default function PortalPage() {
         onError: (e: Error) => toast.error(e.message),
     });
 
+    const createItemMut = useMutation({
+        mutationFn: addMachine,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['portal-requests'] });
+            toast.success('Request submitted successfully');
+            setRequestItemOpen(false);
+            itemForm.reset();
+        },
+        onError: (e: Error) => toast.error(e.message || 'Failed to submit request'),
+    });
+
     // Form — must be declared before any hook/callback that references it
     const form = useForm<FormValues>({
         resolver: zodResolver(ticketSchema),
@@ -362,14 +373,7 @@ export default function PortalPage() {
             reason: data.item_type === 'supplies' ? undefined : (data.reason as any),
         };
 
-        try {
-            await addMachine(mutationData as any);
-            toast.success('Request submitted successfully');
-            setRequestItemOpen(false);
-            itemForm.reset();
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to submit request');
-        }
+        createItemMut.mutate(mutationData as any);
     };
 
     return (

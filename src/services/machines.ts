@@ -113,7 +113,7 @@ export async function deleteMachineRequest(id: string): Promise<void> {
 }
 
 export async function getMachineStats(item_type?: string) {
-    let sql = 'SELECT status FROM machine_requests';
+    let sql = 'SELECT status, item_type FROM machine_requests';
     const params: any[] = [];
     if (item_type === 'hardware') {
         sql += ' WHERE item_type IN (?, ?)';
