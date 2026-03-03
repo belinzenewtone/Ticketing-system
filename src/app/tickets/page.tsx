@@ -1,11 +1,13 @@
 'use client';
 
-import { useUnreadComments } from '@/hooks/useUnreadComments';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getTickets, addTicket, updateTicket, deleteTicket, getTicketStats, getCannedResponses, addCannedResponse, deleteCannedResponse, mergeTickets } from '@/services/tickets';
+import { getTickets, addTicket, updateTicket, deleteTicket, mergeTickets, getTicketStats } from '@/services/tickets';
 import { getITStaff } from '@/services/auth-actions';
+import { getComments } from '@/services/comments';
 import { getTicketActivity } from '@/services/activity';
-import { getComments, addComment, deleteComment } from '@/services/comments';
+import { ChatInterface } from '@/components/ChatInterface';
+import { useUnreadComments } from '@/hooks/useUnreadComments';
+import { generateTicketSummary } from '@/services/ai';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,14 +20,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Send, Lock, Activity, TrendingUp, Timer, Circle } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Activity, Lock, TrendingUp, Timer, Circle, Send } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment, CreateCommentInput } from '@/types/database';
-import { generateTicketSummary } from '@/services/ai';
+import type { TicketCategory, TicketPriority, TicketStatus, CreateTicketInput, Ticket as TicketType, TicketSentiment } from '@/types/database';
+import { getCannedResponses, addCannedResponse, deleteCannedResponse } from '@/services/tickets';
 import { formatDistanceToNow } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -110,10 +112,12 @@ const ticketSchema = z.object({
 
 // ── Page ─────────────────────────────────────────────────────
 export default function TicketsPage() {
-    const { profile } = useAppStore();
     const [formOpen, setFormOpen] = useState(false);
     const [cannedResponsesOpen, setCannedResponsesOpen] = useState(false);
     const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
+    const [isSummarizing, setIsSummarizing] = useState(false);
+    const [aiSummary, setAiSummary] = useState<string | null>(null);
+
     const { readCounts, isInitialized, markTicketAsRead } = useUnreadComments();
 
     const [view, setView] = useState<'dashboard' | 'list'>('list');
@@ -124,23 +128,17 @@ export default function TicketsPage() {
     const [mergingTicket, setMergingTicket] = useState<TicketType | null>(null);
     const [mergeTargetId, setMergeTargetId] = useState('');
 
-    // Comment state
-    const [newComment, setNewComment] = useState('');
-    const [isInternal, setIsInternal] = useState(false);
-
     const { ticketCategory, ticketPriority, ticketStatus, ticketSearch, ticketDateRange, setTicketCategory, setTicketPriority, setTicketStatus, setTicketSearch } = useAppStore();
     const queryClient = useQueryClient();
-
-    // AI Summary State
-    const [isSummarizing, setIsSummarizing] = useState(false);
-    const [aiSummary, setAiSummary] = useState<string | null>(null);
 
     // Tick every minute so SLA countdowns update in the UI between server refetches
     const [slaTick, setSlaTick] = useState(0);
     useEffect(() => {
-        const id = setInterval(() => setSlaTick(n => n + 1), 60 * 1000);
-        return () => clearInterval(id);
+        const timer = setInterval(() => setSlaTick(s => s + 1), 60000);
+        return () => clearInterval(timer);
     }, []);
+
+    const { profile } = useAppStore();
 
     // ── Queries ──────────────────────────────────────────────
     const { data: staffList } = useQuery({ queryKey: ['staff'], queryFn: getITStaff });
@@ -183,24 +181,7 @@ export default function TicketsPage() {
         }
     }, [formOpen, dialogTab, editingTicket, ticketComments, markTicketAsRead]);
 
-    // Scroll to first unread comment (or bottom if all read) when comments tab opens or updates
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const unreadStartRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        if (dialogTab === 'comments' && ticketComments) {
-            setTimeout(() => {
-                if (unreadStartRef.current) {
-                    unreadStartRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                } else {
-                    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-                }
-            }, 250);
-        }
-    }, [dialogTab, ticketComments?.length]);
 
-    // Live comment count for the ticket currently open in the edit dialog.
-    // We look it up from the tickets array so it stays current after query invalidation,
-    // instead of using the stale snapshot stored in editingTicket state.
     const editingCommentCount = editingTicket
         ? (tickets?.find(t => t.id === editingTicket.id)?.comment_count ?? editingTicket.comment_count)
         : 0;
@@ -261,27 +242,6 @@ export default function TicketsPage() {
             setMergeTargetId('');
         },
         onError: (e: Error) => toast.error(e.message),
-    });
-
-    const addCommentMut = useMutation({
-        mutationFn: (input: CreateCommentInput) => addComment(input, profile?.name ?? 'IT Staff'),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['ticket-comments', editingTicket?.id] });
-            invalidate(); // refresh ticket list so comment_count badge updates
-            setNewComment('');
-            setIsInternal(false);
-            toast.success('Comment posted');
-        },
-        onError: (e: Error) => toast.error(e.message),
-    });
-
-    const deleteCommentMut = useMutation({
-        mutationFn: deleteComment,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['ticket-comments', editingTicket?.id] });
-            invalidate(); // refresh ticket list so comment_count badge updates
-            toast.success('Comment deleted');
-        },
     });
 
     // Canned Response mutations
@@ -369,8 +329,6 @@ export default function TicketsPage() {
             setEditAssignee('unassigned');
             setAiSummary(null);
             setDialogTab('details');
-            setNewComment('');
-            setIsInternal(false);
         }
     }, [formOpen]);
 
@@ -427,7 +385,7 @@ export default function TicketsPage() {
         if (!tickets) return [];
         if (showOverdueOnly) return tickets.filter(t => getSlaStatus(t) === 'overdue');
         return tickets;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [tickets, showOverdueOnly, slaTick]);
 
     // ── Render ───────────────────────────────────────────────
@@ -981,114 +939,16 @@ export default function TicketsPage() {
                         </form>
                     )}
 
-                    {/* ── COMMENTS TAB ── */}
+                    {/* ── COMMENTS TAB (Unified) ── */}
                     {editingTicket && dialogTab === 'comments' && (
-                        <div className="mt-4 space-y-4">
-                            {/* Comments Thread - WhatsApp Style */}
-                            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 pb-2">
-                                {!ticketComments ? (
-                                    <div className="space-y-4">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className={`h-16 w-3/4 rounded-2xl ${i % 2 === 0 ? 'ml-auto' : ''}`} />)}</div>
-                                ) : ticketComments.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
-                                        <MessageSquare className="h-10 w-10 mb-2 opacity-30" />
-                                        <p className="text-sm">No comments yet. Be the first to comment.</p>
-                                    </div>
-                                ) : ticketComments.map((comment, index) => {
-                                    const isMe = comment.user_id === profile?.id;
-                                    const isInternal = comment.is_internal;
-                                    const readCount = readCounts[editingTicket!.id] || 0;
-                                    const isFirstUnread = index === readCount && editingCommentCount > readCount;
-
-                                    return (
-                                        <div key={comment.id} ref={isFirstUnread ? unreadStartRef : undefined} className={`flex flex-col w-full ${isMe || isInternal ? 'items-end' : 'items-start'}`}>
-                                            <div className="flex items-end gap-2 max-w-[85%]">
-                                                {!isMe && !isInternal && (
-                                                    <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300">
-                                                        {comment.author_name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                )}
-
-                                                <div className={`relative px-4 py-2.5 shadow-sm text-sm group
-                                                    ${isInternal
-                                                        ? 'bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/50 text-amber-900 dark:text-amber-100 rounded-2xl rounded-tr-sm'
-                                                        : isMe
-                                                            ? 'bg-emerald-600 text-white rounded-2xl rounded-br-sm'
-                                                            : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-foreground rounded-2xl rounded-bl-sm'}`}
-                                                >
-                                                    {/* Header info */}
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        {(!isMe || isInternal) && (
-                                                            <div className={`text-xs font-semibold ${isInternal ? 'text-amber-700 dark:text-amber-400' : 'text-slate-600 dark:text-slate-400'}`}>
-                                                                {comment.author_name}
-                                                            </div>
-                                                        )}
-                                                        {isInternal && (
-                                                            <div className="flex items-center text-[10px] uppercase tracking-wider font-bold text-amber-600 dark:text-amber-500 gap-1 bg-amber-200/50 dark:bg-amber-950 px-1.5 py-0.5 rounded">
-                                                                <Lock className="h-2.5 w-2.5" /> Internal
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <p className="whitespace-pre-wrap leading-relaxed">{comment.content}</p>
-
-                                                    <div className={`flex items-center justify-end gap-2 mt-1.5 text-[10px] ${isInternal ? 'text-amber-600/70 dark:text-amber-400/70' :
-                                                        isMe ? 'text-emerald-100' : 'text-slate-400'
-                                                        }`}>
-                                                        <span>{formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}</span>
-                                                        {comment.user_id === profile?.id && (
-                                                            <button
-                                                                onClick={(e) => { e.preventDefault(); deleteCommentMut.mutate(comment.id); }}
-                                                                className={`opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full ${isInternal ? 'hover:bg-amber-200 dark:hover:bg-amber-800' : 'hover:bg-emerald-700/50'
-                                                                    }`}
-                                                            >
-                                                                <Trash2 className="h-3 w-3" />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {(isMe || isInternal) && (
-                                                    <div className={`h-8 w-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold ${isInternal
-                                                        ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
-                                                        : 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                                                        }`}>
-                                                        {comment.author_name.charAt(0).toUpperCase()}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                <div ref={messagesEndRef} />
-                            </div>
-
-                            {/* New comment form */}
-                            <div className="border-t pt-4 space-y-3">
-                                <Textarea placeholder="Write a comment..." className="min-h-[80px]" value={newComment} onChange={(e) => setNewComment(e.target.value)} />
-                                <div className="flex items-center justify-between">
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsInternal(v => !v)}
-                                        className={`flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-md border transition-colors ${isInternal ? 'bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800' : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-900 dark:border-slate-700'}`}
-                                    >
-                                        <Lock className="h-3.5 w-3.5" />
-                                        {isInternal ? 'Internal Note' : 'Public Reply'}
-                                    </button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        disabled={!newComment.trim() || addCommentMut.isPending}
-                                        onClick={() => {
-                                            if (!newComment.trim() || !editingTicket) return;
-                                            addCommentMut.mutate({ ticket_id: editingTicket.id, content: newComment.trim(), is_internal: isInternal });
-                                        }}
-                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                                    >
-                                        <Send className="h-3.5 w-3.5 mr-1.5" />
-                                        {addCommentMut.isPending ? 'Posting...' : 'Post Comment'}
-                                    </Button>
-                                </div>
-                            </div>
+                        <div className="mt-4 flex flex-col min-h-[400px]">
+                            <ChatInterface
+                                id={editingTicket.id}
+                                isAdmin={true}
+                                profile={profile}
+                                number={editingTicket.number}
+                                status={editingTicket.status}
+                            />
                         </div>
                     )}
 
