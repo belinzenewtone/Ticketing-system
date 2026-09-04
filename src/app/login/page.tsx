@@ -1,0 +1,126 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { signIn } from '@/services/auth';
+import { Loader2, Lock, Eye, EyeOff } from 'lucide-react';
+
+export default function LoginPage() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const router = useRouter();
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        if (!email.toLowerCase().endsWith('@jtl.co.ke')) {
+            setError('Access Denied. Only @jtl.co.ke email addresses are allowed.');
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            await signIn(email, password);
+            // Navigate to root — the server page reads the JWT and redirects
+            // to /portal (USER) or /tickets (ADMIN/IT_STAFF) without an extra round-trip.
+            router.push('/');
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Login failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+            {/* Background effects */}
+            <div className="absolute inset-0 overflow-hidden">
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
+            </div>
+
+            <Card className="relative w-full max-w-md bg-white/80 dark:bg-slate-900/80 border-slate-200 dark:border-slate-800 backdrop-blur-xl shadow-2xl">
+                <CardHeader className="text-center space-y-3 pb-2">
+                    <div className="mx-auto w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center">
+                        <Lock className="h-7 w-7 text-emerald-500" />
+                    </div>
+                    <CardTitle className="text-2xl text-foreground">Welcome Back</CardTitle>
+                    <CardDescription className="text-slate-500 dark:text-slate-400">
+                        Ticketing System — JTL
+                    </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        {error && (
+                            <div className="bg-red-500/10 border border-red-500/30 text-red-500 dark:text-red-400 rounded-lg p-3 text-sm text-center animate-in fade-in">
+                                {error}
+                            </div>
+                        )}
+
+                        <div className="space-y-2">
+                            <Label htmlFor="email" className="text-slate-700 dark:text-slate-300">Email</Label>
+                            <Input
+                                id="email"
+                                type="email"
+                                placeholder="email@jtl.co.ke"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                required
+                                className="bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-foreground placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">Password</Label>
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? 'text' : 'password'}
+                                    placeholder="Enter your password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-foreground placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-emerald-500 focus:ring-emerald-500/20 pr-12"
+                                />
+                                <button
+                                    type="button"
+                                    tabIndex={-1}
+                                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                                    onClick={() => setShowPassword(v => !v)}
+                                    className="absolute right-0 top-0 h-full px-3.5 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                                >
+                                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white h-11 font-medium mt-2"
+                        >
+                            {loading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Signing in...
+                                </>
+                            ) : (
+                                'Sign In'
+                            )}
+                        </Button>
+                    </form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

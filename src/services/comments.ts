@@ -1,0 +1,63 @@
+'use server';
+
+import { query, execute } from '@/lib/db';
+import { auth } from '@/auth';
+import type { TicketComment, CreateCommentInput } from '@/types/database';
+
+function serializeComment(c: any): TicketComment {
+    return {
+        id: c.id,
+        ticket_id: c.ticket_id ?? null,
+        machine_id: c.machine_id ?? null,
+        user_id: c.user_id,
+        author_name: c.author_name,
+        content: c.content,
+        is_internal: Boolean(c.is_internal),
+        created_at: c.created_at,
+    };
+}
+
+export async function getComments(id: string, isMachine: boolean = false, includeInternal: boolean = false): Promise<TicketComment[]> {
+    let sql = 'SELECT * FROM ticket_comments WHERE ' + (isMachine ? 'machine_id = ?' : 'ticket_id = ?');
+    if (!includeInternal) {
+        sql += ' AND is_internal = 0';
+    }
+    sql += ' ORDER BY created_at ASC';
+
+    const comments = await query<any>(sql, id);
+    return comments.map(serializeComment);
+}
+
+export async function addComment(input: CreateCommentInput, authorName: string): Promise<TicketComment> {
+    const session = await auth();
+    const id = crypto.randomUUID();
+    const created_at = new Date().toISOString();
+
+    await execute(
+        `INSERT INTO ticket_comments (id, ticket_id, machine_id, user_id, author_name, content, is_internal, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        id,
+        input.ticket_id ?? null,
+        input.machine_id ?? null,
+        session?.user?.id ?? null,
+        authorName,
+        input.content,
+        input.is_internal ? 1 : 0,
+        created_at
+    );
+
+    return {
+        id,
+        ticket_id: input.ticket_id ?? null,
+        machine_id: input.machine_id ?? null,
+        user_id: session?.user?.id ?? null,
+        author_name: authorName,
+        content: input.content,
+        is_internal: input.is_internal ?? false,
+        created_at,
+    };
+}
+
+export async function deleteComment(id: string): Promise<void> {
+    await execute('DELETE FROM ticket_comments WHERE id = ?', id);
+}
