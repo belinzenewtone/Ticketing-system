@@ -812,57 +812,89 @@ export default function TicketsPage() {
 
                     {/* ── DETAILS TAB ── */}
                     {(!editingTicket || dialogTab === 'details') && (
-                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 px-6 py-5 overflow-y-auto flex-1">
+                        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 px-6 py-5 overflow-y-auto flex-1">
+
+                            {/* Date + Employee */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Date</Label>
-                                    <Input type="date" {...form.register('ticket_date')} />
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
+                                    <Input type="date" className="h-10" {...form.register('ticket_date')} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Employee Name *</Label>
-                                    <Input placeholder="Full name" {...form.register('employee_name')} />
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Employee Name <span className="text-red-400">*</span></Label>
+                                    <Input className="h-10" placeholder="Full name" {...form.register('employee_name')} />
                                     {form.formState.errors.employee_name && <p className="text-red-500 text-xs">{form.formState.errors.employee_name.message}</p>}
                                 </div>
                             </div>
+
+                            {/* Department + Subject */}
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Department</Label>
-                                    <Input placeholder="e.g. Finance, HR, IT..." {...form.register('department')} />
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Department</Label>
+                                    <Input className="h-10" placeholder="e.g. Finance, HR, IT…" {...form.register('department')} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label>Category *</Label>
-                                    <Select onValueChange={(v) => form.setValue('category', v as TicketCategory)} defaultValue={form.getValues('category') || 'email'}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            {Object.entries(categoryConfig).map(([k, v]) => (
-                                                <SelectItem key={k} value={k}>{v.icon} {v.label}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label>Priority *</Label>
-                                    <Select onValueChange={(v) => form.setValue('priority', v as TicketPriority)} defaultValue={form.getValues('priority') || 'medium'}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="critical">🔴 Critical</SelectItem>
-                                            <SelectItem value="high">🟠 High</SelectItem>
-                                            <SelectItem value="medium">🔵 Medium</SelectItem>
-                                            <SelectItem value="low">⚪ Low</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Subject *</Label>
-                                    <Input placeholder="Brief description" {...form.register('subject')} />
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Subject <span className="text-red-400">*</span></Label>
+                                    <Input className="h-10" placeholder="Brief description" {...form.register('subject')} />
                                     {form.formState.errors.subject && <p className="text-red-500 text-xs">{form.formState.errors.subject.message}</p>}
                                 </div>
                             </div>
-                            <div className="space-y-2">
+
+                            {/* Category — icon tile grid */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Category <span className="text-red-400">*</span></Label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {Object.entries(categoryConfig).map(([k, v]) => {
+                                        const active = form.watch('category') === k;
+                                        return (
+                                            <button key={k} type="button"
+                                                onClick={() => form.setValue('category', k as TicketCategory)}
+                                                className={cn(
+                                                    'flex flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center transition-all duration-150',
+                                                    active
+                                                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/30 shadow-sm'
+                                                        : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                                                )}>
+                                                <span className="text-xl leading-none">{v.icon}</span>
+                                                <span className={cn('text-[10px] font-semibold leading-tight', active ? 'text-blue-700 dark:text-blue-400' : 'text-slate-500')}>
+                                                    {v.label}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Priority — colored pill tiles */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Priority <span className="text-red-400">*</span></Label>
+                                <div className="grid grid-cols-4 gap-2">
+                                    {([
+                                        { value: 'critical', label: 'Critical', dot: 'bg-red-500',    active: 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
+                                        { value: 'high',     label: 'High',     dot: 'bg-orange-400', active: 'border-orange-400 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400' },
+                                        { value: 'medium',   label: 'Medium',   dot: 'bg-sky-400',    active: 'border-sky-400 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400' },
+                                        { value: 'low',      label: 'Low',      dot: 'bg-slate-400',  active: 'border-slate-400 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' },
+                                    ] as const).map(opt => {
+                                        const active = form.watch('priority') === opt.value;
+                                        return (
+                                            <button key={opt.value} type="button"
+                                                onClick={() => form.setValue('priority', opt.value as TicketPriority)}
+                                                className={cn(
+                                                    'flex items-center justify-center gap-1.5 rounded-xl border-2 py-2.5 text-sm font-semibold transition-all duration-150',
+                                                    active ? opt.active : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300 dark:hover:border-slate-600'
+                                                )}>
+                                                <span className={cn('h-2 w-2 rounded-full shrink-0', opt.dot)} />
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Description */}
+                            <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
-                                    <Label>Description</Label>
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Description</Label>
                                     {editingTicket && editingTicket.description && editingTicket.description.length > 50 && (
                                         <Button type="button" size="sm" variant="ghost" className="h-6 px-2 text-xs text-emerald-600 hover:text-emerald-700 bg-emerald-50 max-w-fit" onClick={handleGenerateSummary} disabled={isSummarizing}>
                                             {isSummarizing ? <Loader2 className="w-3 h-3 mr-1 animate-spin" /> : <Sparkles className="w-3 h-3 mr-1" />}
@@ -871,28 +903,29 @@ export default function TicketsPage() {
                                     )}
                                 </div>
                                 {aiSummary && (
-                                    <div className="text-sm p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-md mb-2 flex gap-2">
+                                    <div className="text-sm p-3 bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 rounded-xl mb-2 flex gap-2">
                                         <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
                                         <span>{aiSummary}</span>
                                     </div>
                                 )}
-                                <Textarea placeholder="Detailed description of the issue..." className="min-h-[80px]" {...form.register('description')} />
+                                <Textarea placeholder="Detailed description of the issue…" className="min-h-[80px] resize-none" {...form.register('description')} />
                             </div>
 
                             {editingTicket?.attachment_url && (
-                                <div className="space-y-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800">
-                                    <Label className="text-muted-foreground flex items-center gap-2"><Paperclip className="h-4 w-4" /> Attachment Provided</Label>
+                                <div className="space-y-1.5 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"><Paperclip className="h-3.5 w-3.5" /> Attachment</Label>
                                     <a href={editingTicket.attachment_url} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 underline underline-offset-4">View attached file</a>
                                 </div>
                             )}
 
                             {editingTicket && (
                                 <>
+                                    {/* Assignee + Status tiles */}
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label>Assigned To</Label>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Assigned To</Label>
                                             <Select value={editAssignee} onValueChange={setEditAssignee}>
-                                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                                <SelectTrigger className="h-10"><SelectValue /></SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value="unassigned">Unassigned</SelectItem>
                                                     {staffList?.map(staff => (
@@ -901,41 +934,57 @@ export default function TicketsPage() {
                                                 </SelectContent>
                                             </Select>
                                         </div>
-                                        <div className="space-y-2">
-                                            <Label>Status</Label>
-                                            <Select value={editStatus} onValueChange={(v) => setEditStatus(v as TicketStatus)}>
-                                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="open">Open</SelectItem>
-                                                    <SelectItem value="in-progress">In Progress</SelectItem>
-                                                    <SelectItem value="resolved">Resolved</SelectItem>
-                                                    <SelectItem value="closed">Closed</SelectItem>
-                                                </SelectContent>
-                                            </Select>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Status</Label>
+                                            <div className="grid grid-cols-2 gap-1.5">
+                                                {([
+                                                    { value: 'open',        label: 'Open',        dot: 'bg-sky-500' },
+                                                    { value: 'in-progress', label: 'In Progress', dot: 'bg-amber-500' },
+                                                    { value: 'resolved',    label: 'Resolved',    dot: 'bg-emerald-500' },
+                                                    { value: 'closed',      label: 'Closed',      dot: 'bg-slate-400' },
+                                                ] as const).map(opt => {
+                                                    const active = editStatus === opt.value;
+                                                    return (
+                                                        <button key={opt.value} type="button"
+                                                            onClick={() => setEditStatus(opt.value as TicketStatus)}
+                                                            className={cn(
+                                                                'flex items-center gap-1.5 rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-all',
+                                                                active
+                                                                    ? 'border-slate-400 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                                                    : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300'
+                                                            )}>
+                                                            <span className={cn('h-1.5 w-1.5 rounded-full shrink-0', opt.dot)} />
+                                                            {opt.label}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label className="flex items-center text-amber-600 dark:text-amber-500">
-                                            <AlertTriangle className="h-3 w-3 mr-1" /> Internal IT Notes (Hidden from Employee)
+
+                                    <div className="space-y-1.5">
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
+                                            <AlertTriangle className="h-3 w-3" /> Internal IT Notes
+                                            <span className="text-slate-400 font-normal normal-case">(hidden from employee)</span>
                                         </Label>
-                                        <Textarea placeholder="Private staff notes, debugging steps, etc." className="min-h-[60px] bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/50" value={editInternalNotes} onChange={(e) => setEditInternalNotes(e.target.value)} />
+                                        <Textarea placeholder="Private staff notes, debugging steps, etc." className="min-h-[60px] resize-none bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/50" value={editInternalNotes} onChange={(e) => setEditInternalNotes(e.target.value)} />
                                     </div>
-                                    <div className="space-y-2">
+                                    <div className="space-y-1.5">
                                         <div className="flex justify-between items-center">
-                                            <Label>Public Resolution Notes</Label>
+                                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Public Resolution Notes</Label>
                                             {cannedResponses && cannedResponses.length > 0 && (
                                                 <Select onValueChange={(v) => {
                                                     const macro = cannedResponses.find(c => c.id === v);
                                                     if (macro) setEditResolution(prev => prev ? prev + '\n\n' + macro.content : macro.content);
                                                 }}>
-                                                    <SelectTrigger className="h-7 w-[180px] text-xs"><SelectValue placeholder="Insert canned response..." /></SelectTrigger>
+                                                    <SelectTrigger className="h-7 w-[180px] text-xs"><SelectValue placeholder="Insert canned response…" /></SelectTrigger>
                                                     <SelectContent>
                                                         {cannedResponses.map(c => <SelectItem key={c.id} value={c.id}>{c.title}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             )}
                                         </div>
-                                        <Textarea placeholder="What was done to resolve this..." className="min-h-[60px]" value={editResolution} onChange={(e) => setEditResolution(e.target.value)} />
+                                        <Textarea placeholder="What was done to resolve this…" className="min-h-[60px] resize-none" value={editResolution} onChange={(e) => setEditResolution(e.target.value)} />
                                     </div>
                                 </>
                             )}
@@ -943,7 +992,7 @@ export default function TicketsPage() {
                             <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                                 <Button type="button" variant="ghost" onClick={() => setFormOpen(false)} className="h-9 text-sm">Cancel</Button>
                                 <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-emerald-600/30">
-                                    {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editingTicket ? 'Update Ticket' : 'Create Ticket'}
+                                    {(createMut.isPending || updateMut.isPending) ? 'Saving…' : editingTicket ? 'Update Ticket' : 'Create Ticket'}
                                 </Button>
                             </div>
                         </form>

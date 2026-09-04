@@ -451,61 +451,75 @@ export default function ProcurementPage() {
                         <p className="text-emerald-100 text-sm mt-0.5">Fill in the details. PO line items can be added after creation.</p>
                     </div>
                     <div className="max-h-[75vh] overflow-y-auto">
-                    <form onSubmit={createForm.handleSubmit(d => createMut.mutate(d))} className="space-y-4 px-6 py-5">
+                    <form onSubmit={createForm.handleSubmit(d => createMut.mutate(d))} className="space-y-5 px-6 py-5">
+
+                        {/* Title + Date */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2 col-span-2 sm:col-span-1">
-                                <Label>Requisition Title <span className="text-red-500">*</span></Label>
-                                <Input placeholder="e.g. Laptop Procurement Q3 2026" {...createForm.register('title')} />
+                            <div className="space-y-1.5 col-span-2 sm:col-span-1">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Requisition Title <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="e.g. Laptop Procurement Q3 2026" {...createForm.register('title')} />
                                 {createForm.formState.errors.title && <p className="text-red-500 text-xs">{createForm.formState.errors.title.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Requisition Date <span className="text-red-500">*</span></Label>
-                                <Input
-                                    type="date"
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" type="date"
                                     value={createForm.watch('requisition_date') || today}
                                     onChange={e => createForm.setValue('requisition_date', e.target.value, { shouldValidate: true })}
                                 />
-                                <p className="text-[11px] text-slate-400">Auto-set to today — adjust if needed</p>
                             </div>
                         </div>
+
+                        {/* Requested For + Item Count */}
                         <div className="grid grid-cols-3 gap-4">
-                            <div className="space-y-2 col-span-2">
-                                <Label>Requested For <span className="text-red-500">*</span></Label>
-                                <Input placeholder="e.g. John Doe — Finance Dept" {...createForm.register('requested_for')} />
+                            <div className="space-y-1.5 col-span-2">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Requested For <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="e.g. John Doe — Finance Dept" {...createForm.register('requested_for')} />
                                 {createForm.formState.errors.requested_for && <p className="text-red-500 text-xs">{createForm.formState.errors.requested_for.message}</p>}
-                                <p className="text-[11px] text-slate-400">Employee or department this procurement is for</p>
                             </div>
-                            <div className="space-y-2">
-                                <Label>No. of Items <span className="text-red-500">*</span></Label>
-                                <Input type="number" min="1" placeholder="1" {...createForm.register('item_quantity')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">No. of Items <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" type="number" min="1" placeholder="1" {...createForm.register('item_quantity')} />
                                 {createForm.formState.errors.item_quantity && <p className="text-red-500 text-xs">{createForm.formState.errors.item_quantity.message}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Type <span className="text-red-500">*</span></Label>
-                                <Select onValueChange={v => createForm.setValue('type', v as RequisitionType)} defaultValue="it-equipment">
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        {typeOptions.map(opt => (
-                                            <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Total Amount (KES) <span className="text-red-500">*</span></Label>
-                                <Input type="number" min="0" step="0.01" placeholder="0.00" {...createForm.register('total_amount')} />
-                                {createForm.formState.errors.total_amount && <p className="text-red-500 text-xs">{createForm.formState.errors.total_amount.message}</p>}
+
+                        {/* Type — visual tile picker */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Requisition Type <span className="text-red-400">*</span></Label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                {typeOptions.map(opt => {
+                                    const icons: Record<string, string> = {
+                                        'it-equipment': '💻', 'office-supplies': '🖊️', 'services': '🛠️', 'other': '📋',
+                                    };
+                                    const active = createForm.watch('type') === opt.value;
+                                    return (
+                                        <button key={opt.value} type="button"
+                                            onClick={() => createForm.setValue('type', opt.value as RequisitionType)}
+                                            className={cn(
+                                                'flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 text-center transition-all duration-150',
+                                                active
+                                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                                                    : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                                            )}>
+                                            <span className="text-xl leading-none">{icons[opt.value] || '📋'}</span>
+                                            <span className="text-[10px] font-bold leading-tight">{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
                         </div>
+
+                        {/* Amount + Supplier */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Supplier <span className="text-red-500">*</span></Label>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Amount (KES) <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" type="number" min="0" step="0.01" placeholder="0.00" {...createForm.register('total_amount')} />
+                                {createForm.formState.errors.total_amount && <p className="text-red-500 text-xs">{createForm.formState.errors.total_amount.message}</p>}
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Supplier <span className="text-red-400">*</span></Label>
                                 <Select onValueChange={v => createForm.setValue('supplier_name', v)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select supplier…" />
-                                    </SelectTrigger>
+                                    <SelectTrigger className="h-10"><SelectValue placeholder="Select supplier…" /></SelectTrigger>
                                     <SelectContent>
                                         {supplierOptions.map(opt => (
                                             <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
@@ -514,18 +528,21 @@ export default function ProcurementPage() {
                                 </Select>
                                 {createForm.formState.errors.supplier_name && <p className="text-red-500 text-xs">{createForm.formState.errors.supplier_name.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Supplier Contact <span className="text-slate-400 font-normal text-xs">(optional)</span></Label>
-                                <Input placeholder="Phone or email" {...createForm.register('supplier_contact')} />
-                            </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Notes <span className="text-slate-400 font-normal text-xs">(optional)</span></Label>
-                            <Textarea placeholder="Any additional details about this requisition…" rows={3} {...createForm.register('notes')} />
+
+                        {/* Supplier Contact + Notes */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Supplier Contact <span className="text-slate-400 font-normal normal-case">(optional)</span></Label>
+                            <Input className="h-10" placeholder="Phone or email" {...createForm.register('supplier_contact')} />
                         </div>
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Notes <span className="text-slate-400 font-normal normal-case">(optional)</span></Label>
+                            <Textarea className="resize-none min-h-[70px]" placeholder="Any additional details about this requisition…" {...createForm.register('notes')} />
+                        </div>
+
                         <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-                            <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={createMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <Button type="button" variant="ghost" onClick={() => setCreateOpen(false)} className="h-9 text-sm">Cancel</Button>
+                            <Button type="submit" disabled={createMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-emerald-600/30">
                                 {createMut.isPending ? 'Creating…' : 'Create Requisition'}
                             </Button>
                         </div>
@@ -872,37 +889,40 @@ export default function ProcurementPage() {
                         <p className="text-teal-100 text-sm mt-0.5">Each item gets a unique PO / item reference number.</p>
                     </div>
                     <form onSubmit={itemForm.handleSubmit(d => addItemMut.mutate({ ...d, requisition_id: detailReq!.id } as CreateRequisitionItemInput))}
-                        className="space-y-4 px-6 py-5">
+                        className="space-y-5 px-6 py-5">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>PO / Item Reference <span className="text-red-500">*</span></Label>
-                                <Input placeholder="e.g. PO-2026-001" {...itemForm.register('po_reference')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">PO / Item Reference <span className="text-red-400">*</span></Label>
+                                <Input className="h-10 font-mono" placeholder="e.g. PO-2026-001" {...itemForm.register('po_reference')} />
                                 {itemForm.formState.errors.po_reference && <p className="text-red-500 text-xs">{itemForm.formState.errors.po_reference.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Quantity <span className="text-red-500">*</span></Label>
-                                <Input type="number" min="1" {...itemForm.register('quantity')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Quantity <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" type="number" min="1" {...itemForm.register('quantity')} />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Description <span className="text-red-500">*</span></Label>
-                            <Input placeholder="e.g. Dell Latitude 5540 Laptop" {...itemForm.register('description')} />
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Description <span className="text-red-400">*</span></Label>
+                            <Input className="h-10" placeholder="e.g. Dell Latitude 5540 Laptop" {...itemForm.register('description')} />
                             {itemForm.formState.errors.description && <p className="text-red-500 text-xs">{itemForm.formState.errors.description.message}</p>}
                         </div>
-                        <div className="space-y-2">
-                            <Label>Unit Price (KES) <span className="text-red-500">*</span></Label>
-                            <Input type="number" min="0" step="0.01" placeholder="0.00" {...itemForm.register('unit_price')} />
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Unit Price (KES) <span className="text-red-400">*</span></Label>
+                            <Input className="h-10" type="number" min="0" step="0.01" placeholder="0.00" {...itemForm.register('unit_price')} />
                             {itemForm.formState.errors.unit_price && <p className="text-red-500 text-xs">{itemForm.formState.errors.unit_price.message}</p>}
                         </div>
                         {/* Live total preview */}
                         {itemForm.watch('quantity') > 0 && itemForm.watch('unit_price') > 0 && (
-                            <p className="text-sm font-semibold text-emerald-600">
-                                Line Total: {fmtKES(itemForm.watch('quantity') * itemForm.watch('unit_price'))}
-                            </p>
+                            <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
+                                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Line Total</span>
+                                <span className="ml-auto text-base font-bold text-emerald-700 dark:text-emerald-300 tabular-nums">
+                                    {fmtKES(itemForm.watch('quantity') * itemForm.watch('unit_price'))}
+                                </span>
+                            </div>
                         )}
                         <div className="flex justify-end gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
-                            <Button type="button" variant="ghost" onClick={() => setAddItemOpen(false)}>Cancel</Button>
-                            <Button type="submit" disabled={addItemMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                            <Button type="button" variant="ghost" onClick={() => setAddItemOpen(false)} className="h-9 text-sm">Cancel</Button>
+                            <Button type="submit" disabled={addItemMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-emerald-600/30">
                                 {addItemMut.isPending ? 'Adding…' : 'Add Item'}
                             </Button>
                         </div>

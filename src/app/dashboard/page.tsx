@@ -386,66 +386,94 @@ export default function DashboardPage() {
                         <p className="text-emerald-100 text-sm mt-0.5">{editingId ? 'Update the employee email record.' : 'Log a new employee email resolution.'}</p>
                     </div>
                     <div className="max-h-[75vh] overflow-y-auto">
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 px-6 py-5">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 px-6 py-5">
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Date</Label>
-                                <Input type="date" {...form.register('entry_date')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
+                                <Input type="date" className="h-10" {...form.register('entry_date')} />
                             </div>
-                            <div className="space-y-2">
-                                <Label>Employee Name *</Label>
-                                <Input placeholder="Full name" {...form.register('employee_name')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Employee Name <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="Full name" {...form.register('employee_name')} />
                                 {form.formState.errors.employee_name && <p className="text-red-500 text-xs">{form.formState.errors.employee_name.message}</p>}
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Work Email *</Label>
-                                <Input placeholder="name@jtl.co.ke" {...form.register('work_email')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Work Email <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="name@jtl.co.ke" {...form.register('work_email')} />
                                 {form.formState.errors.work_email && <p className="text-red-500 text-xs">{form.formState.errors.work_email.message}</p>}
                             </div>
-                            <div className="space-y-2">
-                                <Label>Phone *</Label>
-                                <Input placeholder="0712345678" {...form.register('employee_phone')} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Phone <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="0712345678" {...form.register('employee_phone')} />
                                 {form.formState.errors.employee_phone && <p className="text-red-500 text-xs">{form.formState.errors.employee_phone.message}</p>}
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label>Alternative Email Status</Label>
-                                <Select onValueChange={(v) => form.setValue('alt_email_status', v)} defaultValue={form.getValues('alt_email_status') || 'doesnt-exist'}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="exists">Exists</SelectItem>
-                                        <SelectItem value="doesnt-exist">Doesn&apos;t Exist</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Alt Email Status</Label>
+                                <div className="grid grid-cols-2 gap-1.5 h-10">
+                                    {([
+                                        { value: 'exists',       label: 'Exists' },
+                                        { value: 'doesnt-exist', label: "Doesn't Exist" },
+                                    ] as const).map(opt => {
+                                        const active = (form.watch('alt_email_status') || 'doesnt-exist') === opt.value;
+                                        return (
+                                            <button key={opt.value} type="button"
+                                                onClick={() => form.setValue('alt_email_status', opt.value)}
+                                                className={cn(
+                                                    'flex items-center justify-center rounded-lg border text-[11px] font-semibold transition-all',
+                                                    active
+                                                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                                                        : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300'
+                                                )}>
+                                                {opt.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                             {form.watch('alt_email_status') !== 'exists' && (
-                                <div className="space-y-2">
-                                    <Label>Alternative Email</Label>
-                                    <Input placeholder="alt@gmail.com" {...form.register('alt_email')} />
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Alternative Email</Label>
+                                    <Input className="h-10" placeholder="alt@gmail.com" {...form.register('alt_email')} />
                                 </div>
                             )}
                         </div>
-                        <div className="space-y-2">
-                            <Label>Resolution *</Label>
-                            <Select onValueChange={(v) => form.setValue('resolution', v as ResolutionType)} defaultValue={form.getValues('resolution') || 'sorted'}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="sorted">✅ Sorted</SelectItem>
-                                    <SelectItem value="alt-email">🔴 Alternative Email</SelectItem>
-                                    <SelectItem value="alt-phone">🟠 Alternative Phone</SelectItem>
-                                    <SelectItem value="alt-both">🟡 Alternative Both</SelectItem>
-                                    <SelectItem value="never-used">🟣 Never Used</SelectItem>
-                                    <SelectItem value="licensing">🔵 Licensing</SelectItem>
-                                </SelectContent>
-                            </Select>
+
+                        {/* Resolution — visual tile picker */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Resolution <span className="text-red-400">*</span></Label>
+                            <div className="grid grid-cols-3 gap-2">
+                                {([
+                                    { value: 'sorted',      label: 'Sorted',           emoji: '✅', active: 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400' },
+                                    { value: 'alt-email',   label: 'Alt Email',        emoji: '📧', active: 'border-red-400 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
+                                    { value: 'alt-phone',   label: 'Alt Phone',        emoji: '📱', active: 'border-orange-400 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400' },
+                                    { value: 'alt-both',    label: 'Alt Both',         emoji: '🔀', active: 'border-amber-400 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400' },
+                                    { value: 'never-used',  label: 'Never Used',       emoji: '🚫', active: 'border-purple-400 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400' },
+                                    { value: 'licensing',   label: 'Licensing',        emoji: '🔑', active: 'border-blue-400 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400' },
+                                ] as const).map(opt => {
+                                    const active = (form.watch('resolution') || 'sorted') === opt.value;
+                                    return (
+                                        <button key={opt.value} type="button"
+                                            onClick={() => form.setValue('resolution', opt.value as ResolutionType)}
+                                            className={cn(
+                                                'flex flex-col items-center gap-1 rounded-xl border-2 py-3 text-center transition-all duration-150 hover:scale-[1.02]',
+                                                active ? opt.active : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                                            )}>
+                                            <span className="text-lg leading-none">{opt.emoji}</span>
+                                            <span className="text-[10px] font-bold">{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
+
                         <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                             <Button type="button" variant="ghost" onClick={() => setFormOpen(false)} className="h-9 text-sm">Cancel</Button>
                             <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-emerald-600/30">
-                                {(createMut.isPending || updateMut.isPending) ? 'Saving...' : editingId ? 'Update Entry' : 'Add Entry'}
+                                {(createMut.isPending || updateMut.isPending) ? 'Saving…' : editingId ? 'Update Entry' : 'Add Entry'}
                             </Button>
                         </div>
                     </form>

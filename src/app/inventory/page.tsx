@@ -414,76 +414,144 @@ export default function InventoryPage() {
                         <p className="text-purple-100 text-sm mt-0.5">{editingId ? 'Update the inventory request details.' : 'Log a new hardware or supplies request.'}</p>
                     </div>
                     <div className="max-h-[75vh] overflow-y-auto">
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 px-6 py-5">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 px-6 py-5">
+
+                        {/* Date + Requester */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Date</Label><Input type="date" {...form.register('date')} /></div>
-                            <div className="space-y-2"><Label>Requester Name *</Label><Input placeholder="Full name" {...form.register('requester_name')} /></div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Category *</Label>
-                                <Select onValueChange={(v) => form.setValue('item_type', v as any)} value={form.watch('item_type')}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="supplies">Supplies</SelectItem>
-                                        <SelectItem value="desktop">Desktop PC</SelectItem>
-                                        <SelectItem value="laptop">Laptop Computer</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
+                                <Input type="date" className="h-10" {...form.register('date')} />
                             </div>
-                            <div className="space-y-2"><Label>Work Email *</Label><Input placeholder="name@jtl.co.ke" {...form.register('work_email')} /></div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Requester Name <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="Full name" {...form.register('requester_name')} />
+                            </div>
                         </div>
 
+                        {/* Work Email */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Work Email <span className="text-red-400">*</span></Label>
+                            <Input className="h-10" placeholder="name@jtl.co.ke" {...form.register('work_email')} />
+                        </div>
+
+                        {/* Item type — visual tiles */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Item Type <span className="text-red-400">*</span></Label>
+                            <div className="grid grid-cols-3 gap-3">
+                                {([
+                                    { value: 'supplies', icon: '📦', label: 'Supplies',  activeClass: 'border-amber-400 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400' },
+                                    { value: 'desktop',  icon: '🖥️', label: 'Desktop',   activeClass: 'border-sky-400 bg-sky-50 dark:bg-sky-950/30 text-sky-700 dark:text-sky-400' },
+                                    { value: 'laptop',   icon: '💻', label: 'Laptop',    activeClass: 'border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400' },
+                                ] as const).map(opt => {
+                                    const active = form.watch('item_type') === opt.value;
+                                    return (
+                                        <button key={opt.value} type="button"
+                                            onClick={() => form.setValue('item_type', opt.value as any)}
+                                            className={cn(
+                                                'flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-all duration-150 hover:scale-[1.02]',
+                                                active ? opt.activeClass : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                                            )}>
+                                            <span className="text-2xl leading-none">{opt.icon}</span>
+                                            <span className="text-sm font-semibold">{opt.label}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Conditional: Supply name or Reason */}
                         {form.watch('item_type') === 'supplies' ? (
-                            <div className="space-y-2">
-                                <Label>Supply Name *</Label>
-                                <Input placeholder="e.g. Printer Toners, HP Laserjet M102" {...form.register('supply_name')} maxLength={20} />
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Supply Name <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" placeholder="e.g. Printer Toners, HP Laserjet M102" {...form.register('supply_name')} maxLength={20} />
                             </div>
                         ) : (
-                            <div className="space-y-2">
-                                <Label>Reason for Request *</Label>
-                                <Select onValueChange={(v) => form.setValue('reason', v as MachineReason)} value={form.watch('reason')}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="old-hardware">Old Hardware Replacement</SelectItem>
-                                        <SelectItem value="faulty">Faulty Equipment</SelectItem>
-                                        <SelectItem value="new-user">New User Onboarding</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Reason for Request <span className="text-red-400">*</span></Label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {([
+                                        { value: 'old-hardware', label: 'Old Hardware', emoji: '🔄' },
+                                        { value: 'faulty',       label: 'Faulty',       emoji: '⚠️' },
+                                        { value: 'new-user',     label: 'New User',     emoji: '👤' },
+                                    ] as const).map(opt => {
+                                        const active = form.watch('reason') === opt.value;
+                                        return (
+                                            <button key={opt.value} type="button"
+                                                onClick={() => form.setValue('reason', opt.value as MachineReason)}
+                                                className={cn(
+                                                    'flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 transition-all duration-150',
+                                                    active
+                                                        ? 'border-purple-400 bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400'
+                                                        : 'border-slate-200 dark:border-slate-700 text-slate-500 hover:border-slate-300'
+                                                )}>
+                                                <span className="text-xl">{opt.emoji}</span>
+                                                <span className="text-[11px] font-semibold">{opt.label}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
 
+                        {/* Importance + Quantity */}
                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2"><Label>Importance *</Label>
-                                <Select onValueChange={(v) => form.setValue('importance', v as 'urgent' | 'important' | 'neutral')} value={form.watch('importance')}>
-                                    <SelectTrigger><SelectValue /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                                        <SelectItem value="important">🟠 Important</SelectItem>
-                                        <SelectItem value="neutral">🔵 Neutral</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Importance <span className="text-red-400">*</span></Label>
+                                <div className="grid grid-cols-3 gap-1.5 h-10">
+                                    {([
+                                        { value: 'urgent',    label: 'Urgent',    dot: 'bg-red-500' },
+                                        { value: 'important', label: 'Important', dot: 'bg-amber-500' },
+                                        { value: 'neutral',   label: 'Neutral',   dot: 'bg-sky-500' },
+                                    ] as const).map(opt => {
+                                        const active = form.watch('importance') === opt.value;
+                                        return (
+                                            <button key={opt.value} type="button"
+                                                onClick={() => form.setValue('importance', opt.value as 'urgent' | 'important' | 'neutral')}
+                                                className={cn(
+                                                    'flex items-center justify-center gap-1 rounded-lg border text-[10px] font-bold transition-all',
+                                                    active
+                                                        ? 'border-slate-400 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
+                                                        : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300'
+                                                )}>
+                                                <span className={cn('h-1.5 w-1.5 rounded-full', opt.dot)} />
+                                                {opt.label.slice(0, 3)}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                            <div className="space-y-2"><Label>Quantity *</Label><Input type="number" min="1" max="999" required {...form.register('item_count')} /></div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Quantity <span className="text-red-400">*</span></Label>
+                                <Input className="h-10" type="number" min="1" max="999" required {...form.register('item_count')} />
+                            </div>
                         </div>
 
-                        <div className="space-y-2"><Label>Notes</Label><Textarea placeholder="Additional context (optional)..." {...form.register('notes')} /></div>
-                        <div className="space-y-2">
-                            <Label className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4" /> Resolution Notes (Public)
-                            </Label>
-                            <Textarea placeholder="Final response visible to the user..." className="border-emerald-100 dark:border-emerald-900/30" {...form.register('resolution_notes')} />
+                        {/* Notes */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Notes <span className="text-slate-400 font-normal normal-case">(optional)</span></Label>
+                            <Textarea className="resize-none min-h-[60px]" placeholder="Additional context…" {...form.register('notes')} />
                         </div>
-                        <div className="space-y-2">
-                            <Label className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-2">
-                                <Monitor className="h-4 w-4" /> Internal IT Notes
+
+                        {/* Resolution Notes (public) */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                                <MessageSquare className="h-3.5 w-3.5" /> Resolution Notes <span className="text-slate-400 font-normal normal-case">(visible to user)</span>
                             </Label>
-                            <Textarea placeholder="IT only notes (not visible to users)..." className="border-emerald-100 dark:border-emerald-900/30" {...form.register('internal_notes')} />
+                            <Textarea className="resize-none min-h-[60px] border-emerald-100 dark:border-emerald-900/30" placeholder="Final response visible to the user…" {...form.register('resolution_notes')} />
+                        </div>
+
+                        {/* Internal IT Notes */}
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
+                                <Monitor className="h-3.5 w-3.5" /> Internal IT Notes <span className="text-slate-400 font-normal normal-case">(staff only)</span>
+                            </Label>
+                            <Textarea className="resize-none min-h-[60px] bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/50" placeholder="IT only notes (not visible to users)…" {...form.register('internal_notes')} />
                         </div>
 
                         <div className="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 mt-2">
                             <Button type="button" variant="ghost" onClick={() => { setFormOpen(false); form.reset(); setEditingId(null); }} className="h-9 text-sm">Cancel</Button>
-                            <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="bg-emerald-600 hover:bg-emerald-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-emerald-600/30">
-                                {(createMut.isPending || updateMut.isPending) ? 'Processing...' : editingId ? 'Update Request' : 'Create Request'}
+                            <Button type="submit" disabled={createMut.isPending || updateMut.isPending} className="bg-purple-600 hover:bg-purple-700 text-white h-9 px-5 text-sm font-semibold shadow-sm shadow-purple-600/30">
+                                {(createMut.isPending || updateMut.isPending) ? 'Saving…' : editingId ? 'Update Request' : 'Create Request'}
                             </Button>
                         </div>
                     </form>
