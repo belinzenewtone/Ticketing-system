@@ -383,10 +383,10 @@ export default function ProcurementPage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Search by title or supplier…" value={search} onChange={e => setSearch(e.target.value)} className="pl-10" />
                 </div>
-                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/60 w-fit">
+                <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/60 w-full sm:w-fit">
                     {(['all', 'active', 'delivered', 'rejected'] as const).map(f => (
                         <button key={f} onClick={() => setFilter(f)}
-                            className={cn('px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150',
+                            className={cn('flex-1 sm:flex-none px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all duration-150',
                                 filter === f ? 'bg-white dark:bg-slate-900 text-foreground shadow-sm' : 'text-slate-500 hover:text-foreground'
                             )}>
                             {f}
@@ -485,7 +485,7 @@ export default function ProcurementPage() {
                     <form onSubmit={createForm.handleSubmit(d => createMut.mutate(d as ReqForm))} className="space-y-5 px-6 py-5">
 
                         {/* Title + Date */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5 col-span-2 sm:col-span-1">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Requisition Title <span className="text-red-400">*</span></Label>
                                 <Input className="h-10" placeholder="e.g. Laptop Procurement Q3 2026" {...createForm.register('title')} />
@@ -541,7 +541,7 @@ export default function ProcurementPage() {
                         </div>
 
                         {/* Amount + Supplier */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Total Amount (KES) <span className="text-red-400">*</span></Label>
                                 <Input className="h-10" type="number" min="0" step="0.01" placeholder="0.00" {...createForm.register('total_amount')} />
@@ -638,7 +638,7 @@ export default function ProcurementPage() {
                                     <div className="space-y-4">
                                         {!editMode ? (
                                             <>
-                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                                                     <div><p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Logged By (Admin)</p><p className="font-medium">{detailReq.requestor_name || '—'}</p></div>
                                                     <div><p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Admin Email</p><p className="font-medium text-sm">{detailReq.requestor_email || '—'}</p></div>
                                                     <div><p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Requested For</p><p className="font-semibold text-foreground">{detailReq.requested_for || '—'}</p></div>
@@ -682,7 +682,7 @@ export default function ProcurementPage() {
                                         ) : (
                                             /* Edit form */
                                             <form onSubmit={editForm.handleSubmit(d => updateMut.mutate({ id: detailReq.id, data: d }))} className="space-y-4">
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label>Title</Label>
                                                         <Input {...editForm.register('title')} />
@@ -708,7 +708,7 @@ export default function ProcurementPage() {
                                                         <Input type="number" min="1" {...editForm.register('item_quantity')} />
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label>Type</Label>
                                                         <Select onValueChange={v => editForm.setValue('type', v as RequisitionType)} defaultValue={detailReq.type}>
@@ -725,7 +725,7 @@ export default function ProcurementPage() {
                                                         <Input type="number" step="0.01" {...editForm.register('total_amount')} />
                                                     </div>
                                                 </div>
-                                                <div className="grid grid-cols-2 gap-4">
+                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <Label>Supplier</Label>
                                                         <Select onValueChange={v => editForm.setValue('supplier_name', v)} defaultValue={detailReq.supplier_name}>
@@ -921,7 +921,7 @@ export default function ProcurementPage() {
                     </div>
                     <form onSubmit={itemForm.handleSubmit(d => addItemMut.mutate({ ...d, requisition_id: detailReq!.id } as unknown as CreateRequisitionItemInput))}
                         className="space-y-5 px-6 py-5">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">PO / Item Reference <span className="text-red-400">*</span></Label>
                                 <Input className="h-10 font-mono" placeholder="e.g. PO-2026-001" {...itemForm.register('po_reference')} />

@@ -301,7 +301,7 @@ export default function TasksPage() {
                 <DialogContent className="sm:max-w-[500px]">
                     <DialogHeader><DialogTitle>{editingId ? 'Edit Task' : 'New Task'}</DialogTitle></DialogHeader>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 mt-4">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label>Date</Label>
                                 <Input type="date" {...form.register('date')} />

@@ -552,7 +552,7 @@ export default function TicketsPage() {
                             <AlertTriangle className="h-4 w-4 mr-1.5" /> Overdue Only
                         </Button>
                         <Select value={ticketCategory} onValueChange={(v) => setTicketCategory(v as TicketCategory | 'all')}>
-                            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Categories</SelectItem>
                                 {Object.entries(categoryConfig).map(([k, v]) => (
@@ -561,7 +561,7 @@ export default function TicketsPage() {
                             </SelectContent>
                         </Select>
                         <Select value={ticketPriority} onValueChange={(v) => setTicketPriority(v as TicketPriority | 'all')}>
-                            <SelectTrigger className="w-[130px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[130px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Priority</SelectItem>
                                 <SelectItem value="critical">🔴 Critical</SelectItem>
@@ -571,7 +571,7 @@ export default function TicketsPage() {
                             </SelectContent>
                         </Select>
                         <Select value={ticketStatus} onValueChange={(v) => setTicketStatus(v as TicketStatus | 'all')}>
-                            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[140px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
                                 <SelectItem value="open">Open</SelectItem>
@@ -815,7 +815,7 @@ export default function TicketsPage() {
                         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 px-6 py-5 overflow-y-auto flex-1">
 
                             {/* Date + Employee */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
                                     <Input type="date" className="h-10" {...form.register('ticket_date')} />
@@ -828,7 +828,7 @@ export default function TicketsPage() {
                             </div>
 
                             {/* Department + Subject */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Department</Label>
                                     <Input className="h-10" placeholder="e.g. Finance, HR, IT…" {...form.register('department')} />
@@ -843,7 +843,7 @@ export default function TicketsPage() {
                             {/* Category — icon tile grid */}
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Category <span className="text-red-400">*</span></Label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {Object.entries(categoryConfig).map(([k, v]) => {
                                         const active = form.watch('category') === k;
                                         return (
@@ -868,7 +868,7 @@ export default function TicketsPage() {
                             {/* Priority — colored pill tiles */}
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Priority <span className="text-red-400">*</span></Label>
-                                <div className="grid grid-cols-4 gap-2">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                     {([
                                         { value: 'critical', label: 'Critical', dot: 'bg-red-500',    active: 'border-red-500 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400' },
                                         { value: 'high',     label: 'High',     dot: 'bg-orange-400', active: 'border-orange-400 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-400' },
@@ -921,7 +921,7 @@ export default function TicketsPage() {
                             {editingTicket && (
                                 <>
                                     {/* Assignee + Status tiles */}
-                                    <div className="grid grid-cols-2 gap-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="space-y-1.5">
                                             <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Assigned To</Label>
                                             <Select value={editAssignee} onValueChange={setEditAssignee}>

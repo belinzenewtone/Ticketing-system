@@ -266,7 +266,7 @@ export default function InventoryPage() {
                             <Input placeholder="Search requester, item or email..." value={machineSearch} onChange={(e) => setMachineSearch(e.target.value)} className="pl-10" />
                         </div>
                         <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-                            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Category" /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="Category" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Items</SelectItem>
                                 <SelectItem value="hardware">All Hardware</SelectItem>
@@ -276,7 +276,7 @@ export default function InventoryPage() {
                             </SelectContent>
                         </Select>
                         <Select value={machineStatus} onValueChange={(v) => setMachineStatus(v as any)}>
-                            <SelectTrigger className="w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[140px]"><SelectValue placeholder="Status" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All Status</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
@@ -560,7 +560,7 @@ export default function InventoryPage() {
             </Dialog>
             {/* ===== VIEW UPDATES / COMMENTS DIALOG (Simplified with ChatInterface) ===== */}
             <Dialog open={!!viewCommentsMachine} onOpenChange={(open) => !open && setViewCommentsMachine(null)}>
-                <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden [&>button:last-child]:hidden">
+                <DialogContent className="sm:max-w-[500px] h-[85dvh] max-h-[600px] flex flex-col p-0 overflow-hidden [&>button:last-child]:hidden">
                     <DialogHeader className="shrink-0 p-4 border-b">
                         <DialogTitle className="flex justify-between items-center">
                             <div className="flex items-center gap-2 min-w-0">

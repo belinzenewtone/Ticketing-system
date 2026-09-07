@@ -41,8 +41,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 sidebarCollapsed ? 'lg:ml-[72px]' : 'lg:ml-64'
             )}>
                 {showTabs && (
-                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md px-4 lg:px-6 py-2.5 flex gap-2 overflow-x-auto no-scrollbar shadow-sm pl-14 lg:pl-6">
-                        <div className="flex gap-2 min-w-max mx-auto lg:mx-0">
+                    /* pl-14 on mobile reserves space past the hamburger button; lg:pl-6 resets on desktop */
+                    <div className="sticky top-0 z-30 w-full border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-950/95 backdrop-blur-md pl-14 pr-4 lg:px-6 py-2.5 flex gap-2 overflow-x-auto shadow-sm"
+                        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                        <div className="flex gap-2 min-w-max lg:mx-0">
                             {currentNav.map((item) => {
                                 const isActive = pathname === item.href;
                                 return (
@@ -56,7 +58,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                                                 : 'text-slate-600 dark:text-slate-400 hover:text-foreground hover:bg-slate-100 dark:hover:bg-slate-800/50'
                                         )}
                                     >
-                                        <item.icon className="h-4 w-4" />
+                                        <item.icon className="h-4 w-4 shrink-0" />
                                         {item.label}
                                     </Link>
                                 );

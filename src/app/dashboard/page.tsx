@@ -271,7 +271,7 @@ export default function DashboardPage() {
                             <Input placeholder="Search entries..." value={entrySearch} onChange={(e) => setEntrySearch(e.target.value)} className="pl-10" />
                         </div>
                         <Select value={entryFilter} onValueChange={(v) => setEntryFilter(v as 'all' | 'sorted' | 'pending')}>
-                            <SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[150px]"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">All</SelectItem>
                                 <SelectItem value="sorted">Sorted</SelectItem>
@@ -279,7 +279,7 @@ export default function DashboardPage() {
                             </SelectContent>
                         </Select>
                         <Select value={entryDateRange ?? 'none'} onValueChange={(v) => setEntryDateRange(v === 'none' ? undefined : v as 'today' | 'week' | 'month' | 'year')}>
-                            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Time Range" /></SelectTrigger>
+                            <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="Time Range" /></SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">All Time</SelectItem>
                                 <SelectItem value="today">Today</SelectItem>
@@ -387,7 +387,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="max-h-[75vh] overflow-y-auto">
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5 px-6 py-5">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
                                 <Input type="date" className="h-10" {...form.register('entry_date')} />
@@ -398,7 +398,7 @@ export default function DashboardPage() {
                                 {form.formState.errors.employee_name && <p className="text-red-500 text-xs">{form.formState.errors.employee_name.message}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Work Email <span className="text-red-400">*</span></Label>
                                 <Input className="h-10" placeholder="name@jtl.co.ke" {...form.register('work_email')} />
@@ -410,7 +410,7 @@ export default function DashboardPage() {
                                 {form.formState.errors.employee_phone && <p className="text-red-500 text-xs">{form.formState.errors.employee_phone.message}</p>}
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Alt Email Status</Label>
                                 <div className="grid grid-cols-2 gap-1.5">
@@ -423,7 +423,7 @@ export default function DashboardPage() {
                                             <button key={opt.value} type="button"
                                                 onClick={() => form.setValue('alt_email_status', opt.value)}
                                                 className={cn(
-                                                    'flex items-center justify-center rounded-lg border text-[11px] font-semibold transition-all',
+                                                    'flex items-center justify-center rounded-lg border text-[11px] font-semibold transition-all h-10',
                                                     active
                                                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
                                                         : 'border-slate-200 dark:border-slate-700 text-slate-400 hover:border-slate-300'

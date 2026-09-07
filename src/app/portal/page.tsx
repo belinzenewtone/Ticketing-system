@@ -327,7 +327,7 @@ export default function PortalPage() {
                         </div>
 
                         {/* Stat pills */}
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
                             {[
                                 { label: 'Tickets', value: isLoading ? null : tickets?.length ?? 0 },
                                 { label: 'Active',  value: isLoading ? null : tickets?.filter(t => t.status === 'open' || t.status === 'in-progress').length ?? 0 },
@@ -367,7 +367,7 @@ export default function PortalPage() {
             {/* ══════════════════════ TICKETS ══════════════════════ */}
             <section>
                 {/* Section header */}
-                <div className="flex items-center justify-between mb-5">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-5">
                     <div className="flex items-center gap-2.5">
                         <h2 className="text-base font-bold text-foreground">Your Tickets</h2>
                         {!isLoading && tickets && (
@@ -376,7 +376,7 @@ export default function PortalPage() {
                             </span>
                         )}
                     </div>
-                    <div className="relative w-56">
+                    <div className="relative w-full sm:w-56">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
                         <Input
                             placeholder="Search tickets…"
@@ -894,7 +894,7 @@ export default function PortalPage() {
                         </div>
 
                         {/* Date + Importance */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Date</Label>
                                 <Input type="date" {...itemForm.register('date')} className="h-10" />
@@ -927,7 +927,7 @@ export default function PortalPage() {
                         </div>
 
                         {/* Name + Email */}
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Your Name <span className="text-red-400">*</span></Label>
                                 <Input {...itemForm.register('requester_name')} placeholder="Full name" className="h-10" />
@@ -942,7 +942,7 @@ export default function PortalPage() {
 
                         {/* Conditional fields */}
                         {itemForm.watch('item_type') === 'supplies' ? (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Supply Name <span className="text-red-400">*</span></Label>
                                     <Input {...itemForm.register('supply_name')} placeholder="e.g. Printer Toners" maxLength={20} className="h-10" />
@@ -954,7 +954,7 @@ export default function PortalPage() {
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
                                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Reason <span className="text-red-400">*</span></Label>
                                     <Select onValueChange={v => itemForm.setValue('reason', v as any)} value={itemForm.watch('reason') || ''}>
@@ -996,7 +996,7 @@ export default function PortalPage() {
         {/* ── Updates / Chat ── */}
         <Dialog open={!!activeItem} onOpenChange={open => { if (!open) { setViewCommentsTicket(null); setViewCommentsMachine(null); } }}>
             {/* [&>button:last-child]:hidden suppresses the default absolute close button so our custom one doesn't overlap the badge */}
-            <DialogContent className="sm:max-w-[480px] h-[580px] flex flex-col p-0 overflow-hidden gap-0 [&>button:last-child]:hidden">
+            <DialogContent className="sm:max-w-[480px] h-[85dvh] max-h-[580px] flex flex-col p-0 overflow-hidden gap-0 [&>button:last-child]:hidden">
                 {/* Header — sticky, never scrolls */}
                 <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
                     {/* Icon + title/subtitle */}
