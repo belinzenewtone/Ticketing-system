@@ -69,17 +69,41 @@ const TYPE_CONFIG: Record<RequisitionType, string> = {
 // ─── Stage badge ─────────────────────────────────────────────────────────────
 function StageBadge({ stage }: { stage: RequisitionStage }) {
     const cfg = STAGE_CONFIG[stage];
-    const color =
-        stage === 'delivered'         ? 'bg-emerald-500/15 text-emerald-600 border-emerald-200/50' :
-        stage === 'rejected'          ? 'bg-red-500/15 text-red-600 border-red-200/50' :
-        stage === 'awaiting_delivery' ? 'bg-cyan-500/15 text-cyan-600 border-cyan-200/50' :
-        stage === 'draft'             ? 'bg-slate-500/15 text-slate-500 border-slate-200/50' :
-        stage === 'procurement'       ? 'bg-teal-500/15 text-teal-600 border-teal-200/50' :
-                                        'bg-amber-500/15 text-amber-600 border-amber-200/50';
+    const stepIdx   = STAGE_ORDER.indexOf(stage);          // -1 for 'rejected'
+    const totalSteps = STAGE_ORDER.length;
+
+    // Colour palette per stage group
+    const palette: Record<string, { wrap: string; dot: string }> = {
+        delivered:         { wrap: 'bg-emerald-500/12 text-emerald-600 dark:text-emerald-400 border-emerald-300/40 dark:border-emerald-700/40', dot: 'bg-emerald-500' },
+        rejected:          { wrap: 'bg-red-500/12 text-red-500 dark:text-red-400 border-red-300/40 dark:border-red-700/40',                      dot: 'bg-red-500'     },
+        awaiting_delivery: { wrap: 'bg-cyan-500/12 text-cyan-600 dark:text-cyan-400 border-cyan-300/40 dark:border-cyan-700/40',                  dot: 'bg-cyan-500'    },
+        draft:             { wrap: 'bg-slate-500/12 text-slate-500 border-slate-300/40 dark:border-slate-600/40',                                 dot: 'bg-slate-400'   },
+        procurement:       { wrap: 'bg-teal-500/12 text-teal-600 dark:text-teal-400 border-teal-300/40 dark:border-teal-700/40',                  dot: 'bg-teal-500'    },
+        requestor:         { wrap: 'bg-violet-500/12 text-violet-600 dark:text-violet-400 border-violet-300/40 dark:border-violet-700/40',         dot: 'bg-violet-500'  },
+        head_department:   { wrap: 'bg-blue-500/12 text-blue-600 dark:text-blue-400 border-blue-300/40 dark:border-blue-700/40',                   dot: 'bg-blue-500'    },
+    };
+    const { wrap, dot } = palette[stage] ?? { wrap: 'bg-amber-500/12 text-amber-600 dark:text-amber-400 border-amber-300/40 dark:border-amber-700/40', dot: 'bg-amber-500' };
+
+    const isActive  = !['draft', 'delivered', 'rejected'].includes(stage);
+    const showStep  = stepIdx > 0 && stage !== 'delivered' && stage !== 'rejected';
+
     return (
-        <Badge variant="outline" className={cn('text-[10px] font-bold uppercase tracking-wide border px-2 py-0.5', color)}>
-            {cfg?.icon} {cfg?.label}
-        </Badge>
+        <span className={cn('inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold tracking-wide whitespace-nowrap', wrap)}>
+            {/* Dot — pulsing when active */}
+            <span className="relative flex h-2 w-2 shrink-0">
+                {isActive && (
+                    <span className={cn('animate-ping absolute inline-flex h-full w-full rounded-full opacity-60', dot)} />
+                )}
+                <span className={cn('relative inline-flex h-2 w-2 rounded-full', dot)} />
+            </span>
+
+            {cfg?.short ?? stage}
+
+            {/* Subtle step counter e.g. "3 / 12" */}
+            {showStep && (
+                <span className="opacity-40 font-normal text-[10px]">{stepIdx + 1}/{totalSteps}</span>
+            )}
+        </span>
     );
 }
 
