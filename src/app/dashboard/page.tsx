@@ -314,7 +314,7 @@ export default function DashboardPage() {
                                         </TableRow>
                                     ) : entries?.map((entry) => (
                                         <TableRow key={entry.id} className={`group ${entry.completed ? 'opacity-60 bg-emerald-50/10 dark:bg-emerald-950/5' : ''}`}>
-                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-middle">
                                                 <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
                                                     #{entry.number}
                                                 </div>
@@ -325,7 +325,7 @@ export default function DashboardPage() {
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <div className="font-medium text-sm text-foreground">{entry.employee_name}</div>
                                                 <div className="text-xs text-muted-foreground mt-0.5 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-                                                    <span className="flex items-center gap-1 truncate"><Mail className="h-3 w-3" /> {entry.work_email}</span>
+                                                    <span className="flex items-center gap-1 min-w-0"><Mail className="h-3 w-3 shrink-0" /><span className="truncate">{entry.work_email}</span></span>
                                                     <span className="flex items-center gap-1 font-mono"><span className="text-[10px]">📱</span> {entry.employee_phone}</span>
                                                 </div>
                                             </TableCell>
@@ -413,7 +413,7 @@ export default function DashboardPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Alt Email Status</Label>
-                                <div className="grid grid-cols-2 gap-1.5 h-10">
+                                <div className="grid grid-cols-2 gap-1.5">
                                     {([
                                         { value: 'exists',       label: 'Exists' },
                                         { value: 'doesnt-exist', label: "Doesn't Exist" },

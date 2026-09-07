@@ -490,7 +490,7 @@ export default function PortalPage() {
                                                                     <Trash2 className="h-3.5 w-3.5" />
                                                                 </button>
                                                             </AlertDialogTrigger>
-                                                            <AlertDialogContent className="z-[9999]">
+                                                            <AlertDialogContent>
                                                                 <AlertDialogHeader>
                                                                     <AlertDialogTitle>Delete Ticket #{ticket.number}?</AlertDialogTitle>
                                                                     <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>

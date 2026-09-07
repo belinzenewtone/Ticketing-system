@@ -614,7 +614,7 @@ export default function TicketsPage() {
                                             ticket.status === 'closed' || ticket.merged_into ? 'opacity-60' : '',
                                             slaStatus === 'overdue' ? 'bg-red-50/20 dark:bg-red-950/10' : ''
                                         )}>
-                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                                <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-middle">
                                                     <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[50px]">
                                                         {ticket.merged_into ? <span className="line-through text-slate-400">#{ticket.number}</span> : `#${ticket.number}`}
                                                     </div>
@@ -630,11 +630,11 @@ export default function TicketsPage() {
                                                 </TableCell>
 
                                                 <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
-                                                    <div className="font-medium text-foreground text-sm max-w-[300px] truncate flex items-center gap-2" title={ticket.subject}>
+                                                    <div className="font-medium text-foreground text-sm max-w-[300px] flex items-center gap-2 min-w-0" title={ticket.subject}>
                                                         {ticket.sentiment && ticket.sentiment !== 'neutral' && ticket.sentiment !== 'positive' && (
-                                                            <span title={`Sentiment: ${ticket.sentiment}`}>{sentimentConfig[ticket.sentiment]?.icon}</span>
+                                                            <span className="shrink-0" title={`Sentiment: ${ticket.sentiment}`}>{sentimentConfig[ticket.sentiment]?.icon}</span>
                                                         )}
-                                                        {ticket.subject}
+                                                        <span className="truncate min-w-0">{ticket.subject}</span>
                                                     </div>
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -668,7 +668,7 @@ export default function TicketsPage() {
 
                                                 <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                     <div className="flex flex-col gap-1.5 justify-center">
-                                                        <Badge variant="outline" className={`h-5 w-[88px] justify-center px-1 text-[11px] font-medium border-0 shrink-0 ${statusConfig[ticket.status]?.color.replace('border-', 'border-0 ')}`}>
+                                                        <Badge variant="outline" className={cn('h-5 w-[88px] justify-center px-1 text-[11px] font-medium border-0 shrink-0', statusConfig[ticket.status]?.color)}>
                                                             {statusConfig[ticket.status]?.label}
                                                         </Badge>
                                                         {ticket.due_date && slaStatus !== 'done' && (

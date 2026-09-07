@@ -178,7 +178,7 @@ export function Sidebar() {
                                         {item.label.split(' ')[0]}
                                     </span>
                                 ) : (
-                                    <span className="truncate">{item.label}</span>
+                                    <span className="truncate min-w-0">{item.label}</span>
                                 )}
                             </Link>
                         );
@@ -206,12 +206,12 @@ export function Sidebar() {
                             <div className="flex gap-2">
                                 <Button variant="outline" size="sm" className="flex-1 justify-center gap-1.5 rounded-lg text-xs"
                                     onClick={() => router.push('/dashboard/profile')}>
-                                    <User className="h-3.5 w-3.5" /> Profile
+                                    <User className="h-3.5 w-3.5 shrink-0" /> Profile
                                 </Button>
                                 <Button variant="ghost" size="sm"
                                     className="flex-1 justify-center gap-1.5 text-red-500 hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg text-xs"
                                     onClick={handleLogout}>
-                                    <LogOut className="h-3.5 w-3.5" /> Logout
+                                    <LogOut className="h-3.5 w-3.5 shrink-0" /> Logout
                                 </Button>
                             </div>
                         </>

@@ -316,7 +316,7 @@ export default function InventoryPage() {
                                     </TableRow>
                                 ) : items?.map((m: MachineRequest) => (
                                     <TableRow key={m.id} className="group">
-                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-top">
+                                        <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60 align-middle">
                                             <div className="inline-flex items-center justify-center font-mono font-medium text-foreground border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-md px-2 py-1 shadow-sm mb-1.5 min-w-[40px]">
                                                 #{m.number}
                                             </div>

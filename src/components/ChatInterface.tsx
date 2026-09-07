@@ -202,11 +202,11 @@ export function ChatInterface({
                                             )}
                                             {c.content}
 
-                                            {/* Delete button for admin's own messages */}
+                                            {/* Delete button for admin's own messages — inline so it never overlaps siblings */}
                                             {isAdmin && c.user_id === profile?.id && (
                                                 <button
                                                     onClick={() => handleDelete(c.id)}
-                                                    className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                                                    className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/30 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow z-10"
                                                 >
                                                     <Trash2 className="h-2.5 w-2.5" />
                                                 </button>
