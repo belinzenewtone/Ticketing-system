@@ -254,14 +254,14 @@ export default function TasksPage() {
                                         </TableRow>
                                     ) : tasks?.map((task) => (
                                         <TableRow key={task.id} className={task.completed ? 'opacity-60' : ''}>
-                                            <TableCell>
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <button onClick={() => toggleMut.mutate({ id: task.id, completed: !task.completed })} className="cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors">
                                                     {task.completed ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
                                                 </button>
                                             </TableCell>
-                                            <TableCell className="text-muted-foreground">{task.date}</TableCell>
-                                            <TableCell className={`font-medium ${task.completed ? 'line-through' : ''}`}>{task.text}</TableCell>
-                                            <TableCell>
+                                            <TableCell className="text-muted-foreground border-r border-slate-200/60 dark:border-slate-800/60">{task.date}</TableCell>
+                                            <TableCell className={`font-medium border-r border-slate-200/60 dark:border-slate-800/60 ${task.completed ? 'line-through' : ''}`}>{task.text}</TableCell>
+                                            <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <Badge variant="outline" className={cn("h-6 px-2 text-[10px] uppercase font-bold border shadow-sm", importanceConfig[task.importance]?.color)}>
                                                     {importanceConfig[task.importance]?.icon} {importanceConfig[task.importance]?.label}
                                                 </Badge>
