@@ -19,7 +19,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle,
+    Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Circle } from 'lucide-react';
+import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Circle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -560,29 +560,34 @@ export default function InventoryPage() {
             </Dialog>
             {/* ===== VIEW UPDATES / COMMENTS DIALOG (Simplified with ChatInterface) ===== */}
             <Dialog open={!!viewCommentsMachine} onOpenChange={(open) => !open && setViewCommentsMachine(null)}>
-                <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden">
-                    <DialogHeader className="p-4 border-b">
+                <DialogContent className="sm:max-w-[500px] h-[600px] flex flex-col p-0 overflow-hidden [&>button:last-child]:hidden">
+                    <DialogHeader className="shrink-0 p-4 border-b">
                         <DialogTitle className="flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <MessageSquare className="h-5 w-5 text-emerald-500" />
-                                <span>Updates for Request #{viewCommentsMachine?.number}</span>
+                            <div className="flex items-center gap-2 min-w-0">
+                                <MessageSquare className="h-5 w-5 text-emerald-500 shrink-0" />
+                                <span className="truncate">Updates for Request #{viewCommentsMachine?.number}</span>
                             </div>
-                            <div className="mr-6">
+                            <div className="flex items-center gap-2 shrink-0">
                                 <Badge variant="outline" className="text-[10px] uppercase font-bold">{viewCommentsMachine?.status}</Badge>
+                                <DialogClose className="h-7 w-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                                    <X className="h-3.5 w-3.5" />
+                                </DialogClose>
                             </div>
                         </DialogTitle>
                     </DialogHeader>
 
-                    {viewCommentsMachine && (
-                        <ChatInterface
-                            id={viewCommentsMachine.id}
-                            isMachine={true}
-                            isAdmin={true}
-                            profile={profile}
-                            number={viewCommentsMachine.number}
-                            status={viewCommentsMachine.status}
-                        />
-                    )}
+                    <div className="flex-1 min-h-0">
+                        {viewCommentsMachine && (
+                            <ChatInterface
+                                id={viewCommentsMachine.id}
+                                isMachine={true}
+                                isAdmin={true}
+                                profile={profile}
+                                number={viewCommentsMachine.number}
+                                status={viewCommentsMachine.status}
+                            />
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

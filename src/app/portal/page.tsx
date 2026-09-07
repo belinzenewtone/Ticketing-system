@@ -16,7 +16,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+    Dialog, DialogContent, DialogClose, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
 import {
     AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -995,12 +995,14 @@ export default function PortalPage() {
 
         {/* ── Updates / Chat ── */}
         <Dialog open={!!activeItem} onOpenChange={open => { if (!open) { setViewCommentsTicket(null); setViewCommentsMachine(null); } }}>
-            <DialogContent className="sm:max-w-[480px] h-[580px] flex flex-col p-0 overflow-hidden gap-0">
-                {/* Header */}
-                <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-                    <div className="flex items-center gap-3 min-w-0">
+            {/* [&>button:last-child]:hidden suppresses the default absolute close button so our custom one doesn't overlap the badge */}
+            <DialogContent className="sm:max-w-[480px] h-[580px] flex flex-col p-0 overflow-hidden gap-0 [&>button:last-child]:hidden">
+                {/* Header — sticky, never scrolls */}
+                <div className="shrink-0 flex items-center gap-3 px-5 py-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+                    {/* Icon + title/subtitle */}
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                         <div className="h-9 w-9 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                            <MessageSquare className="h-4.5 w-4.5 text-emerald-600 dark:text-emerald-400" style={{ height: 18, width: 18 }} />
+                            <MessageSquare style={{ height: 18, width: 18 }} className="text-emerald-600 dark:text-emerald-400" />
                         </div>
                         <div className="min-w-0">
                             <p className="text-sm font-bold text-foreground truncate">
@@ -1015,32 +1017,41 @@ export default function PortalPage() {
                             </p>
                         </div>
                     </div>
-                    {activeItem?.status && (
-                        <span className={cn(
-                            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold shrink-0',
-                            activeItem.status === 'open' ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800' :
-                            activeItem.status === 'in-progress' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' :
-                            activeItem.status === 'resolved' || activeItem.status === 'fulfilled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
-                            'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
-                        )}>
-                            <span className={cn('h-1.5 w-1.5 rounded-full',
-                                activeItem.status === 'open' ? 'bg-sky-500' :
-                                activeItem.status === 'in-progress' ? 'bg-amber-500' :
-                                activeItem.status === 'resolved' || activeItem.status === 'fulfilled' ? 'bg-emerald-500' : 'bg-slate-400'
-                            )} />
-                            {activeItem.status.charAt(0).toUpperCase() + activeItem.status.slice(1).replace('-', ' ')}
-                        </span>
+                    {/* Status badge + close button — grouped so X never overlaps badge */}
+                    <div className="flex items-center gap-2 shrink-0">
+                        {activeItem?.status && (
+                            <span className={cn(
+                                'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold',
+                                activeItem.status === 'open' ? 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800' :
+                                activeItem.status === 'in-progress' ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800' :
+                                activeItem.status === 'resolved' || activeItem.status === 'fulfilled' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800' :
+                                'bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                            )}>
+                                <span className={cn('h-1.5 w-1.5 rounded-full',
+                                    activeItem.status === 'open' ? 'bg-sky-500' :
+                                    activeItem.status === 'in-progress' ? 'bg-amber-500' :
+                                    activeItem.status === 'resolved' || activeItem.status === 'fulfilled' ? 'bg-emerald-500' : 'bg-slate-400'
+                                )} />
+                                {activeItem.status.charAt(0).toUpperCase() + activeItem.status.slice(1).replace('-', ' ')}
+                            </span>
+                        )}
+                        <DialogClose className="h-7 w-7 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <X className="h-3.5 w-3.5" />
+                        </DialogClose>
+                    </div>
+                </div>
+                {/* flex-1 min-h-0 constrains ChatInterface so its internal scroll works and the header stays pinned */}
+                <div className="flex-1 min-h-0">
+                    {activeItem && (
+                        <ChatInterface
+                            id={activeItem.id}
+                            isMachine={!!viewCommentsMachine}
+                            profile={profile}
+                            number={activeItem.number}
+                            status={activeItem.status}
+                        />
                     )}
                 </div>
-                {activeItem && (
-                    <ChatInterface
-                        id={activeItem.id}
-                        isMachine={!!viewCommentsMachine}
-                        profile={profile}
-                        number={activeItem.number}
-                        status={activeItem.status}
-                    />
-                )}
             </DialogContent>
         </Dialog>
 
