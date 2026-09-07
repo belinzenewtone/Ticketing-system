@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { FileDown, Mail, CheckSquare, Monitor, Package } from 'lucide-react';
+import { FileDown, Mail, SquareCheck, Monitor, Package } from 'lucide-react';
 import { useState } from 'react';
 
 type ReportType = 'entries' | 'tasks';
@@ -83,7 +83,7 @@ export default function ReportsPage() {
 
     const summaryCards = [
         { label: 'Email Entries', value: entryStats?.total ?? 0, sub: `${entryStats?.sorted ?? 0} sorted`, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Active Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: CheckSquare, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+        { label: 'Active Tasks', value: taskStats?.total ?? 0, sub: `${taskStats?.completed ?? 0} completed`, icon: SquareCheck, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
     ];
 
     return (

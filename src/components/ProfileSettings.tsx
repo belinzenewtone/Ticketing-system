@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Loader2, KeyRound, Mail, User, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Loader2, KeyRound, Mail, User, ShieldCheck, CircleCheckBig } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PageTransition } from '@/components/PageTransition';
 
@@ -167,7 +167,7 @@ export default function ProfileSettings() {
                     <div className="flex items-center justify-between pt-1">
                         {nameSaved && (
                             <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Saved
+                                <CircleCheckBig className="h-3.5 w-3.5" /> Saved
                             </span>
                         )}
                         <Button
@@ -228,7 +228,7 @@ export default function ProfileSettings() {
                     <div className="flex items-center justify-between pt-1">
                         {pwSaved && (
                             <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-                                <CheckCircle2 className="h-3.5 w-3.5" /> Password updated
+                                <CircleCheckBig className="h-3.5 w-3.5" /> Password updated
                             </span>
                         )}
                         <Button

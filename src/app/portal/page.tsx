@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import {
-    Plus, Search, Ticket, CheckCircle2, Loader2, Archive, MessageSquare,
+    Plus, Search, Ticket, CircleCheckBig, Loader2, Archive, MessageSquare,
     Paperclip, Pencil, Trash2, BookOpen, X, Bot, Sparkles, Package,
     Monitor as MonitorIcon, Laptop as LaptopIcon, ChevronRight, User,
 } from 'lucide-react';

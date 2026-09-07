@@ -24,7 +24,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, CheckCircle, Circle, ListTodo, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
+import { Plus, Search, Trash2, CircleCheck, Circle, ListTodo, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -105,7 +105,7 @@ export default function TasksPage() {
 
     const statCards = [
         { label: 'Total Tasks', value: stats?.total ?? 0, icon: ListTodo, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Completed', value: stats?.completed ?? 0, icon: CheckCircle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Completed', value: stats?.completed ?? 0, icon: CircleCheck, color: 'text-teal-500', bg: 'bg-teal-500/10' },
         { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
@@ -256,7 +256,7 @@ export default function TasksPage() {
                                         <TableRow key={task.id} className={task.completed ? 'opacity-60' : ''}>
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <button onClick={() => toggleMut.mutate({ id: task.id, completed: !task.completed })} className="cursor-pointer p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors">
-                                                    {task.completed ? <CheckCircle className="h-5 w-5 text-emerald-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
+                                                    {task.completed ? <CircleCheck className="h-5 w-5 text-emerald-500" /> : <Circle className="h-5 w-5 text-muted-foreground" />}
                                                 </button>
                                             </TableCell>
                                             <TableCell className="text-muted-foreground border-r border-slate-200/60 dark:border-slate-800/60">{task.date}</TableCell>

@@ -34,7 +34,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { cn } from '@/lib/utils';
 import {
-    Plus, Trash2, ClipboardList, CheckCircle2, XCircle, Clock,
+    Plus, Trash2, ClipboardList, CircleCheckBig, CircleX, Clock,
     ChevronRight, Building2, Pencil, Search, TrendingUp, Package, Eye,
 } from 'lucide-react';
 import type {
@@ -359,8 +359,8 @@ export default function ProcurementPage() {
                 {[
                     { label: 'Total', value: total, icon: ClipboardList, color: 'text-slate-500',  bg: 'bg-slate-500/10' },
                     { label: 'In Progress', value: active, icon: TrendingUp, color: 'text-amber-500',  bg: 'bg-amber-500/10' },
-                    { label: 'Delivered', value: delivered, icon: CheckCircle2, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-                    { label: 'Rejected', value: rejected, icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+                    { label: 'Delivered', value: delivered, icon: CircleCheckBig, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+                    { label: 'Rejected', value: rejected, icon: CircleX, color: 'text-red-500', bg: 'bg-red-500/10' },
                 ].map(s => (
                     <div key={s.label} className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-5">
                         <div className="flex items-start justify-between">
@@ -791,8 +791,8 @@ export default function ProcurementPage() {
                                                         isRejected ? 'bg-red-500 text-white border-red-500' :
                                                         'bg-white dark:bg-slate-900 text-slate-400 border-slate-200 dark:border-slate-700'
                                                     )}>
-                                                        {isPast ? <CheckCircle2 className="h-4 w-4" /> :
-                                                         isRejected ? <XCircle className="h-4 w-4" /> :
+                                                        {isPast ? <CircleCheckBig className="h-4 w-4" /> :
+                                                         isRejected ? <CircleX className="h-4 w-4" /> :
                                                          isCurrent ? <Clock className="h-4 w-4" /> :
                                                          <span className="text-xs">{idx + 1}</span>}
                                                     </div>
@@ -821,11 +821,11 @@ export default function ProcurementPage() {
                                                             <div className="flex gap-2 mt-3">
                                                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs"
                                                                     onClick={() => openApproval(stage, 'approve')}>
-                                                                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Record Approval
+                                                                    <CircleCheckBig className="h-3.5 w-3.5 mr-1" /> Record Approval
                                                                 </Button>
                                                                 <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-600 hover:bg-red-50 h-7 text-xs"
                                                                     onClick={() => openApproval(stage, 'reject')}>
-                                                                    <XCircle className="h-3.5 w-3.5 mr-1" /> Reject
+                                                                    <CircleX className="h-3.5 w-3.5 mr-1" /> Reject
                                                                 </Button>
                                                             </div>
                                                         )}
@@ -973,8 +973,8 @@ export default function ProcurementPage() {
                     )}>
                         <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
                             {approvalAction === 'approve'
-                                ? <><CheckCircle2 className="h-5 w-5" /> Record Approval</>
-                                : <><XCircle className="h-5 w-5" /> Record Rejection</>}
+                                ? <><CircleCheckBig className="h-5 w-5" /> Record Approval</>
+                                : <><CircleX className="h-5 w-5" /> Record Rejection</>}
                         </DialogTitle>
                         <p className="text-white/70 text-sm mt-0.5">
                             Stage: <strong className="text-white">{approvalStage ? STAGE_CONFIG[approvalStage]?.label : ''}</strong>

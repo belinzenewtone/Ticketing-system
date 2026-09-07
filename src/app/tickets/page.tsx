@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CheckCircle2, Loader2, Archive, UserPlus, Paperclip, Sparkles, AlertTriangle, BookTemplate, GitMerge, MessageSquare, Activity, TrendingUp, Timer, Circle } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, LayoutDashboard, List, Ticket, Clock, CircleCheckBig, Loader2, Archive, UserPlus, Paperclip, Sparkles, TriangleAlert, BookMarked, GitMerge, MessageSquare, Activity, TrendingUp, Timer, Circle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
@@ -54,7 +54,7 @@ const priorityConfig: Record<TicketPriority, { label: string; color: string }> =
 const statusConfig: Record<TicketStatus, { label: string; color: string; icon: React.ElementType }> = {
     open: { label: 'Open', color: 'bg-blue-600/20 text-blue-500 border-blue-600/30 hover:bg-blue-600/20', icon: Ticket },
     'in-progress': { label: 'In Progress', color: 'bg-amber-600/20 text-amber-500 border-amber-600/30 hover:bg-amber-600/20', icon: Loader2 },
-    resolved: { label: 'Resolved', color: 'bg-emerald-600/20 text-emerald-500 border-emerald-600/30 hover:bg-emerald-600/20', icon: CheckCircle2 },
+    resolved: { label: 'Resolved', color: 'bg-emerald-600/20 text-emerald-500 border-emerald-600/30 hover:bg-emerald-600/20', icon: CircleCheckBig },
     closed: { label: 'Closed', color: 'bg-slate-600/20 text-slate-400 border-slate-600/30 hover:bg-slate-600/20', icon: Archive },
 };
 
@@ -370,8 +370,8 @@ export default function TicketsPage() {
         { label: 'Total', value: stats?.total ?? 0, icon: Ticket, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Open', value: stats?.open ?? 0, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
         { label: 'In Progress', value: stats?.inProgress ?? 0, icon: Loader2, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Resolved', value: stats?.resolved ?? 0, icon: CheckCircle2, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-        { label: 'Overdue', value: overdueCount, icon: AlertTriangle, color: 'text-red-500', bg: 'bg-red-500/10' },
+        { label: 'Resolved', value: stats?.resolved ?? 0, icon: CircleCheckBig, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Overdue', value: overdueCount, icon: TriangleAlert, color: 'text-red-500', bg: 'bg-red-500/10' },
     ];
 
     const resolutionRate = stats && stats.total > 0 ? Math.round(((stats.resolved + stats.closed) / stats.total) * 100) : 0;
@@ -407,7 +407,7 @@ export default function TicketsPage() {
                 </div>
                 <div className="flex items-center gap-2">
                     <Button variant="outline" onClick={() => setCannedResponsesOpen(true)} className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/30">
-                        <BookTemplate className="h-4 w-4 mr-2" /> Macros
+                        <BookMarked className="h-4 w-4 mr-2" /> Macros
                     </Button>
                     <Button onClick={() => { setEditingTicket(null); form.reset(); setFormOpen(true); }} className="bg-emerald-600 hover:bg-emerald-700 text-white">
                         <Plus className="h-4 w-4 mr-2" /> New Ticket
@@ -462,7 +462,7 @@ export default function TicketsPage() {
                         </div>
                         <div className={cn('rounded-2xl border bg-white dark:bg-slate-900 shadow-sm p-5', overdueCount > 0 ? 'border-red-200 dark:border-red-900' : 'border-slate-200 dark:border-slate-800')}>
                             <div className="flex items-center gap-2 mb-3">
-                                <AlertTriangle className={`h-4 w-4 ${overdueCount > 0 ? 'text-red-500' : 'text-slate-400'}`} />
+                                <TriangleAlert className={`h-4 w-4 ${overdueCount > 0 ? 'text-red-500' : 'text-slate-400'}`} />
                                 <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Overdue Tickets</p>
                             </div>
                             <p className={cn('text-4xl font-bold tabular-nums', overdueCount > 0 ? 'text-red-500' : 'text-emerald-500')}>{overdueCount}</p>
@@ -549,7 +549,7 @@ export default function TicketsPage() {
                             onClick={() => setShowOverdueOnly(v => !v)}
                             className={`h-10 ${showOverdueOnly ? 'bg-red-600 hover:bg-red-700 text-white' : 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/20'}`}
                         >
-                            <AlertTriangle className="h-4 w-4 mr-1.5" /> Overdue Only
+                            <TriangleAlert className="h-4 w-4 mr-1.5" /> Overdue Only
                         </Button>
                         <Select value={ticketCategory} onValueChange={(v) => setTicketCategory(v as TicketCategory | 'all')}>
                             <SelectTrigger className="w-full sm:w-[160px]"><SelectValue /></SelectTrigger>
@@ -673,7 +673,7 @@ export default function TicketsPage() {
                                                         </Badge>
                                                         {ticket.due_date && slaStatus !== 'done' && (
                                                             <div className={`text-[11px] flex items-center gap-1 ${slaStatus === 'overdue' ? 'text-red-500 font-medium' : slaStatus === 'due-soon' ? 'text-amber-500' : 'text-slate-400'}`}>
-                                                                {slaStatus === 'overdue' ? <AlertTriangle className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                                                                {slaStatus === 'overdue' ? <TriangleAlert className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
                                                                 {getSlaLabel(ticket)}
                                                             </div>
                                                         )}
@@ -709,7 +709,7 @@ export default function TicketsPage() {
                                                         )}
                                                         {ticket.status === 'in-progress' && !ticket.merged_into && (
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" onClick={() => statusMut.mutate({ id: ticket.id, status: 'resolved' })} title="Mark Resolved">
-                                                                <CheckCircle2 className="h-4 w-4" />
+                                                                <CircleCheckBig className="h-4 w-4" />
                                                             </Button>
                                                         )}
                                                         {ticket.status !== 'closed' && ticket.status !== 'resolved' && !ticket.merged_into && (
@@ -964,7 +964,7 @@ export default function TicketsPage() {
 
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-500 flex items-center gap-1.5">
-                                            <AlertTriangle className="h-3 w-3" /> Internal IT Notes
+                                            <TriangleAlert className="h-3 w-3" /> Internal IT Notes
                                             <span className="text-slate-400 font-normal normal-case">(hidden from employee)</span>
                                         </Label>
                                         <Textarea placeholder="Private staff notes, debugging steps, etc." className="min-h-[60px] resize-none bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/50" value={editInternalNotes} onChange={(e) => setEditInternalNotes(e.target.value)} />
@@ -1075,7 +1075,7 @@ export default function TicketsPage() {
                             </Select>
                         </div>
                         <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm text-amber-700 dark:text-amber-400">
-                            <AlertTriangle className="h-4 w-4 inline mr-1.5 mb-0.5" />
+                            <TriangleAlert className="h-4 w-4 inline mr-1.5 mb-0.5" />
                             The source ticket will be closed and marked as merged. This cannot be undone.
                         </div>
                         <div className="flex justify-end gap-3 pt-2">

@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
 import { cn } from '@/lib/utils';
-import { Plus, Search, Trash2, Monitor, Package, Clock, CheckCircle, XCircle, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Circle, X } from 'lucide-react';
+import { Plus, Search, Trash2, Monitor, Package, Clock, CircleCheck, CircleX, Pencil, LayoutDashboard, List, Laptop, MessageSquare, Circle, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -167,8 +167,8 @@ export default function InventoryPage() {
     const statCards = [
         { label: 'Total Requests', value: stats?.total ?? 0, icon: Package, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-        { label: 'Fulfilled', value: stats?.fulfilled ?? 0, icon: CheckCircle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-        { label: 'Rejected', value: stats?.rejected ?? 0, icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
+        { label: 'Fulfilled', value: stats?.fulfilled ?? 0, icon: CircleCheck, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Rejected', value: stats?.rejected ?? 0, icon: CircleX, color: 'text-red-500', bg: 'bg-red-500/10' },
     ];
 
     const fulfilledRate = stats && stats.total > 0 ? Math.round((stats.fulfilled / stats.total) * 100) : 0;

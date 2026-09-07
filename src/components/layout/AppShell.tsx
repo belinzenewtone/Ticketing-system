@@ -7,11 +7,11 @@ import { getCurrentProfile } from '@/services/auth-actions';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { Mail, CheckSquare, Monitor, FileBarChart, Ticket, BookOpen } from 'lucide-react';
+import { Mail, SquareCheck, Monitor, FileBarChart, Ticket, BookOpen } from 'lucide-react';
 
 const reportsNav = [
     { href: '/dashboard', label: 'Email', icon: Mail },
-    { href: '/tasks', label: 'Tasks', icon: CheckSquare },
+    { href: '/tasks', label: 'Tasks', icon: SquareCheck },
     { href: '/reports', label: 'Reports', icon: FileBarChart },
 ];
 

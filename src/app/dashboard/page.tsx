@@ -24,7 +24,7 @@ import {
     AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useAppStore } from '@/store/useAppStore';
-import { Plus, Search, Trash2, CheckCircle, Circle, Mail, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
+import { Plus, Search, Trash2, CircleCheck, Circle, Mail, Clock, Pencil, LayoutDashboard, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
@@ -153,7 +153,7 @@ export default function DashboardPage() {
 
     const statCards = [
         { label: 'Total Entries', value: stats?.total ?? 0, icon: Mail, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-        { label: 'Sorted', value: stats?.sorted ?? 0, icon: CheckCircle, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+        { label: 'Sorted', value: stats?.sorted ?? 0, icon: CircleCheck, color: 'text-teal-500', bg: 'bg-teal-500/10' },
         { label: 'Pending', value: stats?.pending ?? 0, icon: Clock, color: 'text-amber-500', bg: 'bg-amber-500/10' },
     ];
 
@@ -332,13 +332,13 @@ export default function DashboardPage() {
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <Badge className={cn("h-6 px-2.5 text-[10px] uppercase font-bold border-0 shadow-sm inline-flex items-center gap-1", resolutionConfig[entry.resolution]?.color)}>
                                                     {resolutionConfig[entry.resolution]?.label.replace('✅', '').trim()}
-                                                    {entry.resolution === 'sorted' && <CheckCircle className="h-3 w-3" />}
+                                                    {entry.resolution === 'sorted' && <CircleCheck className="h-3 w-3" />}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center border-r border-slate-200/60 dark:border-slate-800/60">
                                                 <button onClick={() => toggleMut.mutate({ id: entry.id, completed: !entry.completed })} className="cursor-pointer mx-auto p-1.5 flex items-center justify-center rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                                                     {entry.completed
-                                                        ? <CheckCircle className="h-5 w-5 text-emerald-500" />
+                                                        ? <CircleCheck className="h-5 w-5 text-emerald-500" />
                                                         : <Circle className="h-5 w-5 text-slate-300 dark:text-slate-600" />}
                                                 </button>
                                             </TableCell>
@@ -349,7 +349,7 @@ export default function DashboardPage() {
                                                     </Button>
                                                     {!entry.completed && (
                                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30" onClick={() => toggleMut.mutate({ id: entry.id, completed: true })} title="Mark Complete">
-                                                            <CheckCircle className="h-4 w-4" />
+                                                            <CircleCheck className="h-4 w-4" />
                                                         </Button>
                                                     )}
                                                     <AlertDialog>
