@@ -330,9 +330,9 @@ export default function DashboardPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
-                                                <Badge variant="outline" className={cn("h-6 px-2 text-[10px] uppercase font-bold border-0 shadow-sm", resolutionConfig[entry.resolution]?.color.replace('bg-', 'text-').replace('text-white', 'bg-opacity-10 dark:bg-opacity-20 '), "bg-current")}>
+                                                <Badge className={cn("h-6 px-2.5 text-[10px] uppercase font-bold border-0 shadow-sm inline-flex items-center gap-1", resolutionConfig[entry.resolution]?.color)}>
                                                     {resolutionConfig[entry.resolution]?.label.replace('✅', '').trim()}
-                                                    {entry.resolution === 'sorted' && <CheckCircle className="h-3 w-3 ml-1" />}
+                                                    {entry.resolution === 'sorted' && <CheckCircle className="h-3 w-3" />}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-center border-r border-slate-200/60 dark:border-slate-800/60">
