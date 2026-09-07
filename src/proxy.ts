@@ -27,8 +27,9 @@ export const config = {
          *  - favicon.ico
          *  - /login                      (sign-in page)
          *  - /api/auth                   (NextAuth endpoints)
+         *  - /api/mobile                 (mobile app endpoints — handle own JWT auth)
          *  - /portal                     (employee portal — has its own gate)
          */
-        '/((?!_next/static|_next/image|favicon.ico|login|api/auth|portal).*)',
+        '/((?!_next/static|_next/image|favicon.ico|login|api/auth|api/mobile|portal).*)',
     ],
 };
