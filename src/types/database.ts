@@ -194,6 +194,8 @@ export interface CreateKbArticleInput {
 export type RequisitionType = 'it-equipment' | 'office-supplies' | 'services' | 'other';
 export type RequisitionStage =
     | 'draft'
+    | 'requestor'
+    | 'head_department'
     | 'cio'
     | 'head_hr'
     | 'general_manager'

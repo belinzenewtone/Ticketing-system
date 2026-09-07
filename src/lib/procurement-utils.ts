@@ -5,6 +5,8 @@ import type { RequisitionStage } from '@/types/database';
 // server actions and client components without the 'use server' async restriction.
 export const STAGE_ORDER: RequisitionStage[] = [
     'draft',
+    'requestor',
+    'head_department',
     'cio',
     'head_hr',
     'general_manager',

@@ -45,6 +45,8 @@ import type {
 // ─── Stage config ─────────────────────────────────────────────────────────────
 const STAGE_CONFIG: Record<string, { label: string; short: string; icon: string }> = {
     draft:             { label: 'Draft',                short: 'Draft',     icon: '📝' },
+    requestor:         { label: 'Requestor',            short: 'Req.',      icon: '👤' },
+    head_department:   { label: 'Head of Department',   short: 'HoD',       icon: '👤' },
     cio:               { label: 'CIO',                  short: 'CIO',       icon: '👤' },
     head_hr:           { label: 'Head of HR',           short: 'HR',        icon: '👤' },
     general_manager:   { label: 'General Manager',      short: 'GM',        icon: '👤' },
@@ -248,9 +250,12 @@ export default function ProcurementPage() {
 
     // Forms
     const today = new Date().toISOString().split('T')[0];
-    const createForm = useForm<ReqForm>({ resolver: zodResolver(reqSchema), defaultValues: { requisition_date: today, type: 'it-equipment', total_amount: 0 } });
-    const editForm   = useForm<ReqForm>({ resolver: zodResolver(reqSchema) });
-    const itemForm   = useForm<ItemForm>({ resolver: zodResolver(itemSchema), defaultValues: { quantity: 1, unit_price: 0 } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Zod v4 coerce fields infer as `unknown` for input; safe at runtime
+    const createForm = useForm<ReqForm>({ resolver: zodResolver(reqSchema) as any, defaultValues: { requisition_date: today, type: 'it-equipment', total_amount: 0 } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const editForm   = useForm<ReqForm>({ resolver: zodResolver(reqSchema) as any });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const itemForm   = useForm<ItemForm>({ resolver: zodResolver(itemSchema) as any, defaultValues: { quantity: 1, unit_price: 0 } });
     const apprForm   = useForm<ApprForm>({ resolver: zodResolver(approvalSchema), defaultValues: { signed_date: new Date().toISOString().split('T')[0] } });
     const rejForm    = useForm<RejForm>({ resolver: zodResolver(rejectionSchema) });
 
@@ -451,7 +456,7 @@ export default function ProcurementPage() {
                         <p className="text-emerald-100 text-sm mt-0.5">Fill in the details. PO line items can be added after creation.</p>
                     </div>
                     <div className="max-h-[75vh] overflow-y-auto">
-                    <form onSubmit={createForm.handleSubmit(d => createMut.mutate(d))} className="space-y-5 px-6 py-5">
+                    <form onSubmit={createForm.handleSubmit(d => createMut.mutate(d as ReqForm))} className="space-y-5 px-6 py-5">
 
                         {/* Title + Date */}
                         <div className="grid grid-cols-2 gap-4">
@@ -731,7 +736,7 @@ export default function ProcurementPage() {
                                     <div className="space-y-3">
                                         <p className="text-xs text-muted-foreground mb-4">
                                             Current stage: <span className="font-bold text-foreground">{STAGE_CONFIG[detailReq.current_stage]?.label}</span>
-                                            {detailReq.current_stage === 'draft' && <span className="ml-2 text-amber-600">— advance to CIO to begin the approval chain</span>}
+                                            {detailReq.current_stage === 'draft' && <span className="ml-2 text-amber-600">— submit to Requestor to begin the approval chain</span>}
                                         </p>
 
                                         {/* Skip 'draft' in the visual — it's just the starting point */}
@@ -799,12 +804,12 @@ export default function ProcurementPage() {
                                                             </div>
                                                         )}
 
-                                                        {/* Draft: show "Submit to CIO" button */}
-                                                        {detailReq.current_stage === 'draft' && stage === 'cio' && (
+                                                        {/* Draft: show "Submit to Requestor" button */}
+                                                        {detailReq.current_stage === 'draft' && stage === 'requestor' && (
                                                             <div className="mt-3">
                                                                 <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white h-7 text-xs"
                                                                     onClick={() => openApproval('draft' as RequisitionStage, 'approve')}>
-                                                                    <ChevronRight className="h-3.5 w-3.5 mr-1" /> Submit to CIO
+                                                                    <ChevronRight className="h-3.5 w-3.5 mr-1" /> Submit to Requestor
                                                                 </Button>
                                                             </div>
                                                         )}
@@ -888,7 +893,7 @@ export default function ProcurementPage() {
                         <DialogTitle className="text-white text-lg font-bold">Add PO Line Item</DialogTitle>
                         <p className="text-teal-100 text-sm mt-0.5">Each item gets a unique PO / item reference number.</p>
                     </div>
-                    <form onSubmit={itemForm.handleSubmit(d => addItemMut.mutate({ ...d, requisition_id: detailReq!.id } as CreateRequisitionItemInput))}
+                    <form onSubmit={itemForm.handleSubmit(d => addItemMut.mutate({ ...d, requisition_id: detailReq!.id } as unknown as CreateRequisitionItemInput))}
                         className="space-y-5 px-6 py-5">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
