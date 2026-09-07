@@ -401,15 +401,15 @@ export default function ProcurementPage() {
                     <Table>
 
                         <TableHeader>
-                            <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider w-[90px]">REQ #</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Title</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Requested For</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Supplier</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Type</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider text-right">Amount</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Stage</TableHead>
-                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Date</TableHead>
+                            <TableRow className="bg-slate-50/50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800">
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider w-[90px]  border-r border-slate-200/60 dark:border-slate-800/60">REQ #</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Title</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Requested For</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Supplier</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Type</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider text-right border-r border-slate-200/60 dark:border-slate-800/60">Amount</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Stage</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider          border-r border-slate-200/60 dark:border-slate-800/60">Date</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider text-right w-[80px]">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -442,23 +442,23 @@ export default function ProcurementPage() {
                                                                                   'border-l-amber-400'
                                     )}
                                     onClick={() => openDetail(r)}>
-                                    <TableCell className="font-mono font-bold text-sm">
+                                    <TableCell className="font-mono font-bold text-sm border-r border-slate-200/60 dark:border-slate-800/60">
                                         REQ-{String(r.number).padStart(3, '0')}
                                     </TableCell>
-                                    <TableCell className="font-medium max-w-[180px] truncate">{r.title}</TableCell>
-                                    <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate">{r.requested_for || '—'}</TableCell>
-                                    <TableCell className="text-sm text-muted-foreground">
+                                    <TableCell className="font-medium max-w-[180px] truncate border-r border-slate-200/60 dark:border-slate-800/60">{r.title}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate border-r border-slate-200/60 dark:border-slate-800/60">{r.requested_for || '—'}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground border-r border-slate-200/60 dark:border-slate-800/60">
                                         <div className="flex items-center gap-1.5">
                                             <Building2 className="h-3.5 w-3.5 shrink-0" />
                                             <span className="truncate max-w-[120px]">{r.supplier_name}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60">
                                         <Badge variant="outline" className="text-[10px]">{TYPE_CONFIG[r.type as RequisitionType]}</Badge>
                                     </TableCell>
-                                    <TableCell className="text-right font-semibold text-sm">{fmtKES(r.total_amount)}</TableCell>
-                                    <TableCell><StageBadge stage={r.current_stage} /></TableCell>
-                                    <TableCell className="text-xs text-muted-foreground">{fmtDate(r.requisition_date)}</TableCell>
+                                    <TableCell className="text-right font-semibold text-sm border-r border-slate-200/60 dark:border-slate-800/60">{fmtKES(r.total_amount)}</TableCell>
+                                    <TableCell className="border-r border-slate-200/60 dark:border-slate-800/60"><StageBadge stage={r.current_stage} /></TableCell>
+                                    <TableCell className="text-xs text-muted-foreground border-r border-slate-200/60 dark:border-slate-800/60">{fmtDate(r.requisition_date)}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600"
                                             onClick={e => { e.stopPropagation(); openDetail(r); }}>
