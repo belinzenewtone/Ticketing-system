@@ -187,15 +187,27 @@ export function ChatInterface({
                                                 : c.is_internal
                                                     ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-100 border border-amber-200 dark:border-amber-800'
                                                     : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-100 dark:border-slate-700',
-                                            // Bubble shape — iMessage style
-                                            // Single message
+                                            // Bubble shape — iMessage style (individual corner classes only, no shorthand overrides)
+                                            // Single message — fully round
                                             isGroupStart && isGroupEnd && 'rounded-2xl',
-                                            // First of a group (tail at top corner away from avatar)
-                                            isGroupStart && !isGroupEnd && (isMe ? 'rounded-t-2xl rounded-bl-2xl rounded-br-sm rounded-b-lg' : 'rounded-t-2xl rounded-br-2xl rounded-bl-sm rounded-b-lg'),
-                                            // Middle of a group
-                                            !isGroupStart && !isGroupEnd && (isMe ? 'rounded-l-2xl rounded-r-lg' : 'rounded-r-2xl rounded-l-lg'),
-                                            // Last of a group (tail at bottom corner near avatar)
-                                            !isGroupStart && isGroupEnd && (isMe ? 'rounded-t-lg rounded-bl-2xl rounded-br-sm rounded-tr-2xl' : 'rounded-t-lg rounded-br-2xl rounded-bl-sm rounded-tl-2xl'),
+                                            // First of a group — flat on the "tail" bottom corner
+                                            isGroupStart && !isGroupEnd && (
+                                                isMe
+                                                    ? 'rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-[4px]'
+                                                    : 'rounded-tl-2xl rounded-tr-2xl rounded-bl-[4px] rounded-br-2xl'
+                                            ),
+                                            // Middle of a group — flat on both "tail" side corners
+                                            !isGroupStart && !isGroupEnd && (
+                                                isMe
+                                                    ? 'rounded-tl-2xl rounded-tr-[4px] rounded-bl-2xl rounded-br-[4px]'
+                                                    : 'rounded-tl-[4px] rounded-tr-2xl rounded-bl-[4px] rounded-br-2xl'
+                                            ),
+                                            // Last of a group — flat on the "tail" top corner, avatar side
+                                            !isGroupStart && isGroupEnd && (
+                                                isMe
+                                                    ? 'rounded-tl-2xl rounded-tr-[4px] rounded-bl-2xl rounded-br-2xl'
+                                                    : 'rounded-tl-[4px] rounded-tr-2xl rounded-bl-2xl rounded-br-2xl'
+                                            ),
                                         )}>
                                             {c.is_internal && !isMe && (
                                                 <Lock className="inline h-2.5 w-2.5 mr-1.5 mb-0.5 opacity-50" />
