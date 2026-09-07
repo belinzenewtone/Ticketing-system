@@ -380,6 +380,7 @@ export default function ProcurementPage() {
                             <TableRow className="bg-slate-50/50 dark:bg-slate-900/50">
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider w-[90px]">REQ #</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider">Title</TableHead>
+                                <TableHead className="font-bold uppercase text-[11px] tracking-wider">Requested For</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider">Supplier</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider">Type</TableHead>
                                 <TableHead className="font-bold uppercase text-[11px] tracking-wider text-right">Amount</TableHead>
@@ -420,11 +421,12 @@ export default function ProcurementPage() {
                                     <TableCell className="font-mono font-bold text-sm">
                                         REQ-{String(r.number).padStart(3, '0')}
                                     </TableCell>
-                                    <TableCell className="font-medium max-w-[200px] truncate">{r.title}</TableCell>
+                                    <TableCell className="font-medium max-w-[180px] truncate">{r.title}</TableCell>
+                                    <TableCell className="text-sm text-muted-foreground max-w-[140px] truncate">{r.requested_for || '—'}</TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
                                         <div className="flex items-center gap-1.5">
                                             <Building2 className="h-3.5 w-3.5 shrink-0" />
-                                            <span className="truncate max-w-[140px]">{r.supplier_name}</span>
+                                            <span className="truncate max-w-[120px]">{r.supplier_name}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>
