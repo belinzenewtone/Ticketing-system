@@ -4,8 +4,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // When BYPASS_AUTH is true every request passes through unchanged.
-// Set BYPASS_AUTH=false (and ensure DATABASE_URL is live) to enforce real logins.
-const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true';
+// ONLY honoured in development — silently disabled in production.
+const BYPASS_AUTH =
+    process.env.BYPASS_AUTH === 'true' && process.env.NODE_ENV !== 'production';
 
 const { auth } = NextAuth(authConfig);
 

@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSession } from '@/lib/mobile-auth';
 import { query, execute } from '@/lib/db';
+
+const createRequisitionSchema = z.object({
+    title:            z.string().min(3).max(300),
+    type:             z.enum(['it-equipment', 'office-supplies', 'services', 'other']),
+    item_quantity:    z.coerce.number().int().min(1).max(10000),
+    requested_for:    z.string().min(1).max(300),
+    supplier_name:    z.string().min(1).max(300),
+    total_amount:     z.coerce.number().min(0),
+    supplier_contact: z.string().max(200).optional().nullable(),
+    notes:            z.string().max(2000).optional().nullable(),
+    requisition_date: z.string().optional().nullable(),
+});
 
 export async function GET(request: Request) {
     const session = await getSession(request);
@@ -35,7 +48,15 @@ export async function POST(request: Request) {
     if (session.role === 'USER') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     try {
-        const input = await request.json();
+        const body = await request.json().catch(() => null);
+        const parsed = createRequisitionSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
+                { status: 400 }
+            );
+        }
+        const input = parsed.data;
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
 
@@ -45,12 +66,12 @@ export async function POST(request: Request) {
             id,
             input.requisition_date ?? now.split('T')[0],
             input.title,
-            input.type ?? 'other',
-            input.item_quantity ?? 1,
-            input.requested_for ?? null,
-            input.supplier_name ?? '',
+            input.type,
+            input.item_quantity,
+            input.requested_for,
+            input.supplier_name,
             input.supplier_contact ?? null,
-            input.total_amount ?? 0,
+            input.total_amount,
             input.notes ?? null,
             session.id,
             session.name ?? null,

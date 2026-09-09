@@ -165,11 +165,13 @@ export default function ProcurementPage() {
     const { data: supplierOptions = [] } = useQuery({
         queryKey: ['lookup', 'procurement_supplier'],
         queryFn: () => getLookupValues('procurement_supplier'),
+        staleTime: 10 * 60 * 1000, // lookup data rarely changes
     });
 
     const { data: typeOptions = [] } = useQuery({
         queryKey: ['lookup', 'procurement_type'],
         queryFn: () => getLookupValues('procurement_type'),
+        staleTime: 10 * 60 * 1000,
     });
 
     const { data: detailItems = [] } = useQuery({

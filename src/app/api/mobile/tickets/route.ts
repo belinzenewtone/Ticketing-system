@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { getSession } from '@/lib/mobile-auth';
 import { query, execute } from '@/lib/db';
 import { logActivity } from '@/services/activity';
 import type { TicketCategory, TicketPriority, TicketStatus } from '@/types/database';
+
+const createTicketSchema = z.object({
+    employee_name:  z.string().min(1).max(200),
+    subject:        z.string().min(1).max(500),
+    category:       z.enum(['email', 'account-login', 'account_login', 'password-reset', 'password_reset', 'hardware', 'software', 'network-vpn', 'network_vpn', 'other']),
+    priority:       z.enum(['critical', 'high', 'medium', 'low']),
+    department:     z.string().max(100).optional().nullable(),
+    description:    z.string().max(5000).optional().nullable(),
+    internal_notes: z.string().max(5000).optional().nullable(),
+    attachment_url: z.string().url().optional().nullable(),
+    ticket_date:    z.string().optional().nullable(),
+    status:         z.enum(['open', 'in_progress', 'in-progress', 'resolved', 'closed']).optional(),
+    sentiment:      z.enum(['positive', 'neutral', 'frustrated', 'angry']).optional(),
+});
 
 function fromEnum(val: string): string { return val?.replace(/_/g, '-') ?? ''; }
 function toEnum(val: string): string { return val?.replace(/-/g, '_') ?? ''; }
@@ -73,7 +88,15 @@ export async function POST(request: Request) {
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        const input = await request.json();
+        const body = await request.json().catch(() => null);
+        const parsed = createTicketSchema.safeParse(body);
+        if (!parsed.success) {
+            return NextResponse.json(
+                { error: parsed.error.issues[0]?.message ?? 'Invalid request body' },
+                { status: 400 }
+            );
+        }
+        const input = parsed.data;
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
 

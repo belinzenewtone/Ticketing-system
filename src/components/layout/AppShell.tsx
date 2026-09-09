@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Sidebar } from './Sidebar';
 import { useAppStore } from '@/store/useAppStore';
 import { getCurrentProfile } from '@/services/auth-actions';
+import { getAllLookupCategories } from '@/services/lookup';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -23,10 +25,22 @@ const ticketingNav = [
 export function AppShell({ children }: { children: React.ReactNode }) {
     const { setProfile, sidebarCollapsed } = useAppStore();
     const pathname = usePathname();
+    const queryClient = useQueryClient();
 
     useEffect(() => {
         getCurrentProfile().then(setProfile).catch(console.error);
     }, [setProfile]);
+
+    // Warm the lookup cache for all categories in one shot so that Settings
+    // and Procurement pages find their data already cached on first visit.
+    useEffect(() => {
+        getAllLookupCategories().then((all) => {
+            for (const [category, values] of Object.entries(all)) {
+                queryClient.setQueryData(['lookup', category], values);
+            }
+        }).catch(() => { /* non-critical — pages fall back to their own queries */ });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // run once on mount
 
     const isReportsPage = ['/dashboard', '/tasks', '/reports'].includes(pathname);
     const isTicketingPage = ['/tickets', '/knowledge-base'].includes(pathname);

@@ -68,6 +68,7 @@ function ListEditor({ category, label, description, accentColor }: {
     const { data: items = [], isLoading } = useQuery({
         queryKey: ['lookup', category],
         queryFn: () => getLookupValues(category),
+        staleTime: 10 * 60 * 1000, // lookup data rarely changes
     });
 
     const addMut = useMutation({

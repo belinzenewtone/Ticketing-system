@@ -7,8 +7,17 @@ import type { Session } from "next-auth";
 
 // ─── Dev bypass ───────────────────────────────────────────────────────────────
 // When BYPASS_AUTH=true the app runs without Supabase / any database for auth.
-// All server components that call auth() will receive this mock admin session.
-const BYPASS_AUTH = process.env.BYPASS_AUTH === 'true';
+// ONLY honoured in development — any attempt to set this in production is ignored
+// and a warning is logged so the misconfiguration is visible in logs.
+const BYPASS_AUTH =
+    process.env.BYPASS_AUTH === 'true' && process.env.NODE_ENV !== 'production';
+
+if (process.env.BYPASS_AUTH === 'true' && process.env.NODE_ENV === 'production') {
+    console.error(
+        '[auth] BYPASS_AUTH=true is set in a production environment — ignoring. ' +
+        'Remove this env var from your production configuration immediately.'
+    );
+}
 
 const DEV_SESSION: Session = {
     user: {
@@ -23,7 +32,17 @@ const DEV_SESSION: Session = {
 // ─── Real NextAuth setup ──────────────────────────────────────────────────────
 const _nextAuth = NextAuth({
     ...authConfig,
-    secret: process.env.AUTH_SECRET || 'dev-fallback-secret',
+    secret: (() => {
+        const secret = process.env.AUTH_SECRET;
+        if (!secret) {
+            if (process.env.NODE_ENV === 'production') {
+                throw new Error('[auth] AUTH_SECRET environment variable is not set. Set it in your production environment.');
+            }
+            console.warn('[auth] AUTH_SECRET is not set — using an insecure dev secret. Set AUTH_SECRET before deploying.');
+            return 'dev-insecure-secret-set-AUTH_SECRET-in-env';
+        }
+        return secret;
+    })(),
     session: { strategy: "jwt" },
     providers: [
         CredentialsProvider({
