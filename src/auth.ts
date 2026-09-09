@@ -43,7 +43,10 @@ const _nextAuth = NextAuth({
         }
         return secret;
     })(),
-    session: { strategy: "jwt" },
+    session: {
+        strategy: "jwt",
+        maxAge: 8 * 60 * 60, // 8 hours — one workday; forces re-login after this regardless of activity
+    },
     providers: [
         CredentialsProvider({
             name: "Email and Password",

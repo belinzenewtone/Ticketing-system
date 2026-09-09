@@ -10,6 +10,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Mail, SquareCheck, Monitor, FileBarChart, Ticket, BookOpen } from 'lucide-react';
+import { IdleTimeout } from '@/components/IdleTimeout';
 
 const reportsNav = [
     { href: '/dashboard', label: 'Email', icon: Mail },
@@ -49,6 +50,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col">
+            {/* Auto-logout: warns after 25 min idle, signs out after 5 more minutes */}
+            <IdleTimeout />
             <Sidebar />
             <main className={cn(
                 'min-h-screen flex flex-col relative transition-[margin] duration-300 ease-in-out',
